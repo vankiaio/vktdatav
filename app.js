@@ -1,0 +1,320 @@
+'use strict';
+const path = require('path');
+const express = require('express');
+//const mockjs = require('express-mockjs');
+const opn = require('opn');
+const utils = require('./utils');
+const r2 = require('r2');
+require('colors');
+const { Api, JsonRpc, RpcError, JsSignatureProvider } = require('eosjs');
+const fetch = require('node-fetch');                            // node only; not needed in browsers
+const { TextDecoder, TextEncoder } = require('text-encoding');  // node, IE11 and IE Edge Browsers
+var MongoClient = require('mongodb').MongoClient;
+var url = "mongodb://:27017/admin";
+const XE_URL = 'http://www.xe.com/a/ratesprovider.php?_=';
+
+// 服务器端口
+let NODE_PORT = 3000;
+
+// 获取窗口打开标识
+let isOpenWin = utils.localStorage().getItem('ISOPENWIN');
+
+let vktdatav = {};
+
+// 创建express
+const app = express();
+
+// 路由mock数据
+//app.use('/vktapi', mockjs(path.join(__dirname, './data')));
+app.use('/vktapi', async (req, res) => {
+  //获取jsons数据
+  const data = await runRpc().catch(err=>{
+    console.log("rpc error: ",err)
+  });
+
+  //获取jsons数据
+  const datadb = await runMongodb().catch(err => {
+    console.log("mongodb error: ", err)
+  });
+
+  //获取jsons数据
+  const dataccxt = await runCcxt().catch(err => {
+    console.log("ccxt error: ", err)
+  });
+
+  //获取汇率jsons数据
+  await r2(XE_URL + +new Date())
+    .json
+    .then(({ rates }) => runExchange(rates))
+    .catch((error) => {
+      console.error('⚠️  Cannot fetch currency rates'.bold.red)
+      console.log(error)
+    })
+
+  //console.log(datadb);
+  res.json(vktdatav);
+});
+
+
+const defaultPrivateKey = "5KWNB8FSe3dYbW3fZJBvK4M4QhaCtRjh2EP5j7gSbs7GeNTnxV2"; // useraaaaaaaa
+const signatureProvider = new JsSignatureProvider([defaultPrivateKey]);
+
+const rpc = new JsonRpc('http://221.122.119.226:8888', { fetch });
+const api = new Api({ rpc, signatureProvider, textDecoder: new TextDecoder(), textEncoder: new TextEncoder() });
+
+// rpc对象支持promise，所以使用 async/await 函数运行rpc命令
+const runRpc = async () => {
+  
+  // 获取主网信息
+  const info = await rpc.get_info();
+  console.log(info);
+  vktdatav.head_block_num = info.head_block_num;
+  vktdatav.head_block_producer = info.head_block_producer;
+
+
+  // 获取账号tmd111111111的信息
+  const accountInfo = await rpc.get_account('qingzhudatac');
+  console.log(accountInfo);
+
+
+  //获取账号tmd111111111的资产,查询资产的时候要加上资产的合约名字eosio.token
+  const balance = await rpc.get_currency_balance('eosio.token','qingzhudatac');
+  console.log(balance);
+
+
+  const accountInfo2 = await rpc.get_account('qingzhudatac');
+  console.log(accountInfo2);
+
+
+  //获取账号操作历史
+  const actionHistory = await rpc.history_get_actions('qingzhudatac');
+  console.log(actionHistory);
+
+  //table_row
+
+  const tableRow = await rpc.get_table_rows({ "scope": "currency", "code": "currency", "table":"stat","json":true})
+  console.log(tableRow);
+  
+  const producersinfo = await rpc.get_producers();
+  console.log(producersinfo);
+  
+  vktdatav.producers_num = producersinfo.rows.length;
+
+  vktdatav.producers = JSON.parse('[]');
+
+  for (let i in producersinfo.rows) {
+    vktdatav.producers.push(producersinfo.rows[i].owner);
+  }
+
+  return (vktdatav);
+
+};
+
+// rpc对象支持promise，所以使用 async/await 函数运行rpc命令
+const runMongodb = async () => {
+
+ 
+  MongoClient.connect(url, function(err, db) {
+    if (err)
+    {
+      console.error(err);
+      throw err;
+    } 
+    var dbo = db.db("EOS");
+    // dbo.collection("accounts").find().toArray(function(err, result) {
+    //   if (err) throw err;
+    //   for (let i in result) {
+    //     console.log(result[i].name);
+    //   }
+    dbo.collection("accounts").find().toArray(function (err, result) {
+    if (err) throw err;
+      for (let i in result) {
+        console.log(result[i].name);
+      }
+      if (result.length >= 1) {
+        vktdatav.accounts_num = result.length;
+      }
+      db.close();
+    });
+    dbo.collection("transaction_traces").find().count(function (err, result) {
+      if (err) throw err;
+      vktdatav.transactions_num = result;
+      db.close();
+    });
+    dbo.collection("account_controls").find().count(function (err, result) {
+      if (err) throw err;
+      vktdatav.contracks_num = result;
+      db.close();
+    });
+    //controlled_account: 'vktbeijing',
+    // controlled_permission: 'qingzhudatac',
+    //   controlling_account: 'vankia.trans',
+    //     createdAt: 2018 - 12 - 03T09: 07: 03.191Z
+    //获取合约
+    dbo.collection("account_controls").find().toArray(function (err, result) {
+      if (err) throw err;
+      vktdatav.constracks = JSON.parse('[]');
+      for (let i in result) {
+        vktdatav.constracks.push({ controlled_account: result[i].controlled_account, controlled_permission: result[i].controlled_permission,
+          controlling_account: result[i].controlling_account, createdAt: result[i].createdAt});
+      }
+      console.log(result);
+      db.close();
+    });
+    //aggregate({$group : {_id : "$block_num", max_transactions : {$sum : 1}}},{$group:{_id:null,max:{$max:"$max_transactions"}}})
+    dbo.collection("transaction_traces").aggregate({ $group: { _id: "$block_num", max_transactions: { $sum: 1 } } }, 
+                                                    { $group: { _id: null, max: { $max: "$max_transactions" } } },
+                                                    function (err, result) {
+      if (err) throw err;
+      result.toArray(function (err, result) {
+        if (err) throw err;
+        console.log(result);
+        if (result.length >= 1) {
+          vktdatav.max_tps_num = result[0].max/3;
+        }
+      });
+      db.close();
+    });
+  });
+  return vktdatav;
+}
+
+// rpc对象支持promise，所以使用 async/await 函数运行rpc命令
+const runCcxt = async () => {
+
+  let ticker_vkteth = [];
+  let ticker_ethusd = [];
+  
+  // import ccxt
+  const ccxt = require('ccxt');
+
+  // get vkteth price and vol
+  let bitforex = new ccxt.bitforex();
+  // bitforex.proxy = 'https://cors-anywhere.herokuapp.com/';
+  // load all markets from the exchange
+  let markets = await bitforex.loadMarkets();
+
+  const symbol_vkteth = 'VKT/ETH';
+  if (symbol_vkteth in bitforex.markets) {
+    ticker_vkteth = await bitforex.fetchTicker(symbol_vkteth);
+  }
+  //console.log(ticker_vkteth);
+
+  // get ethusd price
+  let bittrex = new ccxt.bittrex();
+  // load all markets from the exchange
+  markets = await bittrex.loadMarkets();
+
+  const symbol_ethusd = 'ETH/USD';
+  if (symbol_ethusd in bittrex.markets) {
+    ticker_ethusd = await bittrex.fetchTicker(symbol_ethusd);
+  }
+  //console.log(ticker_ethusd);
+
+  // get vkteth 1hour price
+  const ohlcvkteth = await bitforex.fetchOHLCV(symbol_vkteth, '1d', 8);
+  const last7dTime = ohlcvkteth[0].time; // 1h ago closing time
+  // const last1hPrice = ohlcvkteth[ohlcvkteth.length - 1].close; // 1h ago closing price
+  // const last1dPrice = ohlcvkteth[ohlcvkteth.length - 2].close; // 1d ago closing price
+  // const last1wPrice = ohlcvkteth[1].close; // 1w ago closing price
+  // console.log(last7dTime);
+  // console.log(last1hPrice);
+  // console.log(last1dPrice);
+  // console.log(last1wPrice);
+  // console.log(ohlcvkteth);
+
+  const ohlcethusd = await bittrex.fetchOHLCV(symbol_ethusd, '1d', last7dTime, 8);
+  // console.log(ohlcethusd);
+  // console.log(ohlcethusd[0][4]);
+
+  vktdatav.vktusdlast7d = JSON.parse('[]');
+  for (let i in ohlcethusd) {
+    vktdatav.vktusdlast7d.push(ohlcethusd[i][4] * ohlcvkteth[i].close);
+  }
+
+  return vktdatav;
+}
+
+// rpc对象支持promise，所以使用 async/await 函数运行rpc命令
+const runExchange = async (rates) => {
+  const currencies = JSON.parse(decodeRatesData(rates.minutely))
+  vktdatav.usdcny = currencies.CNY
+  console.log(currencies)
+}
+
+/* eslint-disable */
+function decodeRatesData(c) {
+  try {
+    var a = c.substr(c.length - 4)
+    var f = a.charCodeAt(0) + a.charCodeAt(1) + a.charCodeAt(2) + a.charCodeAt(3)
+    f = (c.length - 10) % f
+    f = (f > (c.length - 10 - 4)) ? (c.length - 10 - 4) : f
+    var l = c.substr(f, 10)
+    c = c.substr(0, f) + c.substr(f + 10)
+    var c = decode64(decodeURIComponent(c))
+    if (c === false) {
+      return false
+    }
+    var m = ''
+    var b = 0
+    for (var d = 0; d < (c.length); d += 10) {
+      var h = c.charAt(d)
+      var g = l.charAt(((b % l.length) - 1) < 0 ? (l.length + (b % l.length) - 1) : ((b % l.length) - 1))
+      h = String.fromCharCode(h.charCodeAt(0) - g.charCodeAt(0))
+      m += (h + c.substring(d + 1, d + 10))
+      b++
+    }
+    return m
+  } catch (k) {
+    return false
+  }
+}
+
+function decode64(g) {
+  try {
+    var c = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='
+    var b = ''
+    var o, m, k = ''
+    var n, l, j, h = ''
+    var d = 0
+    var a = /[^A-Za-z0-9\+\/\=]/g
+    if (a.exec(g)) {
+      return false
+    }
+    g = g.replace(/[^A-Za-z0-9\+\/\=]/g, '')
+    do {
+      n = c.indexOf(g.charAt(d++))
+      l = c.indexOf(g.charAt(d++))
+      j = c.indexOf(g.charAt(d++))
+      h = c.indexOf(g.charAt(d++))
+      o = (n << 2) | (l >> 4)
+      m = ((l & 15) << 4) | (j >> 2)
+      k = ((j & 3) << 6) | h
+      b = b + String.fromCharCode(o)
+      if (j != 64) {
+        b = b + String.fromCharCode(m)
+      }
+      if (h != 64) {
+        b = b + String.fromCharCode(k)
+      }
+      o = m = k = ''
+      n = l = j = h = ''
+    } while (d < g.length)
+    return unescape(b)
+  } catch (f) {
+    return false
+  }
+}
+
+// 监听端口、打开浏览器
+app.listen(NODE_PORT, function () {
+  if (isOpenWin === 'false') {
+    let uri = 'http://' + utils.getIP() + ':' + port + '/api';
+    opn(uri);
+
+    // 设置窗口打开标识
+    utils.localStorage().setItem('ISOPENWIN', 'true');
+
+    console.log("mock server start success.".green);
+  }
+});
