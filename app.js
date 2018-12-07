@@ -52,33 +52,37 @@ app.use('/vktapi', async (req, res) => {
     console.log("nodejs app is loading ?", IsLoading);
 
     //获取jsons数据
-    const data = await runRpc().catch(err=>{
-      console.log("rpc error: ",err)
+    const data = await runRpc().catch(err => {
+      console.log("rpc error: ", err)
     });
+
+    console.log("nodejs app passed runRpc!!!");
 
     //获取jsons数据
     const datadb = await runMongodb().catch(err => {
       console.log("mongodb error: ", err)
     });
+    console.log("nodejs app passed runMongodb!!!");
 
     //获取jsons数据
     const dataccxt = await runCcxt().catch(err => {
       console.log("ccxt error: ", err)
     });
+    console.log("nodejs app passed runCcxt!!!");
 
     //获取汇率jsons数据
     await r2(XE_URL + +new Date())
       .json
-      .then(({ rates }) => runExchange(rates))
+      .then(async ({ rates }) => runExchange(rates))
       .catch((error) => {
         console.error('⚠️  Cannot fetch currency rates'.bold.red)
         console.log(error)
       })
+    console.log("nodejs app passed runExchange!!!");
     IsLoading = false;
   }
   console.log(req.query.showtype);
-  switch (req.query.showtype)
-  {
+  switch (req.query.showtype) {
     case "all":
     case undefined:
       res.json(vktdatav);
@@ -107,7 +111,7 @@ app.use('/vktapi', async (req, res) => {
     case "vktprice_list":
       res.json(vktdatav_vktprice_list);
       break;
-      
+
   }
 });
 
@@ -120,7 +124,7 @@ const api = new Api({ rpc, signatureProvider, textDecoder: new TextDecoder(), te
 
 // rpc对象支持promise，所以使用 async/await 函数运行rpc命令
 const runRpc = async () => {
-  
+
   let dumapLocal_cn = "";
   let dumapLocal_en = "";
   let dumapLocal_start = 0;
@@ -139,7 +143,7 @@ const runRpc = async () => {
   // 获取最后24个区块信息的信息
   curBlockNum = vktdatav.head_block_num;
   vktdatav_blocks_list = JSON.parse('[]');
-  for (let i = curBlockNum; i > curBlockNum-24; i--){
+  for (let i = curBlockNum; i > curBlockNum - 24; i--) {
     const blockInfo = await rpc.get_block(i);
     // [
     //   {
@@ -148,10 +152,10 @@ const runRpc = async () => {
     //     "state": "22:22:22"
     //   },
     // ]
-    vktdatav_blocks_list.push({ "name": blockInfo.block_num,"producer":blockInfo.producer,"time":blockInfo.timestamp});
+    vktdatav_blocks_list.push({ "name": blockInfo.block_num, "producer": blockInfo.producer, "time": blockInfo.timestamp });
   }
 
-  
+
 
   // 获取账号qingzhudatac的信息
   // const accountInfo = await rpc.get_account('qingzhudatac');
@@ -175,10 +179,10 @@ const runRpc = async () => {
 
   // const tableRow = await rpc.get_table_rows({ "scope": "currency", "code": "currency", "table":"stat","json":true})
   // console.log(tableRow);
-  
+
   const producersinfo = await rpc.get_producers();
   console.log(producersinfo);
-  
+
   vktdatav.producers_num = producersinfo.rows.length;
   vktdatav_producers_num = [
     {
@@ -192,16 +196,16 @@ const runRpc = async () => {
 
   for (let i in producersinfo.rows) {
     dumapLocal_start = producersinfo.rows[i].url.indexOf("vkt") + 3;
-    
-    if (dumapLocal_start > 3){
+
+    if (dumapLocal_start > 3) {
       dumapLocal_en = producersinfo.rows[i].url.substr(dumapLocal_start, producersinfo.rows[i].url.length - dumapLocal_start)
     }
     if (dumapLocal_en != "") {
-      if(dumapLocal_en.indexOf("shi") < 0){
+      if (dumapLocal_en.indexOf("shi") < 0) {
         dumapLocal_en += "shi"
       }
       console.log(dumapLocal_en)
-      await translate(dumapLocal_en, { to: 'zh-CN' }).then(async(res) => {
+      await translate(dumapLocal_en, { to: 'zh-CN' }).then(async (res) => {
         dumapLocal_cn = res.text;
         console.log(res.text);
         //=> 北京市
@@ -225,9 +229,9 @@ const runRpc = async () => {
               console.log('location:', sres.text);
               //res.send(sres.text);
               vktdatav.producers.push({ owner: producersinfo.rows[i].owner, location: { city: dumapLocal_cn, lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng } });
-              if(i < 3){
+              if (i < 3) {
                 producer_state = "超级节点"
-              }else{
+              } else {
                 producer_state = "备用节点"
               }
               // [
@@ -240,7 +244,7 @@ const runRpc = async () => {
               if (vktdatav_producers_list.length >= producersinfo.rows.length) {
                 console.log(vktdatav_producers_list[i])
                 //vktdatav_producers_list[0].setItem({ name: producersinfo.rows[i].owner, location: dumapLocal_cn, state: producer_state })
-              }else {
+              } else {
                 vktdatav_producers_list.push({ "name": producersinfo.rows[i].owner, "location": dumapLocal_cn, "state": producer_state })
               }
             })
@@ -264,13 +268,12 @@ const runRpc = async () => {
 // rpc对象支持promise，所以使用 async/await 函数运行rpc命令
 const runMongodb = async () => {
 
- 
-  MongoClient.connect(url, function(err, db) {
-    if (err)
-    {
+
+  MongoClient.connect(url, function (err, db) {
+    if (err) {
       console.error(err);
       throw err;
-    } 
+    }
     var dbo = db.db("EOS");
     // dbo.collection("accounts").find().toArray(function(err, result) {
     //   if (err) throw err;
@@ -278,11 +281,11 @@ const runMongodb = async () => {
     //     console.log(result[i].name);
     //   }
     dbo.collection("accounts").find().toArray(function (err, result) {
-    if (err) throw err;
+      if (err) throw err;
       // for (let i in result) {
       //   console.log(result[i].name);
       // }
-    if (result.length >= 1) {
+      if (result.length >= 1) {
         vktdatav.accounts_num = result.length;
         vktdatav_accounts_num = [
           {
@@ -320,32 +323,34 @@ const runMongodb = async () => {
       if (err) throw err;
       vktdatav.constracks = JSON.parse('[]');
       for (let i in result) {
-        vktdatav.constracks.push({ controlled_account: result[i].controlled_account, controlled_permission: result[i].controlled_permission,
-          controlling_account: result[i].controlling_account, createdAt: result[i].createdAt});
+        vktdatav.constracks.push({
+          controlled_account: result[i].controlled_account, controlled_permission: result[i].controlled_permission,
+          controlling_account: result[i].controlling_account, createdAt: result[i].createdAt
+        });
       }
       console.log(result);
       db.close();
     });
     //aggregate({$group : {_id : "$block_num", max_transactions : {$sum : 1}}},{$group:{_id:null,max:{$max:"$max_transactions"}}})
-    dbo.collection("transaction_traces").aggregate({ $group: { _id: "$block_num", max_transactions: { $sum: 1 } } }, 
-                                                    { $group: { _id: null, max: { $max: "$max_transactions" } } },
-                                                    function (err, result) {
-      if (err) throw err;
-      result.toArray(function (err, result) {
+    dbo.collection("transaction_traces").aggregate({ $group: { _id: "$block_num", max_transactions: { $sum: 1 } } },
+      { $group: { _id: null, max: { $max: "$max_transactions" } } },
+      function (err, result) {
         if (err) throw err;
-        console.log(result);
-        if (result.length >= 1) {
-          vktdatav.max_tps_num = result[0].max/3;
-          vktdatav_maxtps = [
-            {
-              "name": "MAX TPS",
-              "value": result[0].max / 3
-            }
-          ];
-        }
+        result.toArray(function (err, result) {
+          if (err) throw err;
+          console.log(result);
+          if (result.length >= 1) {
+            vktdatav.max_tps_num = result[0].max / 3;
+            vktdatav_maxtps = [
+              {
+                "name": "MAX TPS",
+                "value": result[0].max / 3
+              }
+            ];
+          }
+        });
+        db.close();
       });
-      db.close();
-    });
   });
   return vktdatav;
 }
@@ -360,7 +365,7 @@ const runCcxt = async () => {
 
   // get vkteth price and vol
   let bitforex = new ccxt.bitforex();
-  // bitforex.proxy = 'https://cors-anywhere.herokuapp.com/';
+  //bitforex.proxy = 'https://cors-anywhere.herokuapp.com/';
   // load all markets from the exchange
   let markets = await bitforex.loadMarkets();
 
@@ -372,6 +377,7 @@ const runCcxt = async () => {
 
   // get ethusd price
   let bittrex = new ccxt.bittrex();
+  //bittrex.proxy = 'https://cors-anywhere.herokuapp.com/';
   // load all markets from the exchange
   markets = await bittrex.loadMarkets();
 
@@ -407,11 +413,11 @@ const runCcxt = async () => {
   // ]
   for (let i in ohlcethusd) {
     vktkline_date = new Date(ohlcvkteth[i].time);
-    vktkline_YMD = vktkline_date.getFullYear() + '-' + 
-                   (vktkline_date.getMonth() + 1 < 10 ? '0' + (vktkline_date.getMonth() + 1) : vktkline_date.getMonth() + 1) + '-' +
-                   (vktkline_date.getDate() < 10 ? '0' + (vktkline_date.getDate()) : vktkline_date.getDate())
+    vktkline_YMD = vktkline_date.getFullYear() + '-' +
+      (vktkline_date.getMonth() + 1 < 10 ? '0' + (vktkline_date.getMonth() + 1) : vktkline_date.getMonth() + 1) + '-' +
+      (vktkline_date.getDate() < 10 ? '0' + (vktkline_date.getDate()) : vktkline_date.getDate())
     // console.log(vktkline_date)
-    vktdatav.vktusdlast7d.push({ 'price': ohlcethusd[i][4] * ohlcvkteth[i].close, 'date': vktkline_YMD});
+    vktdatav.vktusdlast7d.push({ 'price': ohlcethusd[i][4] * ohlcvkteth[i].close, 'date': vktkline_YMD });
     vktdatav_vktprice_list.push({ 'x': ohlcethusd[i][4] * ohlcvkteth[i].close, 'y': vktkline_YMD });
   }
 
