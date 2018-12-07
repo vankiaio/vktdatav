@@ -5,12 +5,19 @@ const express = require('express');
 const opn = require('opn');
 const utils = require('./utils');
 const r2 = require('r2');
+// import ccxt
+const ccxt = require('ccxt');
+// import GeoIP-lite
+const geoip = require('geoip-lite');
+const superagent = require('superagent');
+const translate = require('google-translate-api');
+
 require('colors');
 const { Api, JsonRpc, RpcError, JsSignatureProvider } = require('eosjs');
 const fetch = require('node-fetch');                            // node only; not needed in browsers
 const { TextDecoder, TextEncoder } = require('text-encoding');  // node, IE11 and IE Edge Browsers
-var MongoClient = require('mongodb').MongoClient;
-var url = "mongodb://:27017/admin";
+const MongoClient = require('mongodb').MongoClient;
+const url = "mongodb://@221.122.119.226:27017/admin";
 const XE_URL = 'http://www.xe.com/a/ratesprovider.php?_=';
 
 // 服务器端口
@@ -27,6 +34,7 @@ const app = express();
 // 路由mock数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
 app.use('/vktapi', async (req, res) => {
+
   //获取jsons数据
   const data = await runRpc().catch(err=>{
     console.log("rpc error: ",err)
@@ -51,8 +59,17 @@ app.use('/vktapi', async (req, res) => {
       console.log(error)
     })
 
-  //console.log(datadb);
-  res.json(vktdatav);
+  console.log(req.query.showtype);
+  switch (req.query.showtype)
+  {
+    case "all":
+    case undefined:
+      res.json(vktdatav);
+      break;
+    case "1":
+      res.json("vktdatav");
+      break;
+  }
 });
 
 
@@ -65,6 +82,9 @@ const api = new Api({ rpc, signatureProvider, textDecoder: new TextDecoder(), te
 // rpc对象支持promise，所以使用 async/await 函数运行rpc命令
 const runRpc = async () => {
   
+  let dumapLocal_cn = "";
+  let dumapLocal_en = "";
+  let dumapLocal_start = 0;
   // 获取主网信息
   const info = await rpc.get_info();
   console.log(info);
@@ -103,8 +123,55 @@ const runRpc = async () => {
   vktdatav.producers = JSON.parse('[]');
 
   for (let i in producersinfo.rows) {
-    vktdatav.producers.push(producersinfo.rows[i].owner);
+    dumapLocal_start = producersinfo.rows[i].url.indexOf("vkt") + 3;
+    
+    if (dumapLocal_start > 3){
+      dumapLocal_en = producersinfo.rows[i].url.substr(dumapLocal_start, producersinfo.rows[i].url.length - dumapLocal_start)
+    }
+    if (dumapLocal_en != "") {
+      if(dumapLocal_en.indexOf("shi") < 0){
+        dumapLocal_en += "shi"
+      }
+      console.log(dumapLocal_en)
+      await translate(dumapLocal_en, { to: 'zh-CN' }).then(async(res) => {
+        dumapLocal_cn = res.text;
+        console.log(res.text);
+        //=> I speak English
+        console.log(res.from.language.iso);
+        //=> nl
+        dumapLocal_en = "";
+
+        if (dumapLocal_cn != "") {
+          var sk = 'M6RPENx4SM8jvjk5qPdVy8yp6AgMKAv0' // 创建应用的sk
+            , address = dumapLocal_cn;
+
+          await superagent.get('http://api.map.baidu.com/geocoder/v2/')
+            .query({ address: address })
+            .query({ output: 'json' })
+            .query({ ak: sk })
+            .end(function (err, sres) {
+              if (err) {
+                console.log('err:', err);
+                return;
+              }
+              console.log('location:', sres.text);
+              //res.send(sres.text);
+              vktdatav.producers.push({ owner: producersinfo.rows[i].owner, location: { city: dumapLocal_cn, lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng } });
+            })
+        }
+      }).catch(err => {
+        console.error(err);
+      });
+    }
+
   }
+
+
+
+  // var ip = "124.200.176.166";
+  // var geo = geoip.lookup(ip);
+
+  // console.log(geo);
 
   return (vktdatav);
 
@@ -184,9 +251,6 @@ const runCcxt = async () => {
 
   let ticker_vkteth = [];
   let ticker_ethusd = [];
-  
-  // import ccxt
-  const ccxt = require('ccxt');
 
   // get vkteth price and vol
   let bitforex = new ccxt.bitforex();
@@ -239,7 +303,7 @@ const runCcxt = async () => {
 const runExchange = async (rates) => {
   const currencies = JSON.parse(decodeRatesData(rates.minutely))
   vktdatav.usdcny = currencies.CNY
-  console.log(currencies)
+  // console.log(currencies)
 }
 
 /* eslint-disable */
