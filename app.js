@@ -49,7 +49,7 @@ const app = express();
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
 app.use('/vktapi', async (req, res) => {
 
-  if (IsLoading == false) {
+  if (IsLoading == false || req.query.showtype == blocks_list) {
 
     IsLoading = true;
 
@@ -68,11 +68,6 @@ app.use('/vktapi', async (req, res) => {
     });
     console.log("nodejs app passed runMongodb!!!");
     IsLoading = false;
-    switch (req.query.showtype) {
-        case "blocks_list":
-          res.json(vktdatav_blocks_list);
-          break;
-    }
   }
   console.log(req.query.showtype);
   switch (req.query.showtype) {
@@ -100,6 +95,11 @@ app.use('/vktapi', async (req, res) => {
       break;
     case "producers_list":
       res.json(vktdatav_producers_list);
+      break;
+    case "blocks_list":
+      if (!IsLoading){
+        res.json(vktdatav_blocks_list);
+      }
       break;
     case "vktprice_list":
       res.json(vktdatav_vktprice_list);
