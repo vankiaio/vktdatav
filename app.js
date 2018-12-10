@@ -64,12 +64,6 @@ app.use('/vktapi', async (req, res) => {
     });
     console.log("nodejs app passed runMongodb!!!");
 
-    //获取jsons数据
-    const dataccxt = await runCcxt().catch(err => {
-      console.log("ccxt error: ", err)
-    });
-    console.log("nodejs app passed runCcxt!!!");
-
     //获取汇率jsons数据
     await r2(XE_URL + +new Date())
       .json
@@ -114,6 +108,14 @@ app.use('/vktapi', async (req, res) => {
 
   }
 });
+
+const timeoutObj = setTimeout(() => {
+  //获取jsons数据
+  const dataccxt = await runCcxt().catch(err => {
+    console.log("ccxt error: ", err)
+  });
+  console.log("nodejs app passed runCcxt!!!");
+}, 15000);
 
 
 const defaultPrivateKey = "5KWNB8FSe3dYbW3fZJBvK4M4QhaCtRjh2EP5j7gSbs7GeNTnxV2"; // useraaaaaaaa
