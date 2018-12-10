@@ -38,6 +38,7 @@ let vktdatav_blocks_list = [];
 let vktdatav_vktprice_list = [];
 let vktdatav_producer_now = {};
 let vktdatav_producer_local = {};
+let vktdatav_cnyusd_price = {};
 
 let IsLoading = false;
 
@@ -109,6 +110,10 @@ app.use('/vktapi', async (req, res) => {
     case "producer_local":
       res.json(vktdatav_producer_local);
       break;
+    case "cnyusd_price":
+      res.json(vktdatav_cnyusd_price);
+      break;
+      
   }
 });
 
@@ -475,6 +480,13 @@ const runCcxt = async () => {
 const runExchange = async (rates) => {
   const currencies = JSON.parse(decodeRatesData(rates.minutely))
   vktdatav.usdcny = currencies.CNY
+  vktdatav_cnyusd_price =
+  [
+    {
+      "name": "",
+      "value": currencies.CNY
+    }
+  ];
   // console.log(currencies)
 }
 
