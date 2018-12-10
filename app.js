@@ -115,7 +115,7 @@ const timeoutObj = setTimeout(async() => {
       console.log(error)
     })
   console.log("nodejs app passed runExchange!!!");
-}, 15000);
+}, 60000);
 
 
 const defaultPrivateKey = "5KWNB8FSe3dYbW3fZJBvK4M4QhaCtRjh2EP5j7gSbs7GeNTnxV2"; // useraaaaaaaa
@@ -131,6 +131,7 @@ const runRpc = async () => {
   let dumapLocal_en = "";
   let dumapLocal_start = 0;
   let curBlockNum = 0;
+  let block_time;
   // 获取主网信息
   const info = await rpc.get_info();
   console.log(info);
@@ -154,7 +155,11 @@ const runRpc = async () => {
     //     "state": "22:22:22"
     //   },
     // ]
-    vktdatav_blocks_list.push({ "name": blockInfo.block_num, "producer": blockInfo.producer, "time": blockInfo.timestamp });
+    block_time = new Date(blockInfo.timestamp);
+    vktdatav_blocks_list.push({ "name": blockInfo.block_num, "producer": blockInfo.producer, 
+      "time": (block_time.getHours() < 10 ? '0' + block_time.getHours() : block_time.getHours()) + ':' + 
+        (block_time.getMinutes() < 10 ? '0' + block_time.getMinutes() : block_time.getMinutes()) + ':' + 
+        (block_time.getSeconds() < 10 ? '0' + block_time.getSeconds() : block_time.getSeconds())});
   }
 
 
