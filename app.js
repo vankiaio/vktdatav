@@ -63,16 +63,6 @@ app.use('/vktapi', async (req, res) => {
       console.log("mongodb error: ", err)
     });
     console.log("nodejs app passed runMongodb!!!");
-
-    //获取汇率jsons数据
-    await r2(XE_URL + +new Date())
-      .json
-      .then(async ({ rates }) => runExchange(rates))
-      .catch((error) => {
-        console.error('⚠️  Cannot fetch currency rates'.bold.red)
-        console.log(error)
-      })
-    console.log("nodejs app passed runExchange!!!");
     IsLoading = false;
   }
   console.log(req.query.showtype);
@@ -109,12 +99,22 @@ app.use('/vktapi', async (req, res) => {
   }
 });
 
-const timeoutObj = setTimeout(() => {
+const timeoutObj = setTimeout(async() => {
   //获取jsons数据
   const dataccxt = await runCcxt().catch(err => {
     console.log("ccxt error: ", err)
   });
   console.log("nodejs app passed runCcxt!!!");
+
+  //获取汇率jsons数据
+  await r2(XE_URL + +new Date())
+    .json
+    .then(async ({ rates }) => runExchange(rates))
+    .catch((error) => {
+      console.error('⚠️  Cannot fetch currency rates'.bold.red)
+      console.log(error)
+    })
+  console.log("nodejs app passed runExchange!!!");
 }, 15000);
 
 
@@ -185,78 +185,81 @@ const runRpc = async () => {
   const producersinfo = await rpc.get_producers();
   console.log(producersinfo);
 
-  vktdatav.producers_num = producersinfo.rows.length;
-  vktdatav_producers_num = [
-    {
-      "name": "节点数量",
-      "value": producersinfo.rows.length
-    }
-  ]
-
-  vktdatav.producers = JSON.parse('[]');
-  let producer_state = "";
-
-  for (let i in producersinfo.rows) {
-    dumapLocal_start = producersinfo.rows[i].url.indexOf("vkt") + 3;
-
-    if (dumapLocal_start > 3) {
-      dumapLocal_en = producersinfo.rows[i].url.substr(dumapLocal_start, producersinfo.rows[i].url.length - dumapLocal_start)
-    }
-    if (dumapLocal_en != "") {
-      if (dumapLocal_en.indexOf("shi") < 0) {
-        dumapLocal_en += "shi"
+  if (vktdatav.producers_num != producersinfo.rows.length)
+  {
+    vktdatav.producers_num = producersinfo.rows.length;
+    vktdatav_producers_num = [
+      {
+        "name": "节点数量",
+        "value": producersinfo.rows.length
       }
-      console.log(dumapLocal_en)
-      await translate(dumapLocal_en, { to: 'zh-CN' }).then(async (res) => {
-        dumapLocal_cn = res.text;
-        console.log(res.text);
-        //=> 北京市
-        console.log(res.from.language.iso);
-        //=> zh-CN
-        dumapLocal_en = "";
+    ]
 
-        if (dumapLocal_cn != "") {
-          var sk = 'M6RPENx4SM8jvjk5qPdVy8yp6AgMKAv0' // 创建应用的sk
-            , address = dumapLocal_cn;
+    vktdatav.producers = JSON.parse('[]');
+    let producer_state = "";
 
-          await superagent.get('http://api.map.baidu.com/geocoder/v2/')
-            .query({ address: address })
-            .query({ output: 'json' })
-            .query({ ak: sk })
-            .end(function (err, sres) {
-              if (err) {
-                console.log('err:', err);
-                return;
-              }
-              console.log('location:', sres.text);
-              //res.send(sres.text);
-              vktdatav.producers.push({ owner: producersinfo.rows[i].owner, location: { city: dumapLocal_cn, lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng } });
-              if (i < 3) {
-                producer_state = "超级节点"
-              } else {
-                producer_state = "备用节点"
-              }
-              // [
-              //   {
-              //     "name": "vankia",
-              //     "location": "北京",
-              //     "state": "超级节点"
-              //   },
-              // ]
-              if (vktdatav_producers_list.length >= producersinfo.rows.length) {
-                console.log(vktdatav_producers_list[i])
-                //vktdatav_producers_list[0].setItem({ name: producersinfo.rows[i].owner, location: dumapLocal_cn, state: producer_state })
-              } else {
-                vktdatav_producers_list.push({ "name": producersinfo.rows[i].owner, "location": dumapLocal_cn, "state": producer_state })
-              }
-            })
+    for (let i in producersinfo.rows) {
+      dumapLocal_start = producersinfo.rows[i].url.indexOf("vkt") + 3;
+
+      if (dumapLocal_start > 3) {
+        dumapLocal_en = producersinfo.rows[i].url.substr(dumapLocal_start, producersinfo.rows[i].url.length - dumapLocal_start)
+      }
+      if (dumapLocal_en != "") {
+        if (dumapLocal_en.indexOf("shi") < 0) {
+          dumapLocal_en += "shi"
         }
-      }).catch(err => {
-        console.error(err);
-      });
-    }
+        console.log(dumapLocal_en)
+        await translate(dumapLocal_en, { to: 'zh-CN' }).then(async (res) => {
+          dumapLocal_cn = res.text;
+          console.log(res.text);
+          //=> 北京市
+          console.log(res.from.language.iso);
+          //=> zh-CN
+          dumapLocal_en = "";
 
-  }
+          if (dumapLocal_cn != "") {
+            var sk = 'M6RPENx4SM8jvjk5qPdVy8yp6AgMKAv0' // 创建应用的sk
+              , address = dumapLocal_cn;
+
+            await superagent.get('http://api.map.baidu.com/geocoder/v2/')
+              .query({ address: address })
+              .query({ output: 'json' })
+              .query({ ak: sk })
+              .end(function (err, sres) {
+                if (err) {
+                  console.log('err:', err);
+                  return;
+                }
+                console.log('location:', sres.text);
+                //res.send(sres.text);
+                vktdatav.producers.push({ owner: producersinfo.rows[i].owner, location: { city: dumapLocal_cn, lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng } });
+                if (i < 3) {
+                  producer_state = "超级节点"
+                } else {
+                  producer_state = "备用节点"
+                }
+                // [
+                //   {
+                //     "name": "vankia",
+                //     "location": "北京",
+                //     "state": "超级节点"
+                //   },
+                // ]
+                if (vktdatav_producers_list.length >= producersinfo.rows.length) {
+                  console.log(vktdatav_producers_list[i])
+                  //vktdatav_producers_list[0].setItem({ name: producersinfo.rows[i].owner, location: dumapLocal_cn, state: producer_state })
+                } else {
+                  vktdatav_producers_list.push({ "name": producersinfo.rows[i].owner, "location": dumapLocal_cn, "state": producer_state })
+                }
+              })
+          }
+        }).catch(err => {
+          console.error(err);
+        });
+      }
+
+    }
+    }
 
   // var ip = "124.200.176.166";
   // var geo = geoip.lookup(ip);
