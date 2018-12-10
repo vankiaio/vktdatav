@@ -33,6 +33,7 @@ let vktdatav_accounts_num = {};
 let vktdatav_blocks_num = {};
 let vktdatav_transaction_num = {};
 let vktdatav_maxtps = {};
+let vktdatav_nowtps = {};
 let vktdatav_blocks_list = [];
 let vktdatav_vktprice_list = [];
 let vktdatav_producer_now = {};
@@ -84,6 +85,9 @@ app.use('/vktapi', async (req, res) => {
       break;
     case "transaction_num":
       res.json(vktdatav_transaction_num);
+      break;
+    case "nowtps":
+      res.json(vktdatav_nowtps);
       break;
     case "vktdatav_maxtps":
       res.json(vktdatav_maxtps);
@@ -158,6 +162,16 @@ const runRpc = async () => {
       "producer": info.head_block_producer
     },
   ];
+  // 获取当前块交易单TPS数量
+  const currentblockInfo = await rpc.get_block(26);
+  //console.log(currentblockInfo)
+  vktdatav_nowtps = [
+    {
+      "name": "TPS",
+      "value": currentblockInfo.transactions.length
+    }
+  ];
+  
   // 获取最后24个区块信息的信息
   curBlockNum = vktdatav.head_block_num;
   vktdatav_blocks_list = JSON.parse('[]');
