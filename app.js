@@ -36,6 +36,7 @@ let vktdatav_maxtps = {};
 let vktdatav_blocks_list = [];
 let vktdatav_vktprice_list = [];
 let vktdatav_producer_now = {};
+let vktdatav_producer_local = {};
 
 let IsLoading = false;
 
@@ -98,6 +99,9 @@ app.use('/vktapi', async (req, res) => {
       break;
     case "producer_now":
       res.json(vktdatav_producer_now);
+      break;
+    case "producer_local":
+      res.json(vktdatav_producer_local);
       break;
   }
 });
@@ -210,6 +214,7 @@ const runRpc = async () => {
     ]
 
     vktdatav.producers = JSON.parse('[]');
+    vktdatav_producer_local = JSON.parse('[]');
     let producer_state = "";
 
     for (let i in producersinfo.rows) {
@@ -245,6 +250,7 @@ const runRpc = async () => {
                   return;
                 }
                 console.log('location:', sres.text);
+                vktdatav_producer_local.push({ lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng,value: 100});
                 //res.send(sres.text);
                 vktdatav.producers.push({ owner: producersinfo.rows[i].owner, location: { city: dumapLocal_cn, lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng } });
                 if (i < 3) {
