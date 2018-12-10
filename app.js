@@ -424,8 +424,8 @@ const runCcxt = async () => {
   // ]
   for (let i in ohlcethusd) {
     vktkline_date = new Date(ohlcvkteth[i].time);
-    vktkline_YMD = vktkline_date.getFullYear() + '-' +
-      (vktkline_date.getMonth() + 1 < 10 ? '0' + (vktkline_date.getMonth() + 1) : vktkline_date.getMonth() + 1) + '-' +
+    vktkline_YMD = vktkline_date.getFullYear() + '/' +
+      (vktkline_date.getMonth() + 1 < 10 ? '0' + (vktkline_date.getMonth() + 1) : vktkline_date.getMonth() + 1) + '/' +
       (vktkline_date.getDate() < 10 ? '0' + (vktkline_date.getDate()) : vktkline_date.getDate())
     // console.log(vktkline_date)
     vktdatav.vktusdlast7d.push({ 'price': (ohlcethusd[i][4] * ohlcvkteth[i].close).toFixed(8), 'date': vktkline_YMD });
