@@ -17,7 +17,7 @@ const { Api, JsonRpc, RpcError, JsSignatureProvider } = require('eosjs');
 const fetch = require('node-fetch');                            // node only; not needed in browsers
 const { TextDecoder, TextEncoder } = require('text-encoding');  // node, IE11 and IE Edge Browsers
 const MongoClient = require('mongodb').MongoClient;
-const url = "mongodb://@221.122.119.226:27017/admin";
+const url = "";
 const XE_URL = 'http://www.xe.com/a/ratesprovider.php?_=';
 
 // 服务器端口
@@ -429,7 +429,7 @@ const runCcxt = async () => {
       (vktkline_date.getDate() < 10 ? '0' + (vktkline_date.getDate()) : vktkline_date.getDate())
     // console.log(vktkline_date)
     vktdatav.vktusdlast7d.push({ 'price': (ohlcethusd[i][4] * ohlcvkteth[i].close).toFixed(8), 'date': vktkline_YMD });
-    vktdatav_vktprice_list.push({ 'x': (ohlcethusd[i][4] * ohlcvkteth[i].close).toFixed(8), 'y': vktkline_YMD });
+    vktdatav_vktprice_list.push({ 'x': vktkline_YMD, 'y': (ohlcethusd[i][4] * ohlcvkteth[i].close).toFixed(8)});
   }
 
   return vktdatav;
