@@ -36,6 +36,8 @@ let vktdatav_maxtps = {};
 let vktdatav_blocks_list = [];
 let vktdatav_vktprice_list = [];
 
+let IsLoading = false;
+
 // 创建express
 const app = express();
 
@@ -43,19 +45,26 @@ const app = express();
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
 app.use('/vktapi', async (req, res) => {
 
-  //获取jsons数据
-  const data = await runRpc().catch(err => {
-    console.log("rpc error: ", err)
-  });
+  if (IsLoading == false) {
 
-  console.log("nodejs app passed runRpc!!!");
+    IsLoading = true;
 
-  //获取jsons数据
-  const datadb = await runMongodb().catch(err => {
-    console.log("mongodb error: ", err)
-  });
-  console.log("nodejs app passed runMongodb!!!");
+    console.log("nodejs app is loading ?", IsLoading);
 
+    //获取jsons数据
+    const data = await runRpc().catch(err => {
+      console.log("rpc error: ", err)
+    });
+
+    console.log("nodejs app passed runRpc!!!");
+
+    //获取jsons数据
+    const datadb = await runMongodb().catch(err => {
+      console.log("mongodb error: ", err)
+    });
+    console.log("nodejs app passed runMongodb!!!");
+    IsLoading = false;
+  }
   console.log(req.query.showtype);
   switch (req.query.showtype) {
     case "all":
