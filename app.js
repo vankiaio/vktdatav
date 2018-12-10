@@ -92,7 +92,9 @@ app.use('/vktapi', async (req, res) => {
       res.json(vktdatav_producers_list);
       break;
     case "blocks_list":
-      res.json(vktdatav_blocks_list);
+      if (!IsLoading){
+        res.json(vktdatav_blocks_list);
+      }
       break;
     case "vktprice_list":
       res.json(vktdatav_vktprice_list);
