@@ -49,7 +49,7 @@ const app = express();
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
 app.use('/vktapi', async (req, res) => {
 
-  if (IsLoading == false || req.query.showtype == blocks_list) {
+  if (IsLoading == false || req.query.showtype == "blocks_list") {
 
     IsLoading = true;
 
