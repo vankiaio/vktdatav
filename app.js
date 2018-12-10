@@ -35,6 +35,7 @@ let vktdatav_transaction_num = {};
 let vktdatav_maxtps = {};
 let vktdatav_blocks_list = [];
 let vktdatav_vktprice_list = [];
+let vktdatav_producer_now = {};
 
 let IsLoading = false;
 
@@ -95,7 +96,9 @@ app.use('/vktapi', async (req, res) => {
     case "vktprice_list":
       res.json(vktdatav_vktprice_list);
       break;
-
+    case "producer_now":
+      res.json(vktdatav_producer_now);
+      break;
   }
 });
 
@@ -142,7 +145,13 @@ const runRpc = async () => {
       "name": "区块数量",
       "value": vktdatav.head_block_num
     }
-  ]
+  ];
+
+  vktdatav_producer_now = [
+    {
+      "producer": info.head_block_producer
+    },
+  ];
   // 获取最后24个区块信息的信息
   curBlockNum = vktdatav.head_block_num;
   vktdatav_blocks_list = JSON.parse('[]');
