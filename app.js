@@ -163,7 +163,7 @@ const runRpc = async () => {
     },
   ];
   // 获取当前块交易单TPS数量
-  const currentblockInfo = await rpc.get_block(26);
+  const currentblockInfo = await rpc.get_block(info.head_block_num);
   //console.log(currentblockInfo)
   vktdatav_nowtps = [
     {
