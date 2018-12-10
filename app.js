@@ -298,12 +298,12 @@ const runMongodb = async () => {
     });
     dbo.collection("transaction_traces").find().count(function (err, result) {
       if (err) throw err;
-      if (result.length >= 1) {
+      if (result >= 1) {
         vktdatav.transactions_num = result;
         vktdatav_transaction_num = [
           {
             "name": "交易数量",
-            "value": result.length
+            "value": result
           }
         ];
       }
@@ -341,10 +341,16 @@ const runMongodb = async () => {
           console.log(result);
           if (result.length >= 1) {
             vktdatav.max_tps_num = result[0].max / 3;
+            // [
+            //   {
+            //     "value": "/2000MAX",
+            //     "url": ""
+            //   }
+            // ]
             vktdatav_maxtps = [
               {
-                "name": "MAX TPS",
-                "value": result[0].max / 3
+                "value": "/" + result[0].max / 3 +"MAX",
+                "url": ""
               }
             ];
           }
