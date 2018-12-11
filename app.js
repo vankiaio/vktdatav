@@ -41,6 +41,7 @@ let vktdatav_producer_location = {};
 let vktdatav_mproducer_location = {};
 let vktdatav_bproducer_location = {};
 let vktdatav_cnyusd_price = {};
+let vktdatav_flyline = {};
 
 let IsLoading = false;
 
@@ -51,7 +52,9 @@ const app = express();
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
 app.use('/vktapi', async (req, res) => {
 
-  if (IsLoading == false || req.query.showtype == "blocks_list") {
+  if (IsLoading == false || 
+    req.query.showtype == "blocks_list" ||
+    req.query.showtype == "producers_list") {
 
     IsLoading = true;
 
@@ -117,6 +120,9 @@ app.use('/vktapi', async (req, res) => {
       break;
     case "bproducer_location":
       res.json(vktdatav_bproducer_location);
+      break;
+    case "flyline":
+      res.json(vktdatav_flyline);
       break;
     case "cnyusd_price":
       res.json(vktdatav_cnyusd_price);
@@ -250,6 +256,7 @@ const runRpc = async () => {
     vktdatav_mproducer_location = JSON.parse('[]');
     vktdatav_bproducer_location = JSON.parse('[]');
     vktdatav_producers_list = JSON.parse('[]');
+    vktdatav_flyline = JSON.parse('[]');
     let producer_state = "";
 
     for (let i in producersinfo.rows) {
@@ -296,6 +303,8 @@ const runRpc = async () => {
                 } else {
                   vktdatav_bproducer_location.push({ lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng, value: 100 });
                   producer_state = "备用节点"
+                  vktdatav_flyline.push({ from: JSON.parse(sres.text).result.location.lng + ',' + JSON.parse(sres.text).result.location.lat, 
+                                            to: vktdatav_mproducer_location[0].lng + ',' + vktdatav_mproducer_location[0].lat});
                 }
                 // [
                 //   {
