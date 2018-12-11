@@ -150,7 +150,7 @@ const runRpc = async () => {
   let dumapLocal_start = 0;
   let curBlockNum = 0;
   let block_time;
-  let filterflg = false;
+  
   // 获取主网信息
   const info = await rpc.get_info();
   console.log(info);
@@ -239,19 +239,10 @@ const runRpc = async () => {
 
     vktdatav.producers = JSON.parse('[]');
     vktdatav_producer_location = JSON.parse('[]');
+    vktdatav_producers_list = JSON.parse('[]');
     let producer_state = "";
 
     for (let i in producersinfo.rows) {
-      filterflg = false;
-
-      // 过滤重复数据
-      for (let producer in vktdatav_producers_list) {
-        if (producer.name == producersinfo.rows[i].owner) {
-          filterflg = true;
-          break;
-        }
-      }
-      if (filterflg) continue;
       
       dumapLocal_start = producersinfo.rows[i].url.indexOf("vkt") + 3;
 
@@ -301,12 +292,7 @@ const runRpc = async () => {
                 //     "state": "超级节点"
                 //   },
                 // ]
-                if (vktdatav_producers_list.length >= producersinfo.rows.length) {
-                  console.log(vktdatav_producers_list[i])
-                  //vktdatav_producers_list[0].setItem({ name: producersinfo.rows[i].owner, location: dumapLocal_cn, state: producer_state })
-                } else {
-                  vktdatav_producers_list.push({ "name": producersinfo.rows[i].owner, "location": dumapLocal_cn, "state": producer_state })
-                }
+                vktdatav_producers_list.push({ "name": producersinfo.rows[i].owner, "location": dumapLocal_cn, "state": producer_state })
               })
           }
         }).catch(err => {
