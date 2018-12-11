@@ -38,6 +38,8 @@ let vktdatav_blocks_list = [];
 let vktdatav_vktprice_list = [];
 let vktdatav_producer_now = {};
 let vktdatav_producer_location = {};
+let vktdatav_mproducer_location = {};
+let vktdatav_bproducer_location = {};
 let vktdatav_cnyusd_price = {};
 
 let IsLoading = false;
@@ -109,6 +111,12 @@ app.use('/vktapi', async (req, res) => {
       break;
     case "producer_location":
       res.json(vktdatav_producer_location);
+      break;
+    case "mproducer_location":
+      res.json(vktdatav_mproducer_location);
+      break;
+    case "bproducer_location":
+      res.json(vktdatav_bproducer_location);
       break;
     case "cnyusd_price":
       res.json(vktdatav_cnyusd_price);
@@ -239,6 +247,8 @@ const runRpc = async () => {
 
     vktdatav.producers = JSON.parse('[]');
     vktdatav_producer_location = JSON.parse('[]');
+    vktdatav_mproducer_location = JSON.parse('[]');
+    vktdatav_bproducer_location = JSON.parse('[]');
     vktdatav_producers_list = JSON.parse('[]');
     let producer_state = "";
 
@@ -281,8 +291,10 @@ const runRpc = async () => {
                 //res.send(sres.text);
                 vktdatav.producers.push({ owner: producersinfo.rows[i].owner, location: { city: dumapLocal_cn, lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng } });
                 if (i < 3) {
+                  vktdatav_mproducer_location.push({ lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng, value: 100 });
                   producer_state = "超级节点"
                 } else {
+                  vktdatav_bproducer_location.push({ lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng, value: 100 });
                   producer_state = "备用节点"
                 }
                 // [
