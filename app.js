@@ -304,8 +304,9 @@ const runRpc = async () => {
                   vktdatav_bproducer_location.push({ lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng, value: 100 });
                   producer_state = "备用节点"
                   if (vktdatav_mproducer_location.length >0){
+                    let idx = parseInt(Math.random() * (vktdatav_mproducer_location.length + 1), 10);
                     vktdatav_flyline.push({ from: JSON.parse(sres.text).result.location.lng + ',' + JSON.parse(sres.text).result.location.lat, 
-                                            to: vktdatav_mproducer_location[0].lng + ',' + vktdatav_mproducer_location[0].lat});
+                      to: vktdatav_mproducer_location[idx].lng + ',' + vktdatav_mproducer_location[idx].lat});
                   }
                 }
                 // [
