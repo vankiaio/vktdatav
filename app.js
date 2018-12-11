@@ -364,7 +364,7 @@ const runMongodb = async () => {
       }
       db.close();
     });
-    dbo.collection("transaction_traces").find().count(function (err, result) {
+    dbo.collection("transaction_traces").find({ "producer_block_id": { $ne: null } }).count(function (err, result) {
       if (err) throw err;
       if (result >= 1) {
         vktdatav.transactions_num = result;
