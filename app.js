@@ -203,7 +203,7 @@ const runRpc = async () => {
     //     "state": "22:22:22"
     //   },
     // ]
-    block_time = new Date(blockInfo.timestamp);
+    block_time = new Date(Date.parse(blockInfo.timestamp) + 8 * 3600*1000);
     vktdatav_blocks_list.push({ "name": blockInfo.block_num, "producer": blockInfo.producer, 
       "time": (block_time.getHours() < 10 ? '0' + block_time.getHours() : block_time.getHours()) + ':' + 
         (block_time.getMinutes() < 10 ? '0' + block_time.getMinutes() : block_time.getMinutes()) + ':' + 
