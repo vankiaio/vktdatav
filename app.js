@@ -53,8 +53,7 @@ const app = express();
 app.use('/vktapi', async (req, res) => {
 
   if (IsLoading == false || 
-    req.query.showtype == "blocks_list" ||
-    req.query.showtype == "producers_list") {
+    req.query.showtype == "blocks_list") {
 
     IsLoading = true;
 
@@ -261,7 +260,7 @@ const runRpc = async () => {
 
     for (let i in producersinfo.rows) {
 
-      if (vktdatav.producers.length > producersinfo.rows.length) {
+      if (vktdatav_producers_list.length >= producersinfo.rows.length) {
         break;
       }
       
