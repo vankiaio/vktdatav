@@ -188,7 +188,7 @@ const runRpc = async () => {
   vktdatav_nowtps = [
     {
       "name": "TPS",
-      "value": currentblockInfo.transactions.length
+      "value": currentblockInfo.transactions.length / 3 > 0 ? currentblockInfo.transactions.length / 3 : currentblockInfo.transactions.length % 3 > 0 ? 1 : 0
     }
   ];
   
