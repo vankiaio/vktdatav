@@ -237,7 +237,7 @@ const runRpc = async () => {
   // console.log(tableRow);
 
   const producersinfo = await rpc.get_producers();
-  console.log(producersinfo);
+  // console.log(producersinfo);
 
   if (vktdatav.producers_num != producersinfo.rows.length ||
     vktdatav_producers_list.length != producersinfo.rows.length||
@@ -260,6 +260,10 @@ const runRpc = async () => {
     let producer_state = "";
 
     for (let i in producersinfo.rows) {
+
+      if (vktdatav.producers.length > producersinfo.rows.length) {
+        break;
+      }
       
       dumapLocal_start = producersinfo.rows[i].url.indexOf("vkt") + 3;
 
