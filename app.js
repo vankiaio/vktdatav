@@ -417,7 +417,7 @@ const runMongodb = async () => {
           if (err) throw err;
           console.log(result);
           if (result.length >= 1) {
-            vktdatav.max_tps_num = result[0].max / 3;
+            vktdatav.max_tps_num = parseInt(result[0].max / 3);
             // [
             //   {
             //     "value": "/2000MAX",
@@ -426,7 +426,7 @@ const runMongodb = async () => {
             // ]
             vktdatav_maxtps = [
               {
-                "value": "/" + result[0].max / 3 +"MAX",
+                "value": "/" + parseInt(result[0].max / 3) +"MAX",
                 "url": ""
               }
             ];
