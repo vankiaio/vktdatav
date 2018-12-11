@@ -37,7 +37,7 @@ let vktdatav_nowtps = {};
 let vktdatav_blocks_list = [];
 let vktdatav_vktprice_list = [];
 let vktdatav_producer_now = {};
-let vktdatav_producer_local = {};
+let vktdatav_producer_location = {};
 let vktdatav_cnyusd_price = {};
 
 let IsLoading = false;
@@ -107,8 +107,8 @@ app.use('/vktapi', async (req, res) => {
     case "producer_now":
       res.json(vktdatav_producer_now);
       break;
-    case "producer_local":
-      res.json(vktdatav_producer_local);
+    case "producer_location":
+      res.json(vktdatav_producer_location);
       break;
     case "cnyusd_price":
       res.json(vktdatav_cnyusd_price);
@@ -150,6 +150,7 @@ const runRpc = async () => {
   let dumapLocal_start = 0;
   let curBlockNum = 0;
   let block_time;
+  let filterflg = false;
   // 获取主网信息
   const info = await rpc.get_info();
   console.log(info);
@@ -224,7 +225,9 @@ const runRpc = async () => {
   const producersinfo = await rpc.get_producers();
   console.log(producersinfo);
 
-  if (vktdatav.producers_num != producersinfo.rows.length)
+  if (vktdatav.producers_num != producersinfo.rows.length ||
+    vktdatav_producers_list.length != producersinfo.rows.length||
+    vktdatav_producer_location.length != producersinfo.rows.length)
   {
     vktdatav.producers_num = producersinfo.rows.length;
     vktdatav_producers_num = [
@@ -235,10 +238,21 @@ const runRpc = async () => {
     ]
 
     vktdatav.producers = JSON.parse('[]');
-    vktdatav_producer_local = JSON.parse('[]');
+    vktdatav_producer_location = JSON.parse('[]');
     let producer_state = "";
 
     for (let i in producersinfo.rows) {
+      filterflg = false;
+
+      // 过滤重复数据
+      for (let producer in vktdatav_producers_list) {
+        if (producer.name == producersinfo.rows[i].owner) {
+          filterflg = true;
+          break;
+        }
+      }
+      if (filterflg) continue;
+      
       dumapLocal_start = producersinfo.rows[i].url.indexOf("vkt") + 3;
 
       if (dumapLocal_start > 3) {
@@ -271,7 +285,8 @@ const runRpc = async () => {
                   return;
                 }
                 console.log('location:', sres.text);
-                vktdatav_producer_local.push({ lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng,value: 100});
+
+                vktdatav_producer_location.push({ lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng,value: 100});
                 //res.send(sres.text);
                 vktdatav.producers.push({ owner: producersinfo.rows[i].owner, location: { city: dumapLocal_cn, lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng } });
                 if (i < 3) {
