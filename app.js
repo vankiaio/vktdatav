@@ -287,7 +287,7 @@ const runRpc = async () => {
               .query({ address: address })
               .query({ output: 'json' })
               .query({ ak: sk })
-              .end(function (err, sres) {
+              .end(async (err, sres) => {
                 if (err) {
                   console.log('err:', err);
                   return;
