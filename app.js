@@ -52,29 +52,6 @@ const app = express();
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
 app.use('/vktapi', async (req, res) => {
 
-  if (IsLoading == false) {
-
-    IsLoading = true;
-
-    console.log("nodejs app is loading ?", IsLoading);
-
-    //获取jsons数据
-    const data = await runRpc().catch(err => {
-      console.log("rpc error: ", err)
-    });
-
-    console.log("nodejs app passed runRpc!!!");
-
-    //获取jsons数据
-    const datadb = await runMongodb().catch(err => {
-      console.log("mongodb error: ", err)
-    });
-    console.log("nodejs app passed runMongodb!!!");
-    IsLoading = false;
-  }
-  if (IsLoading) {
-    return;
-  }
   console.log(req.query.showtype);
   switch (req.query.showtype) {
     case "all":
@@ -100,10 +77,14 @@ app.use('/vktapi', async (req, res) => {
       res.json(vktdatav_maxtps);
       break;
     case "producers_list":
+      if (!IsLoading) {
         res.json(vktdatav_producers_list);
+      }
       break;
     case "blocks_list":
+      if (!IsLoading) {
         res.json(vktdatav_blocks_list);
+      }
       break;
     case "vktprice_list":
       res.json(vktdatav_vktprice_list);
@@ -130,7 +111,7 @@ app.use('/vktapi', async (req, res) => {
   }
 });
 
-const timeoutObj = setTimeout(async() => {
+const intervalObj1 = setInterval(async() => {
   //获取jsons数据
   const dataccxt = await runCcxt().catch(err => {
     console.log("ccxt error: ", err)
@@ -147,6 +128,29 @@ const timeoutObj = setTimeout(async() => {
     })
   console.log("nodejs app passed runExchange!!!");
 }, 60000);
+
+const intervalObj2 = setInterval(async () => {
+  if (IsLoading == false) {
+
+    IsLoading = true;
+
+    console.log("nodejs app is loading ?", IsLoading);
+
+    //获取jsons数据
+    const data = await runRpc().catch(err => {
+      console.log("rpc error: ", err)
+    });
+
+    console.log("nodejs app passed runRpc!!!");
+
+    //获取jsons数据
+    const datadb = await runMongodb().catch(err => {
+      console.log("mongodb error: ", err)
+    });
+    console.log("nodejs app passed runMongodb!!!");
+    IsLoading = false;
+  }
+}, 4000);
 
 
 const defaultPrivateKey = "5KWNB8FSe3dYbW3fZJBvK4M4QhaCtRjh2EP5j7gSbs7GeNTnxV2"; // useraaaaaaaa
@@ -237,7 +241,7 @@ const runRpc = async () => {
   // console.log(tableRow);
 
   const producersinfo = await rpc.get_producers();
-  console.log(producersinfo);
+  //console.log(producersinfo);
 
   producer_count = 0;
   for (let i in producersinfo.rows) {
@@ -246,7 +250,7 @@ const runRpc = async () => {
     }
   }
 
-  console.log(producer_count)
+  console.log("count ------ alll", producer_count, vktdatav.producers_num, vktdatav_producers_list.length, vktdatav_producer_location.length )
   if (vktdatav.producers_num != producer_count ||
     vktdatav_producers_list.length != producer_count||
     vktdatav_producer_location.length != producer_count)
@@ -292,7 +296,7 @@ const runRpc = async () => {
           dumapLocal_en = "";
 
           if (dumapLocal_cn != "") {
-            var sk = 'M6RPENx4SM8jvjk5qPdVy8yp6AgMKAv0' // 创建应用的sk
+            var sk = '5iRbwByNvoPafZvsYE6GWoGm5vooaS9F' // 创建应用的sk
               , address = dumapLocal_cn;
   
             await superagent.get('http://api.map.baidu.com/geocoder/v2/')
