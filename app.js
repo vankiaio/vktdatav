@@ -43,7 +43,8 @@ let vktdatav_bproducer_location = {};
 let vktdatav_cnyusd_price = {};
 let vktdatav_flyline = {};
 
-let IsLoading = false;
+let IsLoadingRPCBASE = false;
+let IsLoadingRPCPRODUCER = false;
 
 // 创建express
 const app = express();
@@ -77,12 +78,12 @@ app.use('/vktapi', async (req, res) => {
       res.json(vktdatav_maxtps);
       break;
     case "producers_list":
-      if (!IsLoading) {
+      if (!IsLoadingRPCPRODUCER) {
         res.json(vktdatav_producers_list);
       }
       break;
     case "blocks_list":
-      if (!IsLoading) {
+      if (!IsLoadingRPCBASE) {
         res.json(vktdatav_blocks_list);
       }
       break;
@@ -130,27 +131,44 @@ const intervalObj1 = setInterval(async() => {
 }, 30000);
 
 const intervalObj2 = setInterval(async () => {
-  if (IsLoading == false) {
 
-    IsLoading = true;
+  IsLoadingRPCBASE = true;
 
-    console.log("nodejs app is loading ?", IsLoading);
+  console.log("nodejs app is loading ?", IsLoadingRPCBASE);
 
-    //获取jsons数据
-    const data = await runRpc().catch(err => {
-      console.log("rpc error: ", err)
-    });
+  //获取jsons数据
+  const data = await runRpcBaseInfo().catch(err => {
+    console.log("runRpcBaseInfo error: ", err)
+  });
 
-    console.log("nodejs app passed runRpc!!!");
+  console.log("nodejs app passed runRpcBaseInfo!!!");
 
-    //获取jsons数据
-    const datadb = await runMongodb().catch(err => {
-      console.log("mongodb error: ", err)
-    });
-    console.log("nodejs app passed runMongodb!!!");
-    IsLoading = false;
-  }
-}, 4000);
+  //获取jsons数据
+  const datadb = await runMongodb().catch(err => {
+    console.log("mongodb error: ", err)
+  });
+  console.log("nodejs app passed runMongodb!!!");
+  IsLoadingRPCBASE = false;
+
+}, 3000);
+
+
+const intervalObj3 = setInterval(async () => {
+
+  IsLoadingRPCPRODUCER = true;
+
+  console.log("nodejs app is loading ?", IsLoadingRPCPRODUCER);
+
+  //获取jsons数据
+  const data = await runRpcGetProducers().catch(err => {
+    console.log("runRpcGetProducers error: ", err)
+  });
+
+  console.log("nodejs app passed runRpcGetProducers!!!");
+
+  IsLoadingRPCPRODUCER = false;
+
+}, 5000);
 
 
 const defaultPrivateKey = "5KWNB8FSe3dYbW3fZJBvK4M4QhaCtRjh2EP5j7gSbs7GeNTnxV2"; // useraaaaaaaa
@@ -160,14 +178,10 @@ const rpc = new JsonRpc('http://221.122.119.226:8888', { fetch });
 const api = new Api({ rpc, signatureProvider, textDecoder: new TextDecoder(), textEncoder: new TextEncoder() });
 
 // rpc对象支持promise，所以使用 async/await 函数运行rpc命令
-const runRpc = async () => {
+const runRpcBaseInfo = async () => {
 
-  let dumapLocal_cn = "";
-  let dumapLocal_en = "";
-  let dumapLocal_start = 0;
   let curBlockNum = 0;
   let block_time;
-  let producer_count = 0;
   
   // 获取主网信息
   const info = await rpc.get_info();
@@ -240,6 +254,20 @@ const runRpc = async () => {
   // const tableRow = await rpc.get_table_rows({ "scope": "currency", "code": "currency", "table":"stat","json":true})
   // console.log(tableRow);
 
+  return (vktdatav);
+
+};
+
+
+// rpc对象支持promise，所以使用 async/await 函数运行rpc命令
+const runRpcGetProducers = async () => {
+
+  let dumapLocal_cn = "";
+  let dumapLocal_en = "";
+  let dumapLocal_start = 0;
+  let producer_count = 0;
+
+  
   const producersinfo = await rpc.get_producers();
   //console.log(producersinfo);
 
@@ -250,11 +278,10 @@ const runRpc = async () => {
     }
   }
 
-  console.log("count ------ alll", producer_count, vktdatav.producers_num, vktdatav_producers_list.length, vktdatav_producer_location.length )
+  console.log("count ------ alll", producer_count, vktdatav.producers_num, vktdatav_producers_list.length, vktdatav_producer_location.length)
   if (vktdatav.producers_num != producer_count ||
-    vktdatav_producers_list.length != producer_count||
-    vktdatav_producer_location.length != producer_count)
-  {
+    vktdatav_producers_list.length != producer_count ||
+    vktdatav_producer_location.length != producer_count) {
     vktdatav.producers_num = producer_count;
     vktdatav_producers_num = [
       {
@@ -273,80 +300,82 @@ const runRpc = async () => {
 
     for (let i in producersinfo.rows) {
       (function () {
-      setTimeout(async function () {
-      dumapLocal_start = producersinfo.rows[i].url.indexOf("vkt") + 3;
+        setTimeout(async function () {
+          dumapLocal_start = producersinfo.rows[i].url.indexOf("vkt") + 3;
 
-      if (dumapLocal_start > 3) {
-        dumapLocal_en = producersinfo.rows[i].url.substr(dumapLocal_start, producersinfo.rows[i].url.length - dumapLocal_start)
-      }
-      console.log("start ---- 1", dumapLocal_en)
-      if (dumapLocal_en != "") {
-        console.log("start ---- 2", dumapLocal_en)
-        if (dumapLocal_en.indexOf("shi") < 0) {
-          dumapLocal_en += "shi"
-        }
-        console.log(dumapLocal_en)
-        await translate(dumapLocal_en, { to: 'zh-CN' }).then(async (res) => {
-          dumapLocal_cn = res.text;
-          console.log("start ---- 3", dumapLocal_cn)
-          console.log(res.text);
-          //=> 北京市
-          console.log(res.from.language.iso);
-          //=> zh-CN
-          dumapLocal_en = "";
-
-          if (dumapLocal_cn != "") {
-            var sk = '5iRbwByNvoPafZvsYE6GWoGm5vooaS9F' // 创建应用的sk
-              , address = dumapLocal_cn;
-  
-            await superagent.get('http://api.map.baidu.com/geocoder/v2/')
-              .query({ address: address })
-              .query({ output: 'json' })
-              .query({ ak: sk })
-              .end((err, sres) => {
-                if (err) {
-                  console.log('err:', err);
-                  return;
-                }
-                console.log('location:', sres.text);
-                
-                if (producersinfo.rows[i].is_active == 1){
-
-                  vktdatav_producer_location.push({ lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng,value: 100});
-                  //res.send(sres.text);
-                  vktdatav.producers.push({ owner: producersinfo.rows[i].owner, location: { city: dumapLocal_cn, lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng } });
-                  if (i < 3) {
-                    vktdatav_mproducer_location.push({ lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng, value: 100 });
-                    producer_state = "超级节点"
-                  } else {
-                    vktdatav_bproducer_location.push({ lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng, value: 100 });
-                    producer_state = "备用节点"
-                    if (vktdatav_mproducer_location.length >0){
-                      let idx = parseInt(Math.random() * vktdatav_mproducer_location.length, 10);
-                      vktdatav_flyline.push({ from: JSON.parse(sres.text).result.location.lng + ',' + JSON.parse(sres.text).result.location.lat, 
-                        to: vktdatav_mproducer_location[idx].lng + ',' + vktdatav_mproducer_location[idx].lat});
-                    }
-                  }
-                  // [
-                  //   {
-                  //     "name": "vankia",
-                  //     "location": "北京",
-                  //     "state": "超级节点"
-                  //   },
-                  // ]
-                  vktdatav_producers_list.push({ "name": producersinfo.rows[i].owner, "location": dumapLocal_cn, "state": producer_state })
-                  console.log("end ---- 1", dumapLocal_cn) 
-                }
-              })
+          if (dumapLocal_start > 3) {
+            dumapLocal_en = producersinfo.rows[i].url.substr(dumapLocal_start, producersinfo.rows[i].url.length - dumapLocal_start)
           }
-        }).catch(err => {
-          console.error(err);
-        });
-      }
-      }, 600 * i);
-    })();
+          console.log("start ---- 1", dumapLocal_en)
+          if (dumapLocal_en != "") {
+            console.log("start ---- 2", dumapLocal_en)
+            if (dumapLocal_en.indexOf("shi") < 0) {
+              dumapLocal_en += "shi"
+            }
+            console.log(dumapLocal_en)
+            await translate(dumapLocal_en, { to: 'zh-CN' }).then(async (res) => {
+              dumapLocal_cn = res.text;
+              console.log("start ---- 3", dumapLocal_cn)
+              console.log(res.text);
+              //=> 北京市
+              console.log(res.from.language.iso);
+              //=> zh-CN
+              dumapLocal_en = "";
+
+              if (dumapLocal_cn != "") {
+                var sk = '5iRbwByNvoPafZvsYE6GWoGm5vooaS9F' // 创建应用的sk
+                  , address = dumapLocal_cn;
+
+                await superagent.get('http://api.map.baidu.com/geocoder/v2/')
+                  .query({ address: address })
+                  .query({ output: 'json' })
+                  .query({ ak: sk })
+                  .end((err, sres) => {
+                    if (err) {
+                      console.log('err:', err);
+                      return;
+                    }
+                    console.log('location:', sres.text);
+
+                    if (producersinfo.rows[i].is_active == 1) {
+
+                      vktdatav_producer_location.push({ lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng, value: 100 });
+                      //res.send(sres.text);
+                      vktdatav.producers.push({ owner: producersinfo.rows[i].owner, location: { city: dumapLocal_cn, lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng } });
+                      if (i < 3) {
+                        vktdatav_mproducer_location.push({ lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng, value: 100 });
+                        producer_state = "超级节点"
+                      } else {
+                        vktdatav_bproducer_location.push({ lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng, value: 100 });
+                        producer_state = "备用节点"
+                        if (vktdatav_mproducer_location.length > 0) {
+                          let idx = parseInt(Math.random() * vktdatav_mproducer_location.length, 10);
+                          vktdatav_flyline.push({
+                            from: JSON.parse(sres.text).result.location.lng + ',' + JSON.parse(sres.text).result.location.lat,
+                            to: vktdatav_mproducer_location[idx].lng + ',' + vktdatav_mproducer_location[idx].lat
+                          });
+                        }
+                      }
+                      // [
+                      //   {
+                      //     "name": "vankia",
+                      //     "location": "北京",
+                      //     "state": "超级节点"
+                      //   },
+                      // ]
+                      vktdatav_producers_list.push({ "name": producersinfo.rows[i].owner, "location": dumapLocal_cn, "state": producer_state })
+                      console.log("end ---- 1", dumapLocal_cn)
+                    }
+                  })
+              }
+            }).catch(err => {
+              console.error(err);
+            });
+          }
+        }, 600 * i);
+      })();
     }
-    }
+  }
 
   // var ip = "124.200.176.166";
   // var geo = geoip.lookup(ip);
