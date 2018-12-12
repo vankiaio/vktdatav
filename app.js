@@ -17,7 +17,7 @@ const { Api, JsonRpc, RpcError, JsSignatureProvider } = require('eosjs');
 const fetch = require('node-fetch');                            // node only; not needed in browsers
 const { TextDecoder, TextEncoder } = require('text-encoding');  // node, IE11 and IE Edge Browsers
 const MongoClient = require('mongodb').MongoClient;
-const url = "";
+const url = "mongodb://vankiaio:vankia123!@221.122.119.226:27017/admin";
 const XE_URL = 'http://www.xe.com/a/ratesprovider.php?_=';
 
 // 服务器端口
@@ -150,7 +150,7 @@ const intervalObj2 = setInterval(async () => {
     console.log("nodejs app passed runMongodb!!!");
     IsLoading = false;
   }
-}, 5000);
+}, 4000);
 
 
 const defaultPrivateKey = "5KWNB8FSe3dYbW3fZJBvK4M4QhaCtRjh2EP5j7gSbs7GeNTnxV2"; // useraaaaaaaa
