@@ -78,7 +78,7 @@ app.use('/vktapi', async (req, res) => {
       res.json(vktdatav_maxtps);
       break;
     case "producers_list":
-      if (!IsLoadingRPCPRODUCER) {
+      if (!IsLoadingRPCPRODUCER && vktdatav_producers_list.length >= 3) {
         res.json(vktdatav_producers_list);
       }
       break;
