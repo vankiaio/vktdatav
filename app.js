@@ -529,7 +529,7 @@ const runExchange = async (rates) => {
   [
     {
       "name": "",
-      "value": currencies.CNY * vktdatav_vktprice_list[7].y
+      "value": (currencies.CNY * vktdatav_vktprice_list[7].y).toFixed(8)
     }
   ];
   // console.log(currencies)
