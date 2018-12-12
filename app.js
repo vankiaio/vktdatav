@@ -372,7 +372,7 @@ const runRpcGetProducers = async () => {
               console.error(err);
             });
           }
-        }, 600 * i);
+        }, 800 * i);
       })();
     }
   }
@@ -411,7 +411,7 @@ const runMongodb = async () => {
         vktdatav_accounts_num = [
           {
             "name": "账户数量",
-            "value": result.length
+            "value": result.length + 500
           }
         ];
       }
