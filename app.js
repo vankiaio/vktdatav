@@ -150,7 +150,7 @@ const intervalObj2 = setInterval(async () => {
     console.log("nodejs app passed runMongodb!!!");
     IsLoading = false;
   }
-}, 4000);
+}, 5000);
 
 
 const defaultPrivateKey = "5KWNB8FSe3dYbW3fZJBvK4M4QhaCtRjh2EP5j7gSbs7GeNTnxV2"; // useraaaaaaaa
@@ -343,7 +343,7 @@ const runRpc = async () => {
           console.error(err);
         });
       }
-      }, 1000 * i);
+      }, 600 * i);
     })();
     }
     }
