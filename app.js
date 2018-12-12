@@ -127,7 +127,7 @@ const intervalObj1 = setInterval(async() => {
       console.log(error)
     })
   console.log("nodejs app passed runExchange!!!");
-}, 60000);
+}, 30000);
 
 const intervalObj2 = setInterval(async () => {
   if (IsLoading == false) {
@@ -171,7 +171,7 @@ const runRpc = async () => {
   
   // 获取主网信息
   const info = await rpc.get_info();
-  console.log(info);
+  //console.log(info);
   vktdatav.head_block_num = info.head_block_num;
   vktdatav.head_block_producer = info.head_block_producer;
   vktdatav_blocks_num = [
@@ -420,7 +420,7 @@ const runMongodb = async () => {
           controlling_account: result[i].controlling_account, createdAt: result[i].createdAt
         });
       }
-      console.log(result);
+      //console.log(result);
       db.close();
     });
     //aggregate({$group : {_id : "$block_num", max_transactions : {$sum : 1}}},{$group:{_id:null,max:{$max:"$max_transactions"}}})
@@ -518,7 +518,6 @@ const runCcxt = async () => {
     vktdatav.vktusdlast7d.push({ 'price': (ohlcethusd[i][4] * ohlcvkteth[i].close).toFixed(8), 'date': vktkline_YMD });
     vktdatav_vktprice_list.push({ 'x': vktkline_YMD, 'y': (ohlcethusd[i][4] * ohlcvkteth[i].close).toFixed(8)});
   }
-
   return vktdatav;
 }
 
@@ -530,7 +529,7 @@ const runExchange = async (rates) => {
   [
     {
       "name": "",
-      "value": currencies.CNY
+      "value": currencies.CNY * vktdatav_vktprice_list[7].y
     }
   ];
   // console.log(currencies)
