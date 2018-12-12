@@ -162,7 +162,7 @@ const runRpc = async () => {
   let dumapLocal_start = 0;
   let curBlockNum = 0;
   let block_time;
-  let found_flg = false;
+  let producer_count = 0;
   
   // 获取主网信息
   const info = await rpc.get_info();
@@ -236,17 +236,25 @@ const runRpc = async () => {
   // console.log(tableRow);
 
   const producersinfo = await rpc.get_producers();
-  // console.log(producersinfo);
+  console.log(producersinfo);
 
-  if (vktdatav.producers_num != producersinfo.rows.length ||
-    vktdatav_producers_list.length != producersinfo.rows.length||
-    vktdatav_producer_location.length != producersinfo.rows.length)
+  producer_count = 0;
+  for (let i in producersinfo.rows) {
+    if (1 == producersinfo.rows[i].is_active) {
+      producer_count++;
+    }
+  }
+
+  console.log(producer_count)
+  if (vktdatav.producers_num != producer_count ||
+    vktdatav_producers_list.length != producer_count||
+    vktdatav_producer_location.length != producer_count)
   {
-    vktdatav.producers_num = producersinfo.rows.length;
+    vktdatav.producers_num = producer_count;
     vktdatav_producers_num = [
       {
         "name": "节点数量",
-        "value": producersinfo.rows.length
+        "value": producer_count
       }
     ]
 
@@ -259,19 +267,23 @@ const runRpc = async () => {
     let producer_state = "";
 
     for (let i in producersinfo.rows) {
-      
+      (function () {
+      setTimeout(async function () {
       dumapLocal_start = producersinfo.rows[i].url.indexOf("vkt") + 3;
 
       if (dumapLocal_start > 3) {
         dumapLocal_en = producersinfo.rows[i].url.substr(dumapLocal_start, producersinfo.rows[i].url.length - dumapLocal_start)
       }
+      console.log("start ---- 1", dumapLocal_en)
       if (dumapLocal_en != "") {
+        console.log("start ---- 2", dumapLocal_en)
         if (dumapLocal_en.indexOf("shi") < 0) {
           dumapLocal_en += "shi"
         }
         console.log(dumapLocal_en)
         await translate(dumapLocal_en, { to: 'zh-CN' }).then(async (res) => {
           dumapLocal_cn = res.text;
+          console.log("start ---- 3", dumapLocal_cn)
           console.log(res.text);
           //=> 北京市
           console.log(res.from.language.iso);
@@ -281,24 +293,20 @@ const runRpc = async () => {
           if (dumapLocal_cn != "") {
             var sk = 'M6RPENx4SM8jvjk5qPdVy8yp6AgMKAv0' // 创建应用的sk
               , address = dumapLocal_cn;
-
+  
             await superagent.get('http://api.map.baidu.com/geocoder/v2/')
               .query({ address: address })
               .query({ output: 'json' })
               .query({ ak: sk })
-              .end(async (err, sres) => {
+              .end((err, sres) => {
                 if (err) {
                   console.log('err:', err);
                   return;
                 }
                 console.log('location:', sres.text);
-                for (let producer in vktdatav_producers_list) {
-                  if (producer.name == producersinfo.rows[i].owner) {
-                    found_flg = true;
-                    break;
-                  }
-                }
-                if (!found_flg) {
+                
+                if (producersinfo.rows[i].is_active == 1){
+
                   vktdatav_producer_location.push({ lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng,value: 100});
                   //res.send(sres.text);
                   vktdatav.producers.push({ owner: producersinfo.rows[i].owner, location: { city: dumapLocal_cn, lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng } });
@@ -322,6 +330,7 @@ const runRpc = async () => {
                   //   },
                   // ]
                   vktdatav_producers_list.push({ "name": producersinfo.rows[i].owner, "location": dumapLocal_cn, "state": producer_state })
+                  console.log("end ---- 1", dumapLocal_cn) 
                 }
               })
           }
@@ -329,7 +338,8 @@ const runRpc = async () => {
           console.error(err);
         });
       }
-
+      }, 1000 * i);
+    })();
     }
     }
 
