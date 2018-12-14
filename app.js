@@ -458,7 +458,8 @@ const runMongodb = async () => {
     //aggregate({$group : {_id : "$block_num", max_transactions : {$sum : 1}}},{$group:{_id:null,max:{$max:"$max_transactions"}}})
     dbo.collection("transaction_traces").aggregate({ $match: { "producer_block_id": { $ne: null } } },
                                                    { $group: { _id: "$block_num", max_transactions: { $sum: 1 } } },
-                                                   { $group: { _id: null, block_num: { $first: "$_id" }, max: { $max: "$max_transactions" } } },
+                                                   { $sort:{ max_transactions : -1 } },
+                                                   { $group: { _id: null, block_num: { $first: "$_id" }, max: { $first: "$max_transactions" } } },
       function (err, result) {
         if (err) throw err;
         result.toArray(function (err, result) {
