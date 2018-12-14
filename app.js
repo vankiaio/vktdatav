@@ -21,7 +21,7 @@ const { TextDecoder, TextEncoder } = require('text-encoding');  // node, IE11 an
 const MongoClient = require('mongodb').MongoClient;
 const MONGO_URL = config.MONGO_URL;
 const VKTAPI_URL = config.VKTAPI_URL;
-const XE_URL = XE_URL;
+const XE_URL = config.XE_URL;
 
 // 服务器端口
 let NODE_PORT = 3030;
