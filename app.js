@@ -11,14 +11,17 @@ const ccxt = require('ccxt');
 const geoip = require('geoip-lite');
 const superagent = require('superagent');
 const translate = require('google-translate-api');
+// 载入配置文件
+var config = require('./config');
 
 require('colors');
 const { Api, JsonRpc, RpcError, JsSignatureProvider } = require('eosjs');
 const fetch = require('node-fetch');                            // node only; not needed in browsers
 const { TextDecoder, TextEncoder } = require('text-encoding');  // node, IE11 and IE Edge Browsers
 const MongoClient = require('mongodb').MongoClient;
-const url = "";
-const XE_URL = 'http://www.xe.com/a/ratesprovider.php?_=';
+const MONGO_URL = config.MONGO_URL;
+const VKTAPI_URL = config.VKTAPI_URL;
+const XE_URL = XE_URL;
 
 // 服务器端口
 let NODE_PORT = 3030;
@@ -174,7 +177,7 @@ const intervalObj3 = setInterval(async () => {
 const defaultPrivateKey = "5KWNB8FSe3dYbW3fZJBvK4M4QhaCtRjh2EP5j7gSbs7GeNTnxV2"; // useraaaaaaaa
 const signatureProvider = new JsSignatureProvider([defaultPrivateKey]);
 
-const rpc = new JsonRpc('http://221.122.119.226:8888', { fetch });
+const rpc = new JsonRpc(VKTAPI_URL, { fetch });
 const api = new Api({ rpc, signatureProvider, textDecoder: new TextDecoder(), textEncoder: new TextEncoder() });
 
 // rpc对象支持promise，所以使用 async/await 函数运行rpc命令
@@ -390,7 +393,7 @@ const runRpcGetProducers = async () => {
 const runMongodb = async () => {
 
 
-  MongoClient.connect(url, function (err, db) {
+  MongoClient.connect(MONGO_URL, function (err, db) {
     if (err) {
       console.error(err);
       throw err;
