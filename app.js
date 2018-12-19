@@ -22,6 +22,7 @@ const MongoClient = require('mongodb').MongoClient;
 const MONGO_URL = config.MONGO_URL;
 const VKTAPI_URL = config.VKTAPI_URL;
 const XE_URL = config.XE_URL;
+const SCATTER_API = config.SCATTER_API;
 
 // 服务器端口
 let NODE_PORT = 3030;
@@ -39,6 +40,8 @@ let vktdatav_maxtps = {};
 let vktdatav_nowtps = {};
 let vktdatav_blocks_list = [];
 let vktdatav_vktprice_list = [];
+let vktdatav_allprices = {};
+let vktdatav_currencies = ["USD", "EUR", "CNY", "GBP", "JPY", "CAD", "CHF", "AUD", "KRW"];
 let vktdatav_producer_now = {};
 let vktdatav_producer_location = {};
 let vktdatav_mproducer_location = {};
@@ -52,11 +55,29 @@ let IsLoadingRPCPRODUCER = false;
 // 创建express
 const app = express();
 
-// 路由mock数据
+// 路由scatter prices数据
+//app.use('/vktapi', mockjs(path.join(__dirname, './data')));
+app.use('/vktapi/v1/currencies', async (req, res) => {
+
+  console.log('/vktapi/v1/currencies', req);
+  res.json(vktdatav_currencies);
+});
+
+// 路由scatter prices数据
+//app.use('/vktapi', mockjs(path.join(__dirname, './data')));
+app.use('/vktapi/v1/prices', async (req, res) => {
+
+  console.log('/vktapi/v1/prices', req.query.v2);
+  if (req.query.v2 === "true") {
+    res.json(vktdatav_allprices);
+  }
+});
+
+// 路由vkt all info 数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
 app.use('/vktapi', async (req, res) => {
 
-  console.log(req.query.showtype);
+  console.log('/vktapi',req.query);
   switch (req.query.showtype) {
     case "all":
     case undefined:
@@ -114,6 +135,19 @@ app.use('/vktapi', async (req, res) => {
       
   }
 });
+
+const intervalObj4 = setInterval(async () => {
+
+  //获取汇率jsons数据
+  await r2(SCATTER_API + "/v1/prices?v2=true")
+    .json
+    .then(async (result) => runScatterPrices(result))
+    .catch((error) => {
+      console.error('⚠️  Cannot fetch scatter prices'.bold.red)
+      console.log(error)
+    })
+  console.log("nodejs app passed runScatterPrices!!!");
+}, 15000);
 
 const intervalObj1 = setInterval(async() => {
   //获取jsons数据
@@ -560,6 +594,7 @@ const runCcxt = async () => {
 const runExchange = async (rates) => {
   const currencies = JSON.parse(decodeRatesData(rates.minutely))
   vktdatav.usdcny = currencies.CNY
+  vktdatav.currencies = currencies
   vktdatav_cnyusd_price =
   [
     {
@@ -567,6 +602,27 @@ const runExchange = async (rates) => {
       "value": (currencies.CNY * vktdatav_vktprice_list[7].y).toFixed(8)
     }
   ];
+  // console.log(currencies)
+}
+
+// rpc对象支持promise，所以使用 async/await 函数运行rpc命令
+const runScatterPrices = async (prices) => {
+  //console.log(prices)
+  vktdatav_allprices = prices;
+  if (vktdatav.vktusdlast7d && vktdatav.vktusdlast7d.length > 0) {
+    vktdatav_allprices["vkt:eosio.token:vkt"] = {
+      USD: (vktdatav.vktusdlast7d[7].price * 1.0).toFixed(8), 
+      EUR: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.EUR).toFixed(8),
+      CNY: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.CNY).toFixed(8),
+      GBP: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.GBP).toFixed(8),
+      JPY: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.JPY).toFixed(8),
+      CAD: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.CAD).toFixed(8),
+      CHF: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.CHF).toFixed(8),
+      AUD: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.AUD).toFixed(8),
+      KRW: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.KRW).toFixed(8),};
+    vktdatav.allprices = vktdatav_allprices;
+  }
+
   // console.log(currencies)
 }
 
