@@ -100,9 +100,10 @@ app.use('/vktapi/v1/account/vkt/:account_id', async (req, res) => {
   for (let i in balances) {
     let balarr = balances[i].split(" ");
     vktdatav_accounts_info.balances.push({
+      contract: "eosio.token",
       amount: balarr[0],
       currency: balarr[1],
-      decimals: balarr[0].split(".")[1].length
+      decimals: balarr[0].split(".")[1].length,
     });
   }
 
@@ -273,6 +274,7 @@ const runRpcBaseInfo = async () => {
   // 获取主网信息
   const info = await rpc.get_info();
   //console.log(info);
+  vktdatav.chain_id = info.chain_id;
   vktdatav.head_block_num = info.head_block_num;
   vktdatav.head_block_producer = info.head_block_producer;
   vktdatav_blocks_num = [
