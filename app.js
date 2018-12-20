@@ -34,6 +34,7 @@ let vktdatav = {};
 let vktdatav_producers_num = {};
 let vktdatav_producers_list = [];
 let vktdatav_accounts_num = {};
+let vktdatav_accounts_info = {};
 let vktdatav_blocks_num = {};
 let vktdatav_transaction_num = {};
 let vktdatav_maxtps = {};
@@ -51,6 +52,7 @@ let vktdatav_flyline = {};
 
 let IsLoadingRPCBASE = false;
 let IsLoadingRPCPRODUCER = false;
+let accountid = "";
 
 // 创建express
 const app = express();
@@ -71,6 +73,54 @@ app.use('/vktapi/v1/prices', async (req, res) => {
   if (req.query.v2 === "true") {
     res.json(vktdatav_allprices);
   }
+});
+
+// 路由scatter 账户信息数据
+//app.use('/vktapi', mockjs(path.join(__dirname, './data')));
+app.use('/vktapi/v1/account/vkt/:account_id', async (req, res) => {
+
+  app.param('account_id', function (req, res, next, account_id) {
+    accountid = account_id;
+    console.log('/vktapi/v1/account/vkt/:account_id', accountid);
+    next();
+  });
+
+  // 获取账号qingzhudatac的信息
+  const accountInfo = await rpc.get_account(accountid);
+  console.log(accountInfo);
+
+
+  //获取账号qingzhudatac的资产,查询资产的时候要加上资产的合约名字eosio.token
+  const balances = await rpc.get_currency_balance('eosio.token', accountid);
+  console.log(balances);
+
+  vktdatav_accounts_info.account_name = accountInfo.account_name;
+  vktdatav_accounts_info.balances = JSON.parse('[]');
+
+  for (let i in balances) {
+    let balarr = balances[i].split(" ");
+    vktdatav_accounts_info.balances.push({
+      amount: balarr[0],
+      currency: balarr[1],
+      decimals: balarr[0].split(".")[1].length
+    });
+  }
+
+
+  // const accountInfo2 = await rpc.get_account('qingzhudatac');
+  // console.log(accountInfo2);
+
+
+  //获取账号操作历史
+  // const actionHistory = await rpc.history_get_actions('qingzhudatac');
+  // console.log(actionHistory);
+
+  //table_row
+
+  // const tableRow = await rpc.get_table_rows({ "scope": "currency", "code": "currency", "table":"stat","json":true})
+  // console.log(tableRow);
+
+  res.json(vktdatav_accounts_info);
 });
 
 // 路由vkt all info 数据
@@ -265,31 +315,6 @@ const runRpcBaseInfo = async () => {
         (block_time.getMinutes() < 10 ? '0' + block_time.getMinutes() : block_time.getMinutes()) + ':' + 
         (block_time.getSeconds() < 10 ? '0' + block_time.getSeconds() : block_time.getSeconds())});
   }
-
-
-
-  // 获取账号qingzhudatac的信息
-  // const accountInfo = await rpc.get_account('qingzhudatac');
-  // console.log(accountInfo);
-
-
-  //获取账号qingzhudatac的资产,查询资产的时候要加上资产的合约名字eosio.token
-  // const balance = await rpc.get_currency_balance('eosio.token','qingzhudatac');
-  // console.log(balance);
-
-
-  // const accountInfo2 = await rpc.get_account('qingzhudatac');
-  // console.log(accountInfo2);
-
-
-  //获取账号操作历史
-  // const actionHistory = await rpc.history_get_actions('qingzhudatac');
-  // console.log(actionHistory);
-
-  //table_row
-
-  // const tableRow = await rpc.get_table_rows({ "scope": "currency", "code": "currency", "table":"stat","json":true})
-  // console.log(tableRow);
 
   return (vktdatav);
 
