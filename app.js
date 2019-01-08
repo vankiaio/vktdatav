@@ -194,16 +194,16 @@ app.use('/vktapi', async (req, res) => {
 const intervalObj4 = setInterval(async () => {
 
   //获取汇率jsons数据
-  // await r2(SCATTER_API + "/v1/prices?v2=true")
-  //   .json
-  //   .then(async (result) => runScatterPrices(result))
-  //   .catch((error) => {
-  //     console.error('⚠️  Cannot fetch scatter prices'.bold.red)
-  //     console.log(error)
-  //   })
-  const dataccxt = await runScatterPrices({}).catch(err => {
-    console.log("runScatterPrices error: ", err)
+  await superagent.get(SCATTER_API + "/v1/prices?v2=true").end(async(err, sres) => {
+    if (err) {
+      console.log('err:', err);
+      return;
+    }
+    const dataccxt = await runScatterPrices(JSON.parse(sres.text)).catch(err => {
+      console.log("runScatterPrices error: ", err)
+    });
   });
+
   console.log("nodejs app passed runScatterPrices!!!");
 }, 15000);
 
