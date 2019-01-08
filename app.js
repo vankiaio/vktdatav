@@ -41,6 +41,7 @@ let vktdatav_maxtps = {};
 let vktdatav_nowtps = {};
 let vktdatav_blocks_list = [];
 let vktdatav_vktprice_list = [];
+let vktdatav_vkttracker_info = [];
 let vktdatav_allprices = {};
 let vktdatav_currencies = ["USD", "EUR", "CNY", "GBP", "JPY", "CAD", "CHF", "AUD", "KRW"];
 let vktdatav_producer_now = {};
@@ -128,7 +129,7 @@ app.use('/vktapi/v1/account/vkt/:account_id', async (req, res) => {
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
 app.use('/vktapi', async (req, res) => {
 
-  console.log('/vktapi',req.query);
+  console.log('/vktapi', req.query);
   switch (req.query.showtype) {
     case "all":
     case undefined:
@@ -165,6 +166,9 @@ app.use('/vktapi', async (req, res) => {
     case "vktprice_list":
       res.json(vktdatav_vktprice_list);
       break;
+    case "vkttracker_info":
+      res.json(vktdatav_vkttracker_info);
+      break;
     case "producer_now":
       res.json(vktdatav_producer_now);
       break;
@@ -183,7 +187,7 @@ app.use('/vktapi', async (req, res) => {
     case "cnyusd_price":
       res.json(vktdatav_cnyusd_price);
       break;
-      
+
   }
 });
 
@@ -200,12 +204,7 @@ const intervalObj4 = setInterval(async () => {
   console.log("nodejs app passed runScatterPrices!!!");
 }, 15000);
 
-const intervalObj1 = setInterval(async() => {
-  //获取jsons数据
-  const dataccxt = await runCcxt().catch(err => {
-    console.log("ccxt error: ", err)
-  });
-  console.log("nodejs app passed runCcxt!!!");
+const intervalObj1 = setInterval(async () => {
 
   //获取汇率jsons数据
   await r2(XE_URL + +new Date())
@@ -216,6 +215,12 @@ const intervalObj1 = setInterval(async() => {
       console.log(error)
     })
   console.log("nodejs app passed runExchange!!!");
+
+  //获取jsons数据
+  const dataccxt = await runCcxt().catch(err => {
+    console.log("ccxt error: ", err)
+  });
+  console.log("nodejs app passed runCcxt!!!");
 }, 30000);
 
 const intervalObj2 = setInterval(async () => {
@@ -270,35 +275,29 @@ const runRpcBaseInfo = async () => {
 
   let curBlockNum = 0;
   let block_time;
-  
+
   // 获取主网信息
   const info = await rpc.get_info();
   //console.log(info);
   vktdatav.chain_id = info.chain_id;
   vktdatav.head_block_num = info.head_block_num;
   vktdatav.head_block_producer = info.head_block_producer;
-  vktdatav_blocks_num = [
-    {
-      "name": "区块数量",
-      "value": vktdatav.head_block_num
-    }
-  ];
+  vktdatav_blocks_num = [{
+    "name": "区块数量",
+    "value": vktdatav.head_block_num
+  }];
 
-  vktdatav_producer_now = [
-    {
-      "producer": info.head_block_producer
-    },
-  ];
+  vktdatav_producer_now = [{
+    "producer": info.head_block_producer
+  }, ];
   // 获取当前块交易单TPS数量
   const currentblockInfo = await rpc.get_block(info.head_block_num);
   //console.log(currentblockInfo)
-  vktdatav_nowtps = [
-    {
-      "name": "TPS",
-      "value": parseInt(currentblockInfo.transactions.length / 3) > 0 ? parseInt(currentblockInfo.transactions.length / 3) : (currentblockInfo.transactions.length % 3 > 0 ? 1 : 0)
-    }
-  ];
-  
+  vktdatav_nowtps = [{
+    "name": "TPS",
+    "value": parseInt(currentblockInfo.transactions.length / 3) > 0 ? parseInt(currentblockInfo.transactions.length / 3) : (currentblockInfo.transactions.length % 3 > 0 ? 1 : 0)
+  }];
+
   // 获取最后24个区块信息的信息
   curBlockNum = vktdatav.head_block_num;
   vktdatav_blocks_list = JSON.parse('[]');
@@ -311,11 +310,14 @@ const runRpcBaseInfo = async () => {
     //     "state": "22:22:22"
     //   },
     // ]
-    block_time = new Date(Date.parse(blockInfo.timestamp) + 8 * 3600*1000);
-    vktdatav_blocks_list.push({ "name": blockInfo.block_num, "producer": blockInfo.producer, 
-      "time": (block_time.getHours() < 10 ? '0' + block_time.getHours() : block_time.getHours()) + ':' + 
-        (block_time.getMinutes() < 10 ? '0' + block_time.getMinutes() : block_time.getMinutes()) + ':' + 
-        (block_time.getSeconds() < 10 ? '0' + block_time.getSeconds() : block_time.getSeconds())});
+    block_time = new Date(Date.parse(blockInfo.timestamp) + 8 * 3600 * 1000);
+    vktdatav_blocks_list.push({
+      "name": blockInfo.block_num,
+      "producer": blockInfo.producer,
+      "time": (block_time.getHours() < 10 ? '0' + block_time.getHours() : block_time.getHours()) + ':' +
+        (block_time.getMinutes() < 10 ? '0' + block_time.getMinutes() : block_time.getMinutes()) + ':' +
+        (block_time.getSeconds() < 10 ? '0' + block_time.getSeconds() : block_time.getSeconds())
+    });
   }
 
   return (vktdatav);
@@ -331,7 +333,7 @@ const runRpcGetProducers = async () => {
   let dumapLocal_start = 0;
   let producer_count = 0;
 
-  
+
   const producersinfo = await rpc.get_producers();
   //console.log(producersinfo);
 
@@ -347,12 +349,10 @@ const runRpcGetProducers = async () => {
     vktdatav_producers_list.length != producer_count ||
     vktdatav_producer_location.length != producer_count) {
     vktdatav.producers_num = producer_count;
-    vktdatav_producers_num = [
-      {
-        "name": "节点数量",
-        "value": producer_count
-      }
-    ]
+    vktdatav_producers_num = [{
+      "name": "节点数量",
+      "value": producer_count
+    }]
 
     vktdatav.producers = JSON.parse('[]');
     vktdatav_producer_location = JSON.parse('[]');
@@ -377,7 +377,9 @@ const runRpcGetProducers = async () => {
               dumapLocal_en += "shi"
             }
             console.log(dumapLocal_en)
-            await translate(dumapLocal_en, { to: 'zh-CN' }).then(async (res) => {
+            await translate(dumapLocal_en, {
+              to: 'zh-CN'
+            }).then(async (res) => {
               dumapLocal_cn = res.text;
               console.log("start ---- 3", dumapLocal_cn)
               console.log(res.text);
@@ -388,12 +390,19 @@ const runRpcGetProducers = async () => {
 
               if (dumapLocal_cn != "") {
                 var sk = '5iRbwByNvoPafZvsYE6GWoGm5vooaS9F' // 创建应用的sk
-                  , address = dumapLocal_cn;
+                  ,
+                  address = dumapLocal_cn;
 
                 await superagent.get('http://api.map.baidu.com/geocoder/v2/')
-                  .query({ address: address })
-                  .query({ output: 'json' })
-                  .query({ ak: sk })
+                  .query({
+                    address: address
+                  })
+                  .query({
+                    output: 'json'
+                  })
+                  .query({
+                    ak: sk
+                  })
                   .end((err, sres) => {
                     if (err) {
                       console.log('err:', err);
@@ -403,14 +412,33 @@ const runRpcGetProducers = async () => {
 
                     if (producersinfo.rows[i].is_active == 1) {
 
-                      vktdatav_producer_location.push({ lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng, value: 100 });
+                      vktdatav_producer_location.push({
+                        lat: JSON.parse(sres.text).result.location.lat,
+                        lng: JSON.parse(sres.text).result.location.lng,
+                        value: 100
+                      });
                       //res.send(sres.text);
-                      vktdatav.producers.push({ owner: producersinfo.rows[i].owner, location: { city: dumapLocal_cn, lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng } });
+                      vktdatav.producers.push({
+                        owner: producersinfo.rows[i].owner,
+                        location: {
+                          city: dumapLocal_cn,
+                          lat: JSON.parse(sres.text).result.location.lat,
+                          lng: JSON.parse(sres.text).result.location.lng
+                        }
+                      });
                       if (i < 3) {
-                        vktdatav_mproducer_location.push({ lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng, value: 100 });
+                        vktdatav_mproducer_location.push({
+                          lat: JSON.parse(sres.text).result.location.lat,
+                          lng: JSON.parse(sres.text).result.location.lng,
+                          value: 100
+                        });
                         producer_state = "超级节点"
                       } else {
-                        vktdatav_bproducer_location.push({ lat: JSON.parse(sres.text).result.location.lat, lng: JSON.parse(sres.text).result.location.lng, value: 100 });
+                        vktdatav_bproducer_location.push({
+                          lat: JSON.parse(sres.text).result.location.lat,
+                          lng: JSON.parse(sres.text).result.location.lng,
+                          value: 100
+                        });
                         producer_state = "备用节点"
                         if (vktdatav_mproducer_location.length > 0) {
                           let idx = parseInt(Math.random() * vktdatav_mproducer_location.length, 10);
@@ -427,7 +455,11 @@ const runRpcGetProducers = async () => {
                       //     "state": "超级节点"
                       //   },
                       // ]
-                      vktdatav_producers_list.push({ "name": producersinfo.rows[i].owner, "location": dumapLocal_cn, "state": producer_state })
+                      vktdatav_producers_list.push({
+                        "name": producersinfo.rows[i].owner,
+                        "location": dumapLocal_cn,
+                        "state": producer_state
+                      })
                       console.log("end ---- 1", dumapLocal_cn)
                     }
                   })
@@ -472,12 +504,10 @@ const runMongodb = async () => {
       // }
       if (result.length >= 1) {
         vktdatav.accounts_num = result.length;
-        vktdatav_accounts_num = [
-          {
-            "name": "账户数量",
-            "value": result.length + 500
-          }
-        ];
+        vktdatav_accounts_num = [{
+          "name": "账户数量",
+          "value": result.length + 500
+        }];
       }
       db.close();
     });
@@ -485,12 +515,10 @@ const runMongodb = async () => {
       if (err) throw err;
       if (result >= 1) {
         vktdatav.transactions_num = result;
-        vktdatav_transaction_num = [
-          {
-            "name": "交易数量",
-            "value": result
-          }
-        ];
+        vktdatav_transaction_num = [{
+          "name": "交易数量",
+          "value": result
+        }];
       }
       db.close();
     });
@@ -509,8 +537,10 @@ const runMongodb = async () => {
       vktdatav.constracks = JSON.parse('[]');
       for (let i in result) {
         vktdatav.constracks.push({
-          controlled_account: result[i].controlled_account, controlled_permission: result[i].controlled_permission,
-          controlling_account: result[i].controlling_account, createdAt: result[i].createdAt
+          controlled_account: result[i].controlled_account,
+          controlled_permission: result[i].controlled_permission,
+          controlling_account: result[i].controlling_account,
+          createdAt: result[i].createdAt
         });
       }
       //console.log(result);
@@ -535,12 +565,10 @@ const runMongodb = async () => {
             //     "url": ""
             //   }
             // ]
-            vktdatav_maxtps = [
-              {
-                "value": "/" + parseInt(result[0].max / 3) +"MAX",
-                "url": ""
-              }
-            ];
+            vktdatav_maxtps = [{
+              "value": "/" + parseInt(result[0].max / 3) + "MAX",
+              "url": ""
+            }];
           }
         });
         db.close();
@@ -584,9 +612,9 @@ const runCcxt = async () => {
   // get vkteth 1hour price
   const ohlcvkteth = await bitforex.fetchOHLCV(symbol_vkteth, '1d', 8);
   const last7dTime = ohlcvkteth[0].time; // 1h ago closing time
-  // const last1hPrice = ohlcvkteth[ohlcvkteth.length - 1].close; // 1h ago closing price
-  // const last1dPrice = ohlcvkteth[ohlcvkteth.length - 2].close; // 1d ago closing price
-  // const last1wPrice = ohlcvkteth[1].close; // 1w ago closing price
+  const currentPrice = ohlcvkteth[ohlcvkteth.length - 1].close; // current closing price
+  const last1dPrice = ohlcvkteth[ohlcvkteth.length - 2].close; // 1d ago closing price
+  const last1wPrice = ohlcvkteth[1].close; // 1w ago closing price
   // console.log(last7dTime);
   // console.log(last1hPrice);
   // console.log(last1dPrice);
@@ -611,9 +639,30 @@ const runCcxt = async () => {
       (vktkline_date.getMonth() + 1 < 10 ? '0' + (vktkline_date.getMonth() + 1) : vktkline_date.getMonth() + 1) + '/' +
       (vktkline_date.getDate() < 10 ? '0' + (vktkline_date.getDate()) : vktkline_date.getDate())
     // console.log(vktkline_date)
-    vktdatav.vktusdlast7d.push({ 'price': (ohlcethusd[i][4] * ohlcvkteth[i].close).toFixed(8), 'date': vktkline_YMD });
-    vktdatav_vktprice_list.push({ 'x': vktkline_YMD, 'y': (ohlcethusd[i][4] * ohlcvkteth[i].close).toFixed(8)});
+    vktdatav.vktusdlast7d.push({
+      'price': (ohlcethusd[i][4] * ohlcvkteth[i].close).toFixed(8),
+      'date': vktkline_YMD
+    });
+    vktdatav_vktprice_list.push({
+      'x': vktkline_YMD,
+      'y': (ohlcethusd[i][4] * ohlcvkteth[i].close).toFixed(8)
+    });
   }
+
+  vktdatav_cnyusd_price = [{
+    "name": "",
+    "value": (vktdatav.usdcny * vktdatav_vktprice_list[7].y).toFixed(8)
+  }];
+
+  vktdatav_vkttracker_info = {
+    'price_vktcny': (vktdatav.usdcny * vktdatav_vktprice_list[7].y).toFixed(8),
+    'price_vkteth': last1dPrice.toFixed(8),
+    'volume_24h': ticker_vkteth.baseVolume,
+    'circulating_supply': 500000000,
+    'total_supply': 1000000000,
+    'percent_change_1d': ((currentPrice - last1dPrice) / last1dPrice).toFixed(8),
+    'percent_change_7d': ((currentPrice - last1wPrice) / last1wPrice).toFixed(8)
+  };
   return vktdatav;
 }
 
@@ -622,13 +671,6 @@ const runExchange = async (rates) => {
   const currencies = JSON.parse(decodeRatesData(rates.minutely))
   vktdatav.usdcny = currencies.CNY
   vktdatav.currencies = currencies
-  vktdatav_cnyusd_price =
-  [
-    {
-      "name": "",
-      "value": (currencies.CNY * vktdatav_vktprice_list[7].y).toFixed(8)
-    }
-  ];
   // console.log(currencies)
 }
 
@@ -638,7 +680,7 @@ const runScatterPrices = async (prices) => {
   vktdatav_allprices = prices;
   if (vktdatav.vktusdlast7d && vktdatav.vktusdlast7d.length > 0) {
     vktdatav_allprices["vkt:eosio.token:vkt"] = {
-      USD: (vktdatav.vktusdlast7d[7].price * 1.0).toFixed(8), 
+      USD: (vktdatav.vktusdlast7d[7].price * 1.0).toFixed(8),
       EUR: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.EUR).toFixed(8),
       CNY: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.CNY).toFixed(8),
       GBP: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.GBP).toFixed(8),
@@ -646,7 +688,8 @@ const runScatterPrices = async (prices) => {
       CAD: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.CAD).toFixed(8),
       CHF: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.CHF).toFixed(8),
       AUD: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.AUD).toFixed(8),
-      KRW: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.KRW).toFixed(8),};
+      KRW: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.KRW).toFixed(8),
+    };
     vktdatav.allprices = vktdatav_allprices;
   }
 
