@@ -12,8 +12,8 @@ const geoip = require('geoip-lite');
 const superagent = require('superagent');
 const translate = require('google-translate-api');
 // 载入配置文件
-var config = require('./config');
-
+const config = require('./config');
+const fs = require('fs');
 require('colors');
 const { Api, JsonRpc, RpcError, JsSignatureProvider } = require('eosjs');
 const fetch = require('node-fetch');                            // node only; not needed in browsers
@@ -74,6 +74,32 @@ app.use('/vktapi/v1/prices', async (req, res) => {
   if (req.query.v2 === "true") {
     res.json(vktdatav_allprices);
   }
+});
+
+// 路由scatter 多语言数据
+//app.use('/vktapi', mockjs(path.join(__dirname, './data')));
+app.use('/vktapi/v1/languages', async (req, res) => {
+
+  console.log('/vktapi/v1/languages?names=', req.query.names);
+  let file = path.join(__dirname, './data/lang/1.json');
+  let Isfound = false;
+  let alllang=JSON.parse(fs.readFileSync( file));
+
+  let lang = JSON.parse('{}');
+  for (let i in alllang){
+    if(alllang[i] === req.query.names){
+      Isfound = true;
+      break;
+    }
+  }
+  if (Isfound) {
+    file = path.join(__dirname, './data/lang/'+ req.query.names+'.json');
+    lang = JSON.parse(fs.readFileSync( file));
+    res.json(lang);
+  }else{
+    res.json(lang);
+  }
+  
 });
 
 // 路由scatter 账户信息数据
