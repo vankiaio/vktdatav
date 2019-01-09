@@ -15,9 +15,17 @@ const translate = require('google-translate-api');
 const config = require('./config');
 const fs = require('fs');
 require('colors');
-const { Api, JsonRpc, RpcError, JsSignatureProvider } = require('eosjs');
-const fetch = require('node-fetch');                            // node only; not needed in browsers
-const { TextDecoder, TextEncoder } = require('text-encoding');  // node, IE11 and IE Edge Browsers
+const {
+  Api,
+  JsonRpc,
+  RpcError,
+  JsSignatureProvider
+} = require('eosjs');
+const fetch = require('node-fetch'); // node only; not needed in browsers
+const {
+  TextDecoder,
+  TextEncoder
+} = require('text-encoding'); // node, IE11 and IE Edge Browsers
 const MongoClient = require('mongodb').MongoClient;
 const MONGO_URL = config.MONGO_URL;
 const VKTAPI_URL = config.VKTAPI_URL;
@@ -73,6 +81,8 @@ app.use('/vktapi/v1/prices', async (req, res) => {
   console.log('/vktapi/v1/prices', req.query.v2);
   if (req.query.v2 === "true") {
     res.json(vktdatav_allprices);
+  }else{
+    res.json(JSON.from('{}'));
   }
 });
 
@@ -80,26 +90,38 @@ app.use('/vktapi/v1/prices', async (req, res) => {
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
 app.use('/vktapi/v1/languages', async (req, res) => {
 
-  console.log('/vktapi/v1/languages?names=', req.query.names);
-  let file = path.join(__dirname, './data/lang/1.json');
+  let file;
   let Isfound = false;
-  let alllang=JSON.parse(fs.readFileSync( file));
-
   let lang = JSON.parse('{}');
-  for (let i in alllang){
-    if(alllang[i] === req.query.names){
-      Isfound = true;
-      break;
+  if (req.query.names != undefined) {
+    console.log('/vktapi/v1/languages?names=', req.query.names);
+    file = path.join(__dirname, './data/lang/1.json');
+    lang = JSON.parse(fs.readFileSync(file));
+    res.json(lang);
+    return;
+  }
+  if (req.query.name != undefined) {
+    console.log('/vktapi/v1/languages?name=', req.query.name);
+    file = path.join(__dirname, './data/lang/1.json');
+    let alllang = JSON.parse(fs.readFileSync(file));
+
+    for (let i in alllang) {
+      if (alllang[i] === req.query.name) {
+        Isfound = true;
+        break;
+      }
     }
-  }
-  if (Isfound) {
-    file = path.join(__dirname, './data/lang/'+ req.query.names+'.json');
-    lang = JSON.parse(fs.readFileSync( file));
+    if (Isfound) {
+      file = path.join(__dirname, './data/lang/' + req.query.name + '.json');
+      lang = JSON.parse(fs.readFileSync(file));
+      res.json(lang);
+    } else {
+      res.json(lang);
+    }
+  } else {
     res.json(lang);
-  }else{
-    res.json(lang);
   }
-  
+
 });
 
 // 路由scatter 账户信息数据
@@ -220,7 +242,7 @@ app.use('/vktapi', async (req, res) => {
 const intervalObj4 = setInterval(async () => {
 
   //获取汇率jsons数据
-  await superagent.get(SCATTER_API + "/v1/prices?v2=true").end(async(err, sres) => {
+  await superagent.get(SCATTER_API + "/v1/prices?v2=true").end(async (err, sres) => {
     if (err) {
       console.log('err:', err);
       return;
@@ -238,7 +260,9 @@ const intervalObj1 = setInterval(async () => {
   //获取汇率jsons数据
   await r2(XE_URL + +new Date())
     .json
-    .then(async ({ rates }) => runExchange(rates))
+    .then(async ({
+      rates
+    }) => runExchange(rates))
     .catch((error) => {
       console.error('⚠️  Cannot fetch currency rates'.bold.red)
       console.log(error)
@@ -296,8 +320,15 @@ const intervalObj3 = setInterval(async () => {
 const defaultPrivateKey = "5KWNB8FSe3dYbW3fZJBvK4M4QhaCtRjh2EP5j7gSbs7GeNTnxV2"; // useraaaaaaaa
 const signatureProvider = new JsSignatureProvider([defaultPrivateKey]);
 
-const rpc = new JsonRpc(VKTAPI_URL, { fetch });
-const api = new Api({ rpc, signatureProvider, textDecoder: new TextDecoder(), textEncoder: new TextEncoder() });
+const rpc = new JsonRpc(VKTAPI_URL, {
+  fetch
+});
+const api = new Api({
+  rpc,
+  signatureProvider,
+  textDecoder: new TextDecoder(),
+  textEncoder: new TextEncoder()
+});
 
 // rpc对象支持promise，所以使用 async/await 函数运行rpc命令
 const runRpcBaseInfo = async () => {
@@ -540,7 +571,11 @@ const runMongodb = async () => {
       }
       db.close();
     });
-    dbo.collection("transaction_traces").find({ "producer_block_id": { $ne: null } }).count(function (err, result) {
+    dbo.collection("transaction_traces").find({
+      "producer_block_id": {
+        $ne: null
+      }
+    }).count(function (err, result) {
       if (err) throw err;
       if (result >= 1) {
         vktdatav.transactions_num = result;
@@ -576,10 +611,34 @@ const runMongodb = async () => {
       db.close();
     });
     //aggregate({$group : {_id : "$block_num", max_transactions : {$sum : 1}}},{$group:{_id:null,max:{$max:"$max_transactions"}}})
-    dbo.collection("transaction_traces").aggregate({ $match: { "producer_block_id": { $ne: null } } },
-                                                   { $group: { _id: "$block_num", max_transactions: { $sum: 1 } } },
-                                                   { $sort:  { max_transactions : -1 } },
-                                                   { $group: { _id: null, block_num: { $first: "$_id" }, max: { $first: "$max_transactions" } } },
+    dbo.collection("transaction_traces").aggregate({
+        $match: {
+          "producer_block_id": {
+            $ne: null
+          }
+        }
+      }, {
+        $group: {
+          _id: "$block_num",
+          max_transactions: {
+            $sum: 1
+          }
+        }
+      }, {
+        $sort: {
+          max_transactions: -1
+        }
+      }, {
+        $group: {
+          _id: null,
+          block_num: {
+            $first: "$_id"
+          },
+          max: {
+            $first: "$max_transactions"
+          }
+        }
+      },
       function (err, result) {
         if (err) throw err;
         result.toArray(function (err, result) {
