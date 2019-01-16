@@ -385,6 +385,10 @@ const runRpcBaseInfo = async () => {
         (block_time.getSeconds() < 10 ? '0' + block_time.getSeconds() : block_time.getSeconds())
     });
   }
+  //确保排序
+  vktdatav_blocks_list.sort(function down(x, y) {
+    return (x.name < y.name) ? 1 : -1
+  });
 
   return (vktdatav);
 
