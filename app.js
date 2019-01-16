@@ -63,6 +63,8 @@ let IsLoadingRPCBASE = false;
 let IsLoadingRPCPRODUCER = false;
 let accountid = "";
 
+let m_maxtps = 0;
+
 // 创建express
 const app = express();
 
@@ -357,6 +359,10 @@ const runRpcBaseInfo = async () => {
     "name": "TPS",
     "value": parseInt(currentblockInfo.transactions.length / 3) > 0 ? parseInt(currentblockInfo.transactions.length / 3) : (currentblockInfo.transactions.length % 3 > 0 ? 1 : 0)
   }];
+
+  if(currentblockInfo.transactions.length / 3 > m_maxtps) {
+    m_maxtps = currentblockInfo.transactions.length / 3;
+  }
 
   // 获取最后24个区块信息的信息
   curBlockNum = vktdatav.head_block_num;
@@ -653,8 +659,11 @@ const runMongodb = async () => {
             //     "url": ""
             //   }
             // ]
+            if(parseInt(result[0].max / 3) > m_maxtps){
+              m_maxtps = parseInt(result[0].max / 3);
+            }
             vktdatav_maxtps = [{
-              "value": "/" + parseInt(result[0].max / 3) + "MAX",
+              "value": "/" + m_maxtps + "MAX",
               "url": ""
             }];
           }
