@@ -61,6 +61,7 @@ let vktdatav_flyline = {};
 
 let IsLoadingRPCBASE = false;
 let IsLoadingRPCPRODUCER = false;
+let IsLoadingRPCBlockList = false;
 let accountid = "";
 
 let m_maxtps = 0;
@@ -241,7 +242,7 @@ app.use('/vktapi', async (req, res) => {
   }
 });
 
-const intervalObj4 = setInterval(async () => {
+const intervalObj0 = setInterval(async () => {
 
   //获取汇率jsons数据
   await superagent.get(SCATTER_API + "/v1/prices?v2=true").end(async (err, sres) => {
@@ -282,7 +283,7 @@ const intervalObj2 = setInterval(async () => {
 
   IsLoadingRPCBASE = true;
 
-  console.log("nodejs app is loading ?", IsLoadingRPCBASE);
+  console.log("nodejs app runRpcBaseInfo is loading ?", IsLoadingRPCBASE);
 
   //获取jsons数据
   const data = await runRpcBaseInfo().catch(err => {
@@ -290,18 +291,29 @@ const intervalObj2 = setInterval(async () => {
   });
 
   console.log("nodejs app passed runRpcBaseInfo!!!");
-
-  //获取jsons数据
-  const datadb = await runMongodb().catch(err => {
-    console.log("mongodb error: ", err)
-  });
-  console.log("nodejs app passed runMongodb!!!");
   IsLoadingRPCBASE = false;
 
 }, 3000);
 
 
 const intervalObj3 = setInterval(async () => {
+
+  IsLoadingRPCBlockList = true;
+
+  console.log("nodejs app runRpcBlockList is loading ?", IsLoadingRPCBlockList);
+
+  //获取jsons数据
+  const data = await runRpcBlockList().catch(err => {
+    console.log("runRpcBlockList error: ", err)
+  });
+
+  console.log("nodejs app passed runRpcBlockList!!!");
+  IsLoadingRPCBlockList = false;
+
+}, 6000);
+
+
+const intervalObj4 = setInterval(async () => {
 
   IsLoadingRPCPRODUCER = true;
 
@@ -314,6 +326,12 @@ const intervalObj3 = setInterval(async () => {
 
   console.log("nodejs app passed runRpcGetProducers!!!");
 
+  //获取jsons数据
+  const datadb = await runMongodb().catch(err => {
+    console.log("mongodb error: ", err)
+  });
+  console.log("nodejs app passed runMongodb!!!");
+  
   IsLoadingRPCPRODUCER = false;
 
 }, 5000);
@@ -363,6 +381,17 @@ const runRpcBaseInfo = async () => {
   if(currentblockInfo.transactions.length / 3 > m_maxtps) {
     m_maxtps = currentblockInfo.transactions.length / 3;
   }
+
+  return (vktdatav);
+
+};
+
+
+// rpc对象支持promise，所以使用 async/await 函数运行rpc命令
+const runRpcBlockList = async () => {
+
+  let curBlockNum = 0;
+  let block_time;
 
   // 获取最后24个区块信息的信息
   curBlockNum = vktdatav.head_block_num;
