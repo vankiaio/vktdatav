@@ -200,7 +200,7 @@ app.use('/vktapi', async (req, res) => {
     case "transaction_num":
       res.json(vktdatav_transaction_num);
       break;
-    case "nowtps":
+    case "vktdatav_nowtps":
       res.json(vktdatav_nowtps);
       break;
     case "vktdatav_maxtps":
