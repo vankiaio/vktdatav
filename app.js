@@ -376,17 +376,17 @@ const runRpcBaseInfo = async () => {
     "producer": info.head_block_producer
   }, ];
   // 获取当前块交易单TPS数量
-  await rpc.get_block(info.head_block_num).then(async (currentblockInfo) => {
-    //console.log(currentblockInfo)
-    vktdatav_nowtps = [{
-      "name": "TPS",
-      "value": parseInt(currentblockInfo.transactions.length / 3) > 0 ? parseInt(currentblockInfo.transactions.length / 3) : (currentblockInfo.transactions.length % 3 > 0 ? 1 : 0)
-    }];
+  // await rpc.get_block(info.head_block_num).then(async (currentblockInfo) => {
+  //   //console.log(currentblockInfo)
+  //   vktdatav_nowtps = [{
+  //     "name": "TPS",
+  //     "value": parseInt(currentblockInfo.transactions.length / 3) > 0 ? parseInt(currentblockInfo.transactions.length / 3) : (currentblockInfo.transactions.length % 3 > 0 ? 1 : 0)
+  //   }];
 
-    if(currentblockInfo.transactions.length / 3 >= m_maxtps) {
-      m_maxtps = parseInt(currentblockInfo.transactions.length / 3);
-    }
-  });
+  //   if(currentblockInfo.transactions.length / 3 >= m_maxtps) {
+  //     m_maxtps = parseInt(currentblockInfo.transactions.length / 3);
+  //   }
+  // });
 
   return (vktdatav);
 
@@ -763,57 +763,62 @@ const runMongodb = async () => {
         });
       });
       //nowtps取得
-      // await dbo.collection("transaction_traces").aggregate({
-      //   $match: {
-      //     "block_num": {
-      //       $gte: vktdatav.head_block_num - 1
-      //     },
-      //     "producer_block_id": {
-      //       $ne: null
-      //     }
-      //   }
-      // }, {
-      //   $group: {
-      //     _id: "$block_num",
-      //     max_transactions: {
-      //       $sum: 1
-      //     }
-      //   }
-      // }, {
-      //   $sort: {
-      //     max_transactions: -1
-      //   }
-      // }, {
-      //   $group: {
-      //     _id: null,
-      //     block_num: {
-      //       $first: "$_id"
-      //     },
-      //     max: {
-      //       $first: "$max_transactions"
-      //     }
-      //   }
-      // },
-      // async function (err, result) {
-      //   if (err) throw err;
-      //   if(result.length >= 1) {
-      //     result.toArray(async function (err, result) {
-      //       if (err) throw err;
-      //       // console.log(result);
-      //       if (result.length >= 1) {
-      // //   vktdatav_nowtps = [{
-      // //     "name": "TPS",
-      // //     "value": parseInt(currentblockInfo.transactions.length / 3) > 0 ? parseInt(currentblockInfo.transactions.length / 3) : (currentblockInfo.transactions.length % 3 > 0 ? 1 : 0)
-      // //   }];
-      //         vktdatav_nowtps = [{
-      //           "name": "TPS",
-      //           "value": parseInt(result[0].max / 3) > 0 ? parseInt(result[0].max / 3) : (result[0].max % 3 > 0 ? 1 : 0)
-      //         }];
-      //       }
-      //     });
-      //     db.close();
-      //   }
-      // });
+      await dbo.collection("transaction_traces").aggregate({
+        $match: {
+          "block_num": {
+            $gte: vktdatav.head_block_num - 2
+          },
+          "producer_block_id": {
+            $ne: null
+          }
+        }
+      }, {
+        $group: {
+          _id: "$block_num",
+          max_transactions: {
+            $sum: 1
+          }
+        }
+      }, {
+        $sort: {
+          max_transactions: -1
+        }
+      }, {
+        $group: {
+          _id: null,
+          block_num: {
+            $first: "$_id"
+          },
+          max: {
+            $first: "$max_transactions"
+          }
+        }
+      },
+      async function (err, result) {
+        if (err) throw err;
+        if(result.length >= 1) {
+          result.toArray(async function (err, result) {
+            if (err) throw err;
+            // console.log(result);
+            if (result.length >= 1) {
+      //   vktdatav_nowtps = [{
+      //     "name": "TPS",
+      //     "value": parseInt(currentblockInfo.transactions.length / 3) > 0 ? parseInt(currentblockInfo.transactions.length / 3) : (currentblockInfo.transactions.length % 3 > 0 ? 1 : 0)
+      //   }];
+              vktdatav_nowtps = [{
+                "name": "TPS",
+                "value": parseInt(result[0].max / 3) > 0 ? parseInt(result[0].max / 3) : (result[0].max % 3 > 0 ? 1 : 0)
+              }];
+            }
+          });
+        }else{
+          vktdatav_nowtps = [{
+            "name": "TPS",
+            "value": 0
+          }];
+        }
+        db.close();
+      });
     }
   });
   
