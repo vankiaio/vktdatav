@@ -591,18 +591,18 @@ const runRpcGetProducers = async () => {
 const runMongodb = async () => {
 
 
-  MongoClient.connect(MONGO_URL, function (err, db) {
+  MongoClient.connect(MONGO_URL, async function (err, db) {
     if (err) {
       console.error(err);
       throw err;
     }
-    var dbo = db.db("EOS");
+    const dbo = db.db("EOS");
     // dbo.collection("accounts").find().toArray(function(err, result) {
     //   if (err) throw err;
     //   for (let i in result) {
     //     console.log(result[i].name);
     //   }
-    dbo.collection("accounts").find().toArray(function (err, result) {
+    await dbo.collection("accounts").find().toArray(async function (err, result) {
       if (err) throw err;
       // for (let i in result) {
       //   console.log(result[i].name);
@@ -614,13 +614,12 @@ const runMongodb = async () => {
           "value": result.length + 500
         }];
       }
-      db.close();
     });
-    dbo.collection("transaction_traces").find({
+    await dbo.collection("transaction_traces").find({
       "producer_block_id": {
         $ne: null
       }
-    }).count(function (err, result) {
+    }).count(async function (err, result) {
       if (err) throw err;
       if (result >= 1) {
         vktdatav.transactions_num = result;
@@ -629,19 +628,17 @@ const runMongodb = async () => {
           "value": result
         }];
       }
-      db.close();
     });
-    dbo.collection("account_controls").find().count(function (err, result) {
-      if (err) throw err;
-      vktdatav.contracks_num = result;
-      db.close();
-    });
+    // await dbo.collection("account_controls").find().count(async function (err, result) {
+    //   if (err) throw err;
+    //   vktdatav.contracks_num = result;
+    // });
     //controlled_account: 'vktbeijing',
     // controlled_permission: 'qingzhudatac',
     //   controlling_account: 'vankia.trans',
     //     createdAt: 2018 - 12 - 03T09: 07: 03.191Z
     //获取合约
-    dbo.collection("account_controls").find().toArray(function (err, result) {
+    await dbo.collection("account_controls").find().toArray(async function (err, result) {
       if (err) throw err;
       vktdatav.constracks = JSON.parse('[]');
       for (let i in result) {
@@ -652,11 +649,11 @@ const runMongodb = async () => {
           createdAt: result[i].createdAt
         });
       }
+      vktdatav.contracks_num = result.count;
       //console.log(result);
-      db.close();
     });
     //aggregate({$group : {_id : "$block_num", max_transactions : {$sum : 1}}},{$group:{_id:null,max:{$max:"$max_transactions"}}})
-    dbo.collection("transaction_traces").aggregate({
+    await dbo.collection("transaction_traces").aggregate({
         $match: {
           "producer_block_id": {
             $ne: null
@@ -684,9 +681,9 @@ const runMongodb = async () => {
           }
         }
       },
-      function (err, result) {
+      async function (err, result) {
         if (err) throw err;
-        result.toArray(function (err, result) {
+        result.toArray(async function (err, result) {
           if (err) throw err;
           console.log(result);
           if (result.length >= 1) {
