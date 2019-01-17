@@ -210,7 +210,7 @@ app.use('/vktapi', async (req, res) => {
       }
       break;
     case "blocks_list":
-      if (!IsLoadingRPCBASE) {
+      if (!IsLoadingRPCBlockList) {
         res.json(vktdatav_blocks_list);
       }
       break;
@@ -396,8 +396,8 @@ const runRpcBlockList = async () => {
   // 获取最后24个区块信息的信息
   curBlockNum = vktdatav.head_block_num;
   vktdatav_blocks_list = JSON.parse('[]');
-  for (let i = curBlockNum; i > curBlockNum - 10; i--) {
-    const blockInfo = await rpc.get_block(i);
+  for(let i = curBlockNum; i > curBlockNum - 10; i--) {
+    // const blockInfo = await rpc.get_block(i);
     // [
     //   {
     //     "name": 22222,
@@ -405,15 +405,20 @@ const runRpcBlockList = async () => {
     //     "state": "22:22:22"
     //   },
     // ]
-    block_time = new Date(Date.parse(blockInfo.timestamp) + 8 * 3600 * 1000);
-    vktdatav_blocks_list.push({
-      "name": blockInfo.block_num,
-      "producer": blockInfo.producer,
-      "time": (block_time.getHours() < 10 ? '0' + block_time.getHours() : block_time.getHours()) + ':' +
-        (block_time.getMinutes() < 10 ? '0' + block_time.getMinutes() : block_time.getMinutes()) + ':' +
-        (block_time.getSeconds() < 10 ? '0' + block_time.getSeconds() : block_time.getSeconds())
+    await Promise.resolve(i).then(async(i) =>{
+      await rpc.get_block(i).then(async (blockInfo) => {
+      block_time = new Date(Date.parse(blockInfo.timestamp) + 8 * 3600 * 1000);
+        vktdatav_blocks_list.push({
+          "name": blockInfo.block_num,
+          "producer": blockInfo.producer,
+          "time": (block_time.getHours() < 10 ? '0' + block_time.getHours() : block_time.getHours()) + ':' +
+            (block_time.getMinutes() < 10 ? '0' + block_time.getMinutes() : block_time.getMinutes()) + ':' +
+            (block_time.getSeconds() < 10 ? '0' + block_time.getSeconds() : block_time.getSeconds())
+        });
+      });
     });
   }
+
   //确保排序
   vktdatav_blocks_list.sort(function down(x, y) {
     return (x.name < y.name) ? 1 : -1
