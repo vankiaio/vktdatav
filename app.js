@@ -766,7 +766,7 @@ const runMongodb = async () => {
       await dbo.collection("transaction_traces").aggregate({
         $match: {
           "block_num": {
-            $gte: vktdatav.head_block_num - 2
+            $gte: vktdatav.head_block_num - 5
           },
           "producer_block_id": {
             $ne: null
