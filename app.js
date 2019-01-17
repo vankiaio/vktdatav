@@ -46,6 +46,7 @@ let vktdatav_accounts_info = {};
 let vktdatav_blocks_num = {};
 let vktdatav_transaction_num = {};
 let vktdatav_maxtps = {};
+let vktdatav_maxtps_onehour = {};
 let vktdatav_nowtps = {};
 let vktdatav_blocks_list = [];
 let vktdatav_vktprice_list = [];
@@ -65,6 +66,7 @@ let IsLoadingRPCBlockList = false;
 let accountid = "";
 
 let m_maxtps = 0;
+let m_maxtps_onehour = 0;
 
 // 创建express
 const app = express();
@@ -203,6 +205,9 @@ app.use('/vktapi', async (req, res) => {
       break;
     case "vktdatav_maxtps":
       res.json(vktdatav_maxtps);
+      break;
+    case "vktdatav_maxtps_onehour":
+      res.json(vktdatav_maxtps_onehour);
       break;
     case "producers_list":
       if (!IsLoadingRPCPRODUCER && vktdatav_producers_list.length >= 3) {
@@ -378,7 +383,7 @@ const runRpcBaseInfo = async () => {
       "value": parseInt(currentblockInfo.transactions.length / 3) > 0 ? parseInt(currentblockInfo.transactions.length / 3) : (currentblockInfo.transactions.length % 3 > 0 ? 1 : 0)
     }];
 
-    if(currentblockInfo.transactions.length / 3 > m_maxtps) {
+    if(currentblockInfo.transactions.length / 3 >= m_maxtps) {
       m_maxtps = parseInt(currentblockInfo.transactions.length / 3);
     }
   });
@@ -652,6 +657,7 @@ const runMongodb = async () => {
       vktdatav.contracks_num = result.count;
       //console.log(result);
     });
+    if(m_maxtps < 2000) {
     //aggregate({$group : {_id : "$block_num", max_transactions : {$sum : 1}}},{$group:{_id:null,max:{$max:"$max_transactions"}}})
     await dbo.collection("transaction_traces").aggregate({
         $match: {
@@ -695,7 +701,7 @@ const runMongodb = async () => {
             //     "url": ""
             //   }
             // ]
-            if(parseInt(result[0].max / 3) > m_maxtps){
+            if(parseInt(result[0].max / 3) >= m_maxtps){
               m_maxtps = parseInt(result[0].max / 3);
             }
             vktdatav_maxtps = [{
@@ -706,7 +712,66 @@ const runMongodb = async () => {
         });
         db.close();
       });
+    }else{
+      await dbo.collection("transaction_traces").aggregate({
+        $match: {
+          "block_num": {
+            $gte: vktdatav.head_block_num - 1200
+          },
+          "producer_block_id": {
+            $ne: null
+          }
+        }
+      }, {
+        $group: {
+          _id: "$block_num",
+          max_transactions: {
+            $sum: 1
+          }
+        }
+      }, {
+        $sort: {
+          max_transactions: -1
+        }
+      }, {
+        $group: {
+          _id: null,
+          block_num: {
+            $first: "$_id"
+          },
+          max: {
+            $first: "$max_transactions"
+          }
+        }
+      },
+      async function (err, result) {
+        if (err) throw err;
+        result.toArray(async function (err, result) {
+          if (err) throw err;
+          console.log(result);
+          if (result.length >= 1) {
+            vktdatav.max_tps_num = parseInt(result[0].max / 3);
+            vktdatav.max_tps_block_num = parseInt(result[0].block_num);
+            // [
+            //   {
+            //     "value": "/2000MAX",
+            //     "url": ""
+            //   }
+            // ]
+            if(parseInt(result[0].max / 3) >= m_maxtps_onehour){
+              m_maxtps_onehour = parseInt(result[0].max / 3) > 1 ? parseInt(result[0].max / 3) : 1;
+            }
+            vktdatav_maxtps_onehour = [{
+              "value": "/" + m_maxtps_onehour + "MAX",
+              "url": ""
+            }];
+          }
+        });
+        db.close();
+      });
+    }
   });
+  
   return vktdatav;
 }
 
