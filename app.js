@@ -334,7 +334,7 @@ const intervalObj4 = setInterval(async () => {
   
   IsLoadingRPCPRODUCER = false;
 
-}, 5000);
+}, 8000);
 
 
 const defaultPrivateKey = "5KWNB8FSe3dYbW3fZJBvK4M4QhaCtRjh2EP5j7gSbs7GeNTnxV2"; // useraaaaaaaa
