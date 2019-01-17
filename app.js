@@ -371,16 +371,17 @@ const runRpcBaseInfo = async () => {
     "producer": info.head_block_producer
   }, ];
   // 获取当前块交易单TPS数量
-  const currentblockInfo = await rpc.get_block(info.head_block_num);
-  //console.log(currentblockInfo)
-  vktdatav_nowtps = [{
-    "name": "TPS",
-    "value": parseInt(currentblockInfo.transactions.length / 3) > 0 ? parseInt(currentblockInfo.transactions.length / 3) : (currentblockInfo.transactions.length % 3 > 0 ? 1 : 0)
-  }];
+  await rpc.get_block(info.head_block_num).then(async (currentblockInfo) => {
+    //console.log(currentblockInfo)
+    vktdatav_nowtps = [{
+      "name": "TPS",
+      "value": parseInt(currentblockInfo.transactions.length / 3) > 0 ? parseInt(currentblockInfo.transactions.length / 3) : (currentblockInfo.transactions.length % 3 > 0 ? 1 : 0)
+    }];
 
-  if(currentblockInfo.transactions.length / 3 > m_maxtps) {
-    m_maxtps = currentblockInfo.transactions.length / 3;
-  }
+    if(currentblockInfo.transactions.length / 3 > m_maxtps) {
+      m_maxtps = currentblockInfo.transactions.length / 3;
+    }
+  });
 
   return (vktdatav);
 
