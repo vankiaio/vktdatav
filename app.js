@@ -762,7 +762,7 @@ const runMongodb = async () => {
               m_maxtps_onehour = parseInt(result[0].max / 3) > 1 ? parseInt(result[0].max / 3) : 1;
             }
             vktdatav_maxtps_onehour = [{
-              "value": "Last 1 Hour " + m_maxtps_onehour + "MAX",
+              "value": m_maxtps_onehour + "MAX/H",
               "url": ""
             }];
           }
