@@ -86,7 +86,7 @@ app.use('/vktapi/v1/prices', async (req, res) => {
   console.log('/vktapi/v1/prices', req.query.v2);
   if (req.query.v2 === "true") {
     res.json(vktdatav_allprices);
-  }else{
+  } else {
     res.json(JSON.from('{}'));
   }
 });
@@ -336,7 +336,7 @@ const intervalObj4 = setInterval(async () => {
     console.log("mongodb error: ", err)
   });
   console.log("nodejs app passed runMongodb!!!");
-  
+
   IsLoadingRPCPRODUCER = false;
 
 }, 8000);
@@ -402,7 +402,7 @@ const runRpcBlockList = async () => {
   // 获取最后24个区块信息的信息
   curBlockNum = vktdatav.head_block_num;
   vktdatav_blocks_list = JSON.parse('[]');
-  for(let i = curBlockNum; i > curBlockNum - 10; i--) {
+  for (let i = curBlockNum; i > curBlockNum - 10; i--) {
     // const blockInfo = await rpc.get_block(i);
     // [
     //   {
@@ -411,9 +411,9 @@ const runRpcBlockList = async () => {
     //     "state": "22:22:22"
     //   },
     // ]
-    await Promise.resolve(i).then(async(i) =>{
+    await Promise.resolve(i).then(async (i) => {
       await rpc.get_block(i).then(async (blockInfo) => {
-      block_time = new Date(Date.parse(blockInfo.timestamp) + 8 * 3600 * 1000);
+        block_time = new Date(Date.parse(blockInfo.timestamp) + 8 * 3600 * 1000);
         vktdatav_blocks_list.push({
           "name": blockInfo.block_num,
           "producer": blockInfo.producer,
@@ -657,171 +657,169 @@ const runMongodb = async () => {
       vktdatav.contracks_num = result.count;
       //console.log(result);
     });
-    if(m_maxtps < 2000 || m_maxtps_onehour > m_maxtps) {
-    //aggregate({$group : {_id : "$block_num", max_transactions : {$sum : 1}}},{$group:{_id:null,max:{$max:"$max_transactions"}}})
-    await dbo.collection("transaction_traces").aggregate({
-        $match: {
-          "producer_block_id": {
-            $ne: null
-          }
-        }
-      }, {
-        $group: {
-          _id: "$block_num",
-          max_transactions: {
-            $sum: 1
-          }
-        }
-      }, {
-        $sort: {
-          max_transactions: -1
-        }
-      }, {
-        $group: {
-          _id: null,
-          block_num: {
-            $first: "$_id"
-          },
-          max: {
-            $first: "$max_transactions"
-          }
-        }
-      },
-      async function (err, result) {
-        if (err) throw err;
-        result.toArray(async function (err, result) {
-          if (err) throw err;
-          // console.log(result);
-          if (result.length >= 1) {
-            vktdatav.max_tps_num = parseInt(result[0].max / 3);
-            vktdatav.max_tps_block_num = parseInt(result[0].block_num);
-            // [
-            //   {
-            //     "value": "/2000MAX",
-            //     "url": ""
-            //   }
-            // ]
-            if(parseInt(result[0].max / 3) >= m_maxtps){
-              m_maxtps = parseInt(result[0].max / 3);
-            }
-            vktdatav_maxtps = [{
-              "value": "/" + m_maxtps + "MAX",
-              "url": ""
-            }];
-          }
-        });
-        db.close();
-      });
-    }else{
-      // 最后一小时TPS
+    if (m_maxtps < 2000 || m_maxtps_onehour > m_maxtps) {
+      //aggregate({$group : {_id : "$block_num", max_transactions : {$sum : 1}}},{$group:{_id:null,max:{$max:"$max_transactions"}}})
       await dbo.collection("transaction_traces").aggregate({
-        $match: {
-          "block_num": {
-            $gte: vktdatav.head_block_num - 1200
-          },
-          "producer_block_id": {
-            $ne: null
-          }
-        }
-      }, {
-        $group: {
-          _id: "$block_num",
-          max_transactions: {
-            $sum: 1
-          }
-        }
-      }, {
-        $sort: {
-          max_transactions: -1
-        }
-      }, {
-        $group: {
-          _id: null,
-          block_num: {
-            $first: "$_id"
-          },
-          max: {
-            $first: "$max_transactions"
-          }
-        }
-      },
-      async function (err, result) {
-        if (err) throw err;
-        result.toArray(async function (err, result) {
-          if (err) throw err;
-          // console.log(result);
-          if (result.length >= 1) {
-
-            if(parseInt(result[0].max / 3) >= m_maxtps_onehour){
-              m_maxtps_onehour = parseInt(result[0].max / 3) > 1 ? parseInt(result[0].max / 3) : 1;
+          $match: {
+            "producer_block_id": {
+              $ne: null
             }
-            vktdatav_maxtps_onehour = [{
-              "value": m_maxtps_onehour + "MAX/H",
-              "url": ""
-            }];
           }
-        });
-      });
-      //nowtps取得
-      await dbo.collection("transaction_traces").aggregate({
-        $match: {
-          "block_num": {
-            $gte: vktdatav.head_block_num - 5
-          },
-          "producer_block_id": {
-            $ne: null
+        }, {
+          $group: {
+            _id: "$block_num",
+            max_transactions: {
+              $sum: 1
+            }
           }
-        }
-      }, {
-        $group: {
-          _id: "$block_num",
-          max_transactions: {
-            $sum: 1
+        }, {
+          $sort: {
+            max_transactions: -1
           }
-        }
-      }, {
-        $sort: {
-          max_transactions: -1
-        }
-      }, {
-        $group: {
-          _id: null,
-          block_num: {
-            $first: "$_id"
-          },
-          max: {
-            $first: "$max_transactions"
+        }, {
+          $group: {
+            _id: null,
+            block_num: {
+              $first: "$_id"
+            },
+            max: {
+              $first: "$max_transactions"
+            }
           }
-        }
-      },
-      async function (err, result) {
-        if (err) throw err;
-        if(result.length >= 1) {
+        },
+        async function (err, result) {
+          if (err) throw err;
           result.toArray(async function (err, result) {
             if (err) throw err;
             // console.log(result);
             if (result.length >= 1) {
-      //   vktdatav_nowtps = [{
-      //     "name": "TPS",
-      //     "value": parseInt(currentblockInfo.transactions.length / 3) > 0 ? parseInt(currentblockInfo.transactions.length / 3) : (currentblockInfo.transactions.length % 3 > 0 ? 1 : 0)
-      //   }];
+              vktdatav.max_tps_num = parseInt(result[0].max / 3);
+              vktdatav.max_tps_block_num = parseInt(result[0].block_num);
+              // [
+              //   {
+              //     "value": "/2000MAX",
+              //     "url": ""
+              //   }
+              // ]
+              if (parseInt(result[0].max / 3) >= m_maxtps) {
+                m_maxtps = parseInt(result[0].max / 3);
+              }
+              vktdatav_maxtps = [{
+                "value": "/" + m_maxtps + "MAX",
+                "url": ""
+              }];
+            }
+          });
+          db.close();
+        });
+    } else {
+      // 最后一小时TPS
+      await dbo.collection("transaction_traces").aggregate({
+          $match: {
+            "block_num": {
+              $gte: vktdatav.head_block_num - 1200
+            },
+            "producer_block_id": {
+              $ne: null
+            }
+          }
+        }, {
+          $group: {
+            _id: "$block_num",
+            max_transactions: {
+              $sum: 1
+            }
+          }
+        }, {
+          $sort: {
+            max_transactions: -1
+          }
+        }, {
+          $group: {
+            _id: null,
+            block_num: {
+              $first: "$_id"
+            },
+            max: {
+              $first: "$max_transactions"
+            }
+          }
+        },
+        async function (err, result) {
+          if (err) throw err;
+          result.toArray(async function (err, result) {
+            if (err) throw err;
+            // console.log(result);
+            if (result.length >= 1) {
+
+              if (parseInt(result[0].max / 3) >= m_maxtps_onehour) {
+                m_maxtps_onehour = parseInt(result[0].max / 3) > 1 ? parseInt(result[0].max / 3) : 1;
+              }
+              vktdatav_maxtps_onehour = [{
+                "value": m_maxtps_onehour + "MAX/H",
+                "url": ""
+              }];
+            }
+          });
+        });
+      //nowtps取得
+      await dbo.collection("transaction_traces").aggregate({
+          $match: {
+            "block_num": {
+              $gte: vktdatav.head_block_num - 2
+            },
+            "producer_block_id": {
+              $ne: null
+            }
+          }
+        }, {
+          $group: {
+            _id: "$block_num",
+            max_transactions: {
+              $sum: 1
+            }
+          }
+        }, {
+          $sort: {
+            max_transactions: -1
+          }
+        }, {
+          $group: {
+            _id: null,
+            block_num: {
+              $first: "$_id"
+            },
+            max: {
+              $first: "$max_transactions"
+            }
+          }
+        },
+        async function (err, result) {
+          if (err) throw err;
+          result.toArray(async function (err, result) {
+            if (err) throw err;
+            // console.log(result);
+            if (result.length >= 1) {
+              //   vktdatav_nowtps = [{
+              //     "name": "TPS",
+              //     "value": parseInt(currentblockInfo.transactions.length / 3) > 0 ? parseInt(currentblockInfo.transactions.length / 3) : (currentblockInfo.transactions.length % 3 > 0 ? 1 : 0)
+              //   }];
               vktdatav_nowtps = [{
                 "name": "TPS",
                 "value": parseInt(result[0].max / 3) > 0 ? parseInt(result[0].max / 3) : (result[0].max % 3 > 0 ? 1 : 0)
               }];
+            } else {
+              vktdatav_nowtps = [{
+                "name": "TPS",
+                "value": 0
+              }];
             }
           });
-        }else{
-          vktdatav_nowtps = [{
-            "name": "TPS",
-            "value": 0
-          }];
-        }
-        db.close();
-      });
+          db.close();
+        });
     }
   });
-  
+
   return vktdatav;
 }
 
