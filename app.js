@@ -657,7 +657,7 @@ const runMongodb = async () => {
       vktdatav.contracks_num = result.count;
       //console.log(result);
     });
-    if(m_maxtps < 2000) {
+    if(m_maxtps < 2000 || m_maxtps_onehour > m_maxtps) {
     //aggregate({$group : {_id : "$block_num", max_transactions : {$sum : 1}}},{$group:{_id:null,max:{$max:"$max_transactions"}}})
     await dbo.collection("transaction_traces").aggregate({
         $match: {
