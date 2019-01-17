@@ -379,7 +379,7 @@ const runRpcBaseInfo = async () => {
     }];
 
     if(currentblockInfo.transactions.length / 3 > m_maxtps) {
-      m_maxtps = currentblockInfo.transactions.length / 3;
+      m_maxtps = parseInt(currentblockInfo.transactions.length / 3);
     }
   });
 
