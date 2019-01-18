@@ -14,6 +14,7 @@ const translate = require('google-translate-api');
 // 载入配置文件
 const config = require('./config');
 const fs = require('fs');
+const du = require('date-utils');
 require('colors');
 const {
   Api,
@@ -874,11 +875,12 @@ const runMongodbTPSList = async () => {
           // console.log(result);
           if (result.length >= 1) {
             vktdatav_tpslist = JSON.parse('[]');
+            var today=new Date();
             for (let i = 0; i < result.length; i++) {
-
+              console.log(result[i]._id);
               await Promise.resolve(i).then(async (i) => {
                 vktdatav_tpslist.push({
-                  'x': result[i]._id.replace(/T/, ' ').replace(/\..+/, ''),
+                  'x': today.add({days: 1}).toFormat(YYYY/MM/DD),
                   'y': parseInt(result[i].max_transactions / 3),
                   's': 0
                 });
