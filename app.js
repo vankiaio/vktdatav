@@ -861,7 +861,7 @@ const runMongodbTPSList = async () => {
         }
       }, {
         $group: {
-          _id: "$block_time",
+          _id: "$block_num",
           max_transactions: {
             $sum: 1
           }
@@ -878,8 +878,9 @@ const runMongodbTPSList = async () => {
 
               await Promise.resolve(i).then(async (i) => {
                 vktdatav_tpslist.push({
-                  'x': result[i]._id.replace(/T/, ' ').replace(/\..+/, ''),
-                  'y': parseInt(result[i].max_transactions / 3)
+                  'x': result[i]._id,
+                  'y': parseInt(result[i].max_transactions / 3),
+                  's': 0
                 });
               });
             }
@@ -888,19 +889,19 @@ const runMongodbTPSList = async () => {
               return (x.x < y.x) ? -1 : 1
             });
 
-            // for (let i = 0; i < result.length; i++) {
-            //   await Promise.resolve(i).then(async (i) => {
-            //     vktdatav_tpslist[i].s = i+1;
-            //   });
-            // }
+            for (let i = 0; i < result.length; i++) {
+              await Promise.resolve(i).then(async (i) => {
+                vktdatav_tpslist[i].s = i+1;
+              });
+            }
           } else {
             vktdatav_tpslist = JSON.parse('[]');
             for (let i = 0; i < 12; i++) {
               await Promise.resolve(i).then(async (i) => {
                 vktdatav_tpslist.push({
                   'x': vktdatav.head_block_num - 12 + i,
-                  'y': parseInt(0)//,
-                  // 's': i+1
+                  'y': parseInt(0),
+                  's': i+1
                 });
               });
             }
