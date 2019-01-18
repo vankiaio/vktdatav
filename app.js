@@ -14,7 +14,6 @@ const translate = require('google-translate-api');
 // 载入配置文件
 const config = require('./config');
 const fs = require('fs');
-require('date-utils');
 require('colors');
 const {
   Api,
@@ -875,14 +874,12 @@ const runMongodbTPSList = async () => {
           // console.log(result);
           if (result.length >= 1) {
             vktdatav_tpslist = JSON.parse('[]');
-            var today=new Date();
             for (let i = 0; i < result.length; i++) {
-              console.log(result[i]._id);
+
               await Promise.resolve(i).then(async (i) => {
                 vktdatav_tpslist.push({
-                  'x': today.add({days: 1}).toFormat(YYYY/MM/DD),
-                  'y': parseInt(result[i].max_transactions / 3),
-                  's': 0
+                  'x': result[i]._id.replace(/T/, ' ').replace(/\..+/, ''),
+                  'y': parseInt(result[i].max_transactions / 3)
                 });
               });
             }
@@ -891,19 +888,19 @@ const runMongodbTPSList = async () => {
               return (x.x < y.x) ? -1 : 1
             });
 
-            for (let i = 0; i < result.length; i++) {
-              await Promise.resolve(i).then(async (i) => {
-                vktdatav_tpslist[i].s = i+1;
-              });
-            }
+            // for (let i = 0; i < result.length; i++) {
+            //   await Promise.resolve(i).then(async (i) => {
+            //     vktdatav_tpslist[i].s = i+1;
+            //   });
+            // }
           } else {
             vktdatav_tpslist = JSON.parse('[]');
             for (let i = 0; i < 12; i++) {
               await Promise.resolve(i).then(async (i) => {
                 vktdatav_tpslist.push({
                   'x': vktdatav.head_block_num - 12 + i,
-                  'y': parseInt(0),
-                  's': i+1
+                  'y': parseInt(0)//,
+                  // 's': i+1
                 });
               });
             }
