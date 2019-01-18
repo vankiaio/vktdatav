@@ -888,8 +888,16 @@ const runMongodbTPSList = async () => {
             vktdatav_tpslist.sort(function down(x, y) {
               return (x.x < y.x) ? -1 : 1
             });
+
+            for (let i = 0; i < result.length; i++) {
+              await Promise.resolve(i).then(async (i) => {
+                vktdatav_tpslist.push({
+                  's': i+1
+                });
+              });
+            }
           } else {
-            for (let i = result.length; i < 12; i++) {
+            for (let i = 0; i < 12; i++) {
               await Promise.resolve(i).then(async (i) => {
                 vktdatav_tpslist.push({
                   'x': vktdatav.head_block_num - 12 + i,
