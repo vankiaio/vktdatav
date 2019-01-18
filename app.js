@@ -852,7 +852,7 @@ const runMongodbTPSList = async () => {
     await dbo.collection("transaction_traces").aggregate({
         $match: {
           "block_num": {
-            $gte: vktdatav.head_block_num - 36,
+            $gte: vktdatav.head_block_num - 26,
             $lte: vktdatav.head_block_num
           },
           "producer_block_id": {
