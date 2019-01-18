@@ -891,9 +891,7 @@ const runMongodbTPSList = async () => {
 
             for (let i = 0; i < result.length; i++) {
               await Promise.resolve(i).then(async (i) => {
-                vktdatav_tpslist.push({
-                  's': i+1
-                });
+                vktdatav_tpslist.s = i+1;
               });
             }
           } else {
