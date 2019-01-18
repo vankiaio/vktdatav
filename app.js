@@ -210,7 +210,7 @@ app.use('/vktapi', async (req, res) => {
       res.json(vktdatav_maxtps_onehour);
       break;
     case "producers_list":
-      if (!IsLoadingRPCPRODUCER && vktdatav_producers_list.length >= 3) {
+      if (!IsLoadingRPCPRODUCER && vktdatav_producers_list.length >= 7) {
         res.json(vktdatav_producers_list);
       }
       break;
@@ -536,7 +536,7 @@ const runRpcGetProducers = async () => {
                           lng: JSON.parse(sres.text).result.location.lng
                         }
                       });
-                      if (i < 3) {
+                      if (i < 7) {
                         vktdatav_mproducer_location.push({
                           lat: JSON.parse(sres.text).result.location.lat,
                           lng: JSON.parse(sres.text).result.location.lng,
