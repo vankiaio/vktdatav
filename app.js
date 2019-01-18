@@ -368,7 +368,7 @@ const runRpcBaseInfo = async () => {
   vktdatav.head_block_num = info.head_block_num;
   vktdatav.head_block_producer = info.head_block_producer;
   vktdatav_blocks_num = [{
-    "name": "区块数量",
+    // "name": "区块数量",
     "value": vktdatav.head_block_num
   }];
 
@@ -460,7 +460,7 @@ const runRpcGetProducers = async () => {
     vktdatav_producer_location.length != producer_count) {
     vktdatav.producers_num = producer_count;
     vktdatav_producers_num = [{
-      "name": "节点数量",
+      // "name": "节点数量",
       "value": producer_count
     }]
 
@@ -615,7 +615,7 @@ const runMongodb = async () => {
       if (result.length >= 1) {
         vktdatav.accounts_num = result.length;
         vktdatav_accounts_num = [{
-          "name": "账户数量",
+          // "name": "账户数量",
           "value": result.length + 500
         }];
       }
@@ -629,7 +629,7 @@ const runMongodb = async () => {
       if (result >= 1) {
         vktdatav.transactions_num = result;
         vktdatav_transaction_num = [{
-          "name": "交易数量",
+          // "name": "交易数量",
           "value": result
         }];
       }
@@ -751,10 +751,7 @@ const runMongodb = async () => {
             if (err) throw err;
             // console.log(result);
             if (result.length >= 1) {
-
-              if (parseInt(result[0].max / 3) >= m_maxtps_onehour) {
-                m_maxtps_onehour = parseInt(result[0].max / 3) > 1 ? parseInt(result[0].max / 3) : 1;
-              }
+              m_maxtps_onehour = parseInt(result[0].max / 3) > 1 ? parseInt(result[0].max / 3) : 1;
               vktdatav_maxtps_onehour = [{
                 "value": m_maxtps_onehour + "MAX/H",
                 "url": ""
@@ -805,12 +802,12 @@ const runMongodb = async () => {
               //     "value": parseInt(currentblockInfo.transactions.length / 3) > 0 ? parseInt(currentblockInfo.transactions.length / 3) : (currentblockInfo.transactions.length % 3 > 0 ? 1 : 0)
               //   }];
               vktdatav_nowtps = [{
-                "name": "TPS",
+                // "name": "TPS",
                 "value": parseInt(result[0].max / 3) > 0 ? parseInt(result[0].max / 3) : (result[0].max % 3 > 0 ? 1 : 0)
               }];
             } else {
               vktdatav_nowtps = [{
-                "name": "TPS",
+                // "name": "TPS",
                 "value": 0
               }];
             }
@@ -896,7 +893,7 @@ const runCcxt = async () => {
   }
 
   vktdatav_cnyusd_price = [{
-    "name": "",
+    // "name": "",
     "value": (vktdatav.usdcny * vktdatav_vktprice_list[7].y).toFixed(8)
   }];
 
