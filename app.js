@@ -861,7 +861,7 @@ const runMongodbTPSList = async () => {
         }
       }, {
         $group: {
-          _id: "$block_num",
+          _id: "$block_time",
           max_transactions: {
             $sum: 1
           }
@@ -878,7 +878,7 @@ const runMongodbTPSList = async () => {
 
               await Promise.resolve(i).then(async (i) => {
                 vktdatav_tpslist.push({
-                  'x': result[i]._id,
+                  'x': result[i]._id.replace(/T/, ' ').replace(/\..+/, ''),
                   'y': parseInt(result[i].max_transactions / 3),
                   's': 0
                 });
