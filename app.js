@@ -880,6 +880,7 @@ const runMongodbTPSList = async () => {
                 vktdatav_tpslist.push({
                   'x': result[i]._id,
                   'y': parseInt(result[i].max_transactions / 3),
+                  's': 0
                 });
               });
             }
@@ -887,18 +888,16 @@ const runMongodbTPSList = async () => {
             vktdatav_tpslist.sort(function down(x, y) {
               return (x.x < y.x) ? -1 : 1
             });
-
+          } else {
             for (let i = result.length; i < 12; i++) {
               await Promise.resolve(i).then(async (i) => {
                 vktdatav_tpslist.push({
-                  'x': result[i]._id,
-                  'y': parseInt(result[i].max_transactions / 3),
+                  'x': vktdatav.head_block_num - 12 + i,
+                  'y': parseInt(0),
+                  's': i+1
                 });
               });
             }
-
-          } else {
-            vktdatav_tpslist = JSON.parse('[]');
           }
         });
         db.close();
