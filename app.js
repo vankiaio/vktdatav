@@ -14,7 +14,7 @@ const translate = require('google-translate-api');
 // 载入配置文件
 const config = require('./config');
 const fs = require('fs');
-const du = require('date-utils');
+require('date-utils');
 require('colors');
 const {
   Api,
