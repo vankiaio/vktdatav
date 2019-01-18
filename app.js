@@ -48,6 +48,7 @@ let vktdatav_transaction_num = {};
 let vktdatav_maxtps = {};
 let vktdatav_maxtps_onehour = {};
 let vktdatav_nowtps = {};
+let vktdatav_tpslist = {};
 let vktdatav_blocks_list = [];
 let vktdatav_vktprice_list = [];
 let vktdatav_vkttracker_info = [];
@@ -200,6 +201,9 @@ app.use('/vktapi', async (req, res) => {
     case "transaction_num":
       res.json(vktdatav_transaction_num);
       break;
+    case "vktdatav_tpslist":
+      res.json(vktdatav_tpslist);
+      break;
     case "vktdatav_nowtps":
       res.json(vktdatav_nowtps);
       break;
@@ -341,6 +345,15 @@ const intervalObj4 = setInterval(async () => {
 
 }, 8000);
 
+const intervalObj5 = setInterval(async () => {
+
+  //获取jsons数据
+  const datadb = await runMongodbTPSList().catch(err => {
+    console.log("mongodb error: ", err)
+  });
+  console.log("nodejs app passed runMongodbTPSList!!!");
+
+}, 10000);
 
 const defaultPrivateKey = "5KWNB8FSe3dYbW3fZJBvK4M4QhaCtRjh2EP5j7gSbs7GeNTnxV2"; // useraaaaaaaa
 const signatureProvider = new JsSignatureProvider([defaultPrivateKey]);
@@ -817,6 +830,78 @@ const runMongodb = async () => {
     }
   });
 
+  return vktdatav;
+}
+
+// rpc对象支持promise，所以使用 async/await 函数运行rpc命令
+const runMongodbTPSList = async () => {
+
+
+  MongoClient.connect(MONGO_URL, async function (err, db) {
+    if (err) {
+      console.error(err);
+      throw err;
+    }
+    const dbo = db.db("EOS");
+    // dbo.collection("accounts").find().toArray(function(err, result) {
+    //   if (err) throw err;
+    //   for (let i in result) {
+    //     console.log(result[i].name);
+    //   }
+    //nowtps取得
+    await dbo.collection("transaction_traces").aggregate({
+        $match: {
+          "block_num": {
+            $gte: vktdatav.head_block_num - 36,
+            $lte: vktdatav.head_block_num
+          },
+          "producer_block_id": {
+            $ne: null
+          }
+        }
+      }, {
+        $group: {
+          _id: "$block_num",
+          max_transactions: {
+            $sum: 1
+          }
+        }
+      },
+      async function (err, result) {
+        if (err) throw err;
+        result.toArray(async function (err, result) {
+          if (err) throw err;
+          // console.log(result);
+          if (result.length >= 1) {
+            vktdatav_tpslist = JSON.parse('[]');
+            for (let i = 0; i < result.length; i++) {
+
+              await Promise.resolve(i).then(async (i) => {
+                vktdatav_tpslist.push({
+                  'x': result[i]._id,
+                  'y': parseInt(result[i].max_transactions / 3),
+                  's': 0
+                });
+              });
+            }
+            //确保排序
+            vktdatav_tpslist.sort(function down(x, y) {
+              return (x.x < y.x) ? -1 : 1
+            });
+
+            for (let i = 0; i < result.length; i++) {
+              await Promise.resolve(i).then(async (i) => {
+                vktdatav_tpslist[i].s = i + 1;
+              });
+            }
+
+          } else {
+            vktdatav_tpslist = JSON.parse('[]');
+          }
+        });
+        db.close();
+      });
+  });
   return vktdatav;
 }
 
