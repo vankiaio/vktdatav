@@ -92,6 +92,18 @@ app.use('/vktapi/v1/prices', async (req, res) => {
   }
 });
 
+// 路由scatter create_vkt account
+app.use(bodyParser.urlencoded({ extended: false }));
+app.post('/vktapi/v1/create_vkt', async (req, res) => {
+
+  console.log('/vktapi/v1/create_vkt', req.body);
+  if (req.body.account_name != undefined ) {
+
+  } else {
+    res.json(JSON.from('{}'));
+  }
+});
+
 // 路由scatter 多语言数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
 app.use('/vktapi/v1/languages', async (req, res) => {
