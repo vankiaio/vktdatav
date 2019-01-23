@@ -22,7 +22,7 @@ const {
   RpcError,
   JsSignatureProvider
 } = require('eosjs');
-let {ecc} = Eos.modules;
+const Ecc = require('eosjs-ecc');
 const fetch = require('node-fetch'); // node only; not needed in browsers
 const {
   TextDecoder,
@@ -110,7 +110,7 @@ app.post('/vktapi/v1/create_vkt', async (req, res) => {
   if (req.body.signature != undefined && req.body.keys.active != undefined) {
     let sig = req.body.signature;
     let pubkey = req.body.keys.active;
-    let checkHash = ecc.verifyHash(sig, req.body, pubkey);
+    let checkHash = Ecc.verifyHash(sig, req.body, pubkey);
     console.log('/vktapi/v1/create_vkt - checkHash=', checkHash);
     
   } else {
