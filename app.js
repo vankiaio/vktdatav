@@ -22,6 +22,7 @@ const {
   RpcError,
   JsSignatureProvider
 } = require('eosjs');
+let {ecc} = Eos.modules;
 const fetch = require('node-fetch'); // node only; not needed in browsers
 const {
   TextDecoder,
@@ -94,16 +95,29 @@ app.use('/vktapi/v1/prices', async (req, res) => {
 });
 
 // 路由scatter create_vkt account
+// /vktapi/v1/create_vkt { transaction_id: '111',
+//   signature: 'SIG_K1_KkFyxEKt9XerYAzrKmKPKJscesnE9LX3a9vfhbeLHts1u9qU69Wbnk1CEW4B9Jh7MsLvQ2mJcesDvbSf1ss6H9GzK5CgJo',
+//   keys: 
+//    { active: 'VKT8d2MU37BHznkchJA3gNiFJmPFfM6T2WXocuJzDmQsj8tH2Nhqp',
+//      owner: 'VKT64Qv4GnUN4TU3fKqHvfhxGLpnjnMCujwAMNZHLuWn1mYbAbFjk' },
+//   account_name: 'tokyoliyi111' }
+
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 app.post('/vktapi/v1/create_vkt', async (req, res) => {
 
   console.log('/vktapi/v1/create_vkt', req.body);
-  if (req.body.account_name != undefined ) {
-
+  if (req.body.signature != undefined && req.body.keys.active != undefined) {
+    let sig = req.body.signature;
+    let pubkey = req.body.keys.active;
+    let checkHash = ecc.verifyHash(sig, req.body, pubkey);
+    console.log('/vktapi/v1/create_vkt - checkHash=', checkHash);
+    
   } else {
     res.json(JSON.from('{}'));
   }
 });
+
 
 // 路由scatter 多语言数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
