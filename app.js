@@ -197,7 +197,7 @@ app.post('/vktapi/v1/create_vkt', async (req, res) => {
     });
     
     console.log("newaccount result = ",result);
-    res.json(JSON.parse('{created}'));
+    res.json(JSON.parse('{\'created\':\'true\'}'));
   } else {
     res.json(JSON.parse('{}'));
   }
