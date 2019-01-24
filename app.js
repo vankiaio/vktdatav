@@ -107,13 +107,82 @@ app.use(bodyParser.json());
 app.post('/vktapi/v1/create_vkt', async (req, res) => {
 
   console.log('/vktapi/v1/create_vkt', req.body);
-  if (req.body.signature != undefined && req.body.keys.active != undefined) {
+  if (req.body.signature != undefined && req.body.keys.active != undefined &&
+    req.body.transaction_id != undefined && req.body.transaction_id === "vankiawallet") {
     let sig = req.body.signature;
-    let pubkey = req.body.keys.active;
+    let pubkeyactive = req.body.keys.active;
+    let pubkeyowner = req.body.keys.owner;
+    let actname = req.body.account_name;
+    
     console.log('Public Key:\t', pubkey) // VKTkey...
     let checkHash = ecc.verify(sig, pubkey, pubkey);
     console.log('/vktapi/v1/create_vkt - checkHash=', checkHash);
+
+    const result = await api.transact({
+      actions: [{
+        account: 'eosio',
+        name: 'newaccount',
+        authorization: [{
+          actor: 'makeaccouts',
+          permission: 'active',
+        }],
+        data: {
+          creator: 'makeaccouts',
+          name: actname,
+          owner: {
+            threshold: 1,
+            keys: [{
+              key: pubkeyowner,
+              weight: 1
+            }],
+            accounts: [],
+            waits: []
+          },
+          active: {
+            threshold: 1,
+            keys: [{
+              key: pubkeyactive,
+              weight: 1
+            }],
+            accounts: [],
+            waits: []
+          },
+        },
+      },
+      {
+        account: 'eosio',
+        name: 'buyrambytes',
+        authorization: [{
+          actor: 'makeaccouts',
+          permission: 'active',
+        }],
+        data: {
+          payer: 'makeaccouts',
+          receiver: actname,
+          bytes: 8192,
+        },
+      },
+      {
+        account: 'eosio',
+        name: 'delegatebw',
+        authorization: [{
+          actor: 'makeaccouts',
+          permission: 'active',
+        }],
+        data: {
+          from: 'makeaccouts',
+          receiver: actname,
+          stake_net_quantity: '0.5000 VKT',
+          stake_cpu_quantity: '0.5000 VKT',
+          transfer: false,
+        }
+      }]
+    }, {
+      blocksBehind: 3,
+      expireSeconds: 30,
+    });
     
+    console.log("newaccount result = ",result);
   } else {
     res.json(JSON.from('{}'));
   }
