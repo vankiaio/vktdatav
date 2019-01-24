@@ -33,6 +33,7 @@ const MONGO_URL = config.MONGO_URL;
 const VKTAPI_URL = config.VKTAPI_URL;
 const XE_URL = config.XE_URL;
 const SCATTER_API = config.SCATTER_API;
+const defaultPrivateKey = config.defaultPrivateKey;
 
 // 服务器端口
 let NODE_PORT = 3030;
