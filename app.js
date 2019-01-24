@@ -21,8 +21,8 @@ const {
   JsonRpc,
   RpcError,
   JsSignatureProvider,
-  ecc
 } = require('eosjs');
+const ecc = require("eosjs-ecc");
 const fetch = require('node-fetch'); // node only; not needed in browsers
 const {
   TextDecoder,
@@ -110,7 +110,8 @@ app.post('/vktapi/v1/create_vkt', async (req, res) => {
   if (req.body.signature != undefined && req.body.keys.active != undefined) {
     let sig = req.body.signature;
     let pubkey = req.body.keys.active;
-    let checkHash = ecc.verify(sig, {data:pubkey});
+    console.log('Public Key:\t', pubkey) // VKTkey...
+    let checkHash = ecc.verify(sig, pubkey, pubkey);
     console.log('/vktapi/v1/create_vkt - checkHash=', checkHash);
     
   } else {
