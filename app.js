@@ -137,11 +137,11 @@ app.post('/vktapi/v1/create_vkt', async (req, res) => {
         account: 'eosio',
         name: 'newaccount',
         authorization: [{
-          actor: 'makeaccouts',
+          actor: 'makeaccounts',
           permission: 'active',
         }],
         data: {
-          creator: 'makeaccouts',
+          creator: 'makeaccounts',
           name: actname,
           owner: {
             threshold: 1,
@@ -167,11 +167,11 @@ app.post('/vktapi/v1/create_vkt', async (req, res) => {
         account: 'eosio',
         name: 'buyrambytes',
         authorization: [{
-          actor: 'makeaccouts',
+          actor: 'makeaccounts',
           permission: 'active',
         }],
         data: {
-          payer: 'makeaccouts',
+          payer: 'makeaccounts',
           receiver: actname,
           bytes: 8192,
         },
@@ -180,11 +180,11 @@ app.post('/vktapi/v1/create_vkt', async (req, res) => {
         account: 'eosio',
         name: 'delegatebw',
         authorization: [{
-          actor: 'makeaccouts',
+          actor: 'makeaccounts',
           permission: 'active',
         }],
         data: {
-          from: 'makeaccouts',
+          from: 'makeaccounts',
           receiver: actname,
           stake_net_quantity: '0.5000 VKT',
           stake_cpu_quantity: '0.5000 VKT',
