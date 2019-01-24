@@ -186,8 +186,8 @@ app.post('/vktapi/v1/create_vkt', async (req, res) => {
         data: {
           from: 'makeaccounts',
           receiver: actname,
-          stake_net_quantity: '0.5000 VKT',
-          stake_cpu_quantity: '0.5000 VKT',
+          stake_net_quantity: '0.0500 VKT',
+          stake_cpu_quantity: '0.0500 VKT',
           transfer: false,
         }
       }]
@@ -197,6 +197,7 @@ app.post('/vktapi/v1/create_vkt', async (req, res) => {
     });
     
     console.log("newaccount result = ",result);
+    res.json(JSON.from('{created}'));
   } else {
     res.json(JSON.from('{}'));
   }
