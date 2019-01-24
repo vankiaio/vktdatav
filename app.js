@@ -74,6 +74,19 @@ let m_maxtps_onehour = 0;
 // 创建express
 const app = express();
 
+const signatureProvider = new JsSignatureProvider([defaultPrivateKey]);
+
+const rpc = new JsonRpc(VKTAPI_URL, {
+  fetch
+});
+const api = new Api({
+  rpc,
+  signatureProvider,
+  textDecoder: new TextDecoder(),
+  textEncoder: new TextEncoder()
+});
+
+
 // 路由scatter prices数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
 app.use('/vktapi/v1/currencies', async (req, res) => {
@@ -114,8 +127,8 @@ app.post('/vktapi/v1/create_vkt', async (req, res) => {
     let pubkeyowner = req.body.keys.owner;
     let actname = req.body.account_name;
     
-    console.log('Public Key:\t', pubkey) // VKTkey...
-    let checkHash = ecc.verify(sig, pubkey, pubkey);
+    console.log('Public Key:\t', pubkeyactive) // VKTkey...
+    let checkHash = ecc.verify(sig, pubkeyactive, pubkeyactive);
     console.log('/vktapi/v1/create_vkt - checkHash=', checkHash);
 
     const result = await api.transact({
@@ -451,19 +464,6 @@ const intervalObj5 = setInterval(async () => {
   console.log("nodejs app passed runMongodbTPSList!!!");
 
 }, 10000);
-
-const defaultPrivateKey = "5KWNB8FSe3dYbW3fZJBvK4M4QhaCtRjh2EP5j7gSbs7GeNTnxV2"; // useraaaaaaaa
-const signatureProvider = new JsSignatureProvider([defaultPrivateKey]);
-
-const rpc = new JsonRpc(VKTAPI_URL, {
-  fetch
-});
-const api = new Api({
-  rpc,
-  signatureProvider,
-  textDecoder: new TextDecoder(),
-  textEncoder: new TextEncoder()
-});
 
 // rpc对象支持promise，所以使用 async/await 函数运行rpc命令
 const runRpcBaseInfo = async () => {
