@@ -122,7 +122,7 @@ app.post('/vktapi/v1/create_vkt', async (req, res) => {
 
   console.log('/vktapi/v1/create_vkt', req.body);
   if (req.body.signature != undefined && req.body.keys.active != undefined &&
-    req.body.transaction_id != undefined && req.body.transaction_id === "vankiawallet") {
+    req.body.transaction_id != undefined && req.body.transaction_id === "ttmcwallet") {
     let sig = req.body.signature;
     let pubkeyactive = req.body.keys.active;
     let pubkeyowner = req.body.keys.owner;
@@ -186,8 +186,8 @@ app.post('/vktapi/v1/create_vkt', async (req, res) => {
         data: {
           from: 'makeaccounts',
           receiver: actname,
-          stake_net_quantity: '0.0500 VKT',
-          stake_cpu_quantity: '0.0500 VKT',
+          stake_net_quantity: '0.0500 TTMC',
+          stake_cpu_quantity: '0.0500 TTMC',
           transfer: false,
         }
       }]
@@ -195,7 +195,28 @@ app.post('/vktapi/v1/create_vkt', async (req, res) => {
       blocksBehind: 3,
       expireSeconds: 30,
     });
-    
+/*
+  const result = await api.transact({
+    actions: [{
+      account: 'eosio.token',
+      name: 'transfer',
+      authorization: [{
+        actor: 'makeaccounts',
+        permission: 'active',
+      }],
+      data: {
+        from: 'makeaccounts',
+        to: 'tokyoliyi',
+        quantity: '0.0100 TTMC',
+        memo: 'TTMC test',
+      },
+    }]
+  }, {
+    blocksBehind: 3,
+    expireSeconds: 30,
+  });
+  console.dir(result);
+*/
     console.log("newaccount result = ",result);
     res.json(JSON.parse('{"created" : true}'));
   } else {
@@ -326,7 +347,7 @@ app.use('/vktapi', async (req, res) => {
       res.json(vktdatav_maxtps_onehour);
       break;
     case "producers_list":
-      if (!IsLoadingRPCPRODUCER && vktdatav_producers_list.length >= 7) {
+      if (!IsLoadingRPCPRODUCER && vktdatav_producers_list.length >= 3) {
         res.json(vktdatav_producers_list);
       }
       break;
@@ -441,9 +462,9 @@ const intervalObj4 = setInterval(async () => {
   console.log("nodejs app is loading ?", IsLoadingRPCPRODUCER);
 
   //获取jsons数据
-  const data = await runRpcGetProducers().catch(err => {
-    console.log("runRpcGetProducers error: ", err)
-  });
+//  const data = await runRpcGetProducers().catch(err => {
+//    console.log("runRpcGetProducers error: ", err)
+//  });
 
   console.log("nodejs app passed runRpcGetProducers!!!");
 
