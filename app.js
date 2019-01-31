@@ -285,11 +285,29 @@ app.use('/vktapi/v1/account/vkt/:account_id', async (req, res) => {
   vktdatav_accounts_info.account_name = accountInfo.account_name;
   vktdatav_accounts_info.balances = JSON.parse('[]');
 
+  const lockedbalance = await rpc.get_table_rows({
+    json: true,              // Get the response as json
+    code: 'eosio.token',     // Contract that we target
+    scope: accountid,         // Account that owns the data
+    table: 'locked',        // Table name
+    limit: 10,               // maximum number of rows that we want to get
+  });
+
+  // console.log(lockedbalance)
+
+  let amountlocked = 0.0;
+  let unlockdate = "";
   for (let i in balances) {
     let balarr = balances[i].split(" ");
+    if(balarr[1] === "TTMC"){
+      amountlocked = lockedbalance.rows[0].balance;
+      unlockdate = lockedbalance.rows[0].unlock_request_time;
+    }
     vktdatav_accounts_info.balances.push({
       contract: "eosio.token",
       amount: balarr[0],
+      amountlocked: amountlocked,
+      unlockdate: unlockdate,
       currency: balarr[1],
       decimals: balarr[0].split(".")[1].length,
     });
