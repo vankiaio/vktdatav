@@ -306,7 +306,8 @@ app.use('/vktapi/v1/account/vkt/:account_id', async (req, res) => {
     vktdatav_accounts_info.balances.push({
       contract: "eosio.token",
       amount: balarr[0],
-      amountlocked: amountlocked,
+      amountlocked: amountlocked.split(' ')[0],
+      availableamount: balarr[0] - amountlocked.split(' ')[0],
       unlockdate: unlockdate,
       currency: balarr[1],
       decimals: balarr[0].split(".")[1].length,
