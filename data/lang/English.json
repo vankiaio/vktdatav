@@ -135,7 +135,7 @@
         "create_eos_account_act_bar_btn": "Create account",
         "create_eos_exchange_change_name": "Want to change names?",
         "create_eos_exchange_info_tit": "We will create an account for you free of charge on the TTMC blockchain.",
-        "create_eos_exchange_info_sub": "Please confirm your username ${accountName} and return if you need to change it.",
+        "create_eos_exchange_info_sub": "Please confirm your username and return if you need to change it.",
         "create_eos_exchange_use_name_btn": "Use name",
         "create_eos_exchange_ex_field_parts": ["Send at least", "to account", "with", "as the memo"],
         "create_eos_exchange_sent_tit": "After sending TTMC from an exchange with the above details, copy the transaction ID here.",
