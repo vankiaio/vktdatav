@@ -131,7 +131,7 @@
         "create_eos_account_act_bar_btn": "계정 만들기",
         "create_eos_exchange_change_name": "이름을 변경하시겠습니까?",
         "create_eos_exchange_info_tit": "우리는 TTMC 블록 체인에 무료로 계정을 만들 것입니다.",
-        "create_eos_exchange_info_sub": "사용자 이름을 {accountName} (으)로 확인하고 변경해야하는 경우 반환하십시오.",
+        "create_eos_exchange_info_sub": "사용자 이름을 (으)로 확인하고 변경해야하는 경우 반환하십시오.",
         "create_eos_exchange_use_name_btn": "이름 사용하기",
         "create_eos_exchange_ex_field_parts": ["최소한", "을 다음 계정으로", "이 메모와 함께", "보내주세요"],
         "create_eos_exchange_sent_tit": "위의 세부사항과 함께 거래소에서 TTMC를 보낸 후, 트랜잭션 ID를 여기에 붙여넣으세요.",
