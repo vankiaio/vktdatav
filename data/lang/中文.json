@@ -131,7 +131,7 @@
         "create_eos_account_act_bar_btn": "创建账户",
         "create_eos_exchange_change_name": "需要更改名称？",
         "create_eos_exchange_info_tit": "我们将在TTMC区块链上免费为您创建一个帐户。",
-        "create_eos_exchange_info_sub": "请确认您的用户名 {accountName} 并在需要更改时返回。",
+        "create_eos_exchange_info_sub": "请确认您的用户名，并在需要更改时返回。",
         "create_eos_exchange_use_name_btn": "用户名称",
         "create_eos_exchange_ex_field_parts": ["发送至少", "到账户", "填写", "作为memo"],
         "create_eos_exchange_sent_tit": "填写上述详细信息，从交易所转账TTMC后，请将交易ID复制到此处。",
