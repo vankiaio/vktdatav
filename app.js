@@ -15,6 +15,7 @@ const translate = require('google-translate-api');
 // 载入配置文件
 const config = require('./config');
 const fs = require('fs');
+const moment = require('moment');
 require('colors');
 const {
   Api,
@@ -296,15 +297,15 @@ app.use('/vktapi/v1/account/vkt/:account_id', async (req, res) => {
   // console.log(lockedbalance)
 
   let amountlocked = 0.0;
-  let unlockdate = "";
+  let unlockdate ;
   for (let i in balances) {
     let balarr = balances[i].split(" ");
     if(balarr[1] === "TTMC" && lockedbalance.rows.length > 0){
       amountlocked = lockedbalance.rows[0].balance.split(' ')[0];
-      unlockdate = lockedbalance.rows[0].unlock_execute_time;
+      unlockdate = moment.utc(lockedbalance.rows[0].unlock_execute_time, moment.ISO_8601).local().format();
     }else{
       amountlocked = 0.0;
-      unlockdate = "";
+      unlockdate = moment().format();
     }
     vktdatav_accounts_info.balances.push({
       contract: "eosio.token",
