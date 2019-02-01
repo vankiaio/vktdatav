@@ -301,7 +301,7 @@ app.use('/vktapi/v1/account/vkt/:account_id', async (req, res) => {
     let balarr = balances[i].split(" ");
     if(balarr[1] === "TTMC" && lockedbalance.rows.length > 0){
       amountlocked = lockedbalance.rows[0].balance.split(' ')[0];
-      unlockdate = lockedbalance.rows[0].unlock_request_time;
+      unlockdate = lockedbalance.rows[0].unlock_execute_time;
     }else{
       amountlocked = 0.0;
       unlockdate = "";
