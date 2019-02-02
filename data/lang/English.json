@@ -96,7 +96,7 @@
         "add_keys_select_create_eos_tit": "Create a new TTMC account",
         "add_keys_select_create_eos_desc": "We'll quickly generate key for you",
         "add_keys_select_create_eos_btn": "TTMC account",
-        "add_keys_import_name_lbl": "Key name",
+        "add_keys_import_name_lbl": "Account name",
         "add_keys_import_name_plc": "Give this key a name to remember.",
         "add_keys_import_text_tit": "Import private key as text",
         "add_keys_import_text_desc": "If you would like to type in or paste your private key",
