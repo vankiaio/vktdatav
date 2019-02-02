@@ -143,7 +143,7 @@
         "create_eos_exchange_tx_id_lbl": "Transaction ID",
         "create_eos_exchange_act_bar_btn": "Create account",
         "create_eos_errors_invalid_res": "Either CPU or NET was below or equal to 0",
-        "keypair_name_lbl": "Key name",
+        "keypair_name_lbl": "Account name",
         "keypair_name_plc": "Give this key a name to remember.",
         "keypair_dashboard_states_add": "Add account",
         "keypair_dashboard_states_linked": "account",
