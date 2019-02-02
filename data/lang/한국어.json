@@ -86,7 +86,7 @@
         "add_keys_select_create_tit": "새로운 키 만들기",
         "add_keys_select_create_desc": "신규 생성한 키 세트는 다양한 블록체인에서 사용할 수 있습니다. 이 키와 관련된 주소는 어떤 자산도 저장되어 있지 않은 완전히 새로운 것입니다.",
         "add_keys_select_create_btn": "키 만들기",
-        "add_keys_select_import_tit": "기존 키 가져오기",
+        "add_keys_select_import_tit": "기존 TTMC 계정 가져 오기",
         "add_keys_select_import_desc": "보유 중인 키가 있고, TTMC Wallet로 가져오고 싶은 경우",
         "add_keys_select_import_btn": "키 가져오기",
         "add_keys_select_create_eos_tit": "TTMC 계정 신규 생성",
