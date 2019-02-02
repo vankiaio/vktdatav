@@ -146,7 +146,7 @@
         "keypair_name_lbl": "Account name",
         "keypair_name_plc": "Give this key a name to remember.",
         "keypair_dashboard_states_add": "Add account",
-        "keypair_dashboard_states_linked": "account",
+        "keypair_dashboard_states_linked": "Account",
         "keypair_dashboard_states_keys": "Keys & blockchains",
         "keypair_dashboard_add_account_create_eos_lbl": "Create a new TTMC account",
         "keypair_dashboard_add_account_create_eos_desc": "If you want to create a new TTMC account on top of this key.",
