@@ -139,7 +139,7 @@
         "create_eos_exchange_tx_id_lbl": "交易 ID",
         "create_eos_exchange_act_bar_btn": "创建账户",
         "create_eos_errors_invalid_res": "CPU或NET的数量小于或等于0",
-        "keypair_name_lbl": "密钥名称",
+        "keypair_name_lbl": "账户名称",
         "keypair_name_plc": "请命名该密钥方便记忆",
         "keypair_dashboard_states_add": "添加账户",
         "keypair_dashboard_states_linked": "账户",
