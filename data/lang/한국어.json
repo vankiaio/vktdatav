@@ -139,7 +139,7 @@
         "create_eos_exchange_tx_id_lbl": "트랜잭션 ID",
         "create_eos_exchange_act_bar_btn": "계정 만들기",
         "create_eos_errors_invalid_res": "CPU 또는 NET이 0보다 작거나 0이었습니다",
-        "keypair_name_lbl": "키 이름",
+        "keypair_name_lbl": "계정 이름",
         "keypair_name_plc": "이 키를 쉽게 기억할 수 있는 이름을 입력해주세요.",
         "keypair_dashboard_states_add": "계정 추가하기",
         "keypair_dashboard_states_linked": "계정",
