@@ -92,7 +92,7 @@
         "add_keys_select_create_eos_tit": "TTMC 계정 신규 생성",
         "add_keys_select_create_eos_desc": "TTMC Wallet는 빠르게 키쌍을 생성할 것입니다",
         "add_keys_select_create_eos_btn": "TTMC 계정",
-        "add_keys_import_name_lbl": "키 이름",
+        "add_keys_import_name_lbl": "계정 이름",
         "add_keys_import_name_plc": "이 키를 쉽게 기억할 수 있는 이름을 입력해주세요.",
         "add_keys_import_text_tit": "텍스트 형태의 개인키 가져오기",
         "add_keys_import_text_desc": "개인 키를 입력하거나 붙여넣기 하세요",
