@@ -92,7 +92,7 @@
         "add_keys_select_create_eos_tit": "创建一个新的TTMC账户",
         "add_keys_select_create_eos_desc": "我们将快速为您生成密钥",
         "add_keys_select_create_eos_btn": "TTMC 账户",
-        "add_keys_import_name_lbl": "密钥名称",
+        "add_keys_import_name_lbl": "账户名称",
         "add_keys_import_name_plc": "为密钥命名，方便记忆",
         "add_keys_import_text_tit": "导入文本格式私钥",
         "add_keys_import_text_desc": "您可以输入或粘贴您的私钥",
