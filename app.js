@@ -294,15 +294,15 @@ app.use('/vktapi/v1/account/vkt/:account_id', async (req, res) => {
     limit: 10,               // maximum number of rows that we want to get
   });
 
-  // console.log(lockedbalance)
+  console.log(lockedbalance)
 
   let amountlocked = 0.0;
   let unlockdate ;
   for (let i in balances) {
     let balarr = balances[i].split(" ");
     if(balarr[1] === "TTMC" && lockedbalance.rows.length > 0){
-      amountlocked = lockedbalance.rows[0].balance.split(' ')[0];
-      unlockdate = moment.utc(lockedbalance.rows[0].unlock_execute_time, moment.ISO_8601).local().format();
+      amountlocked = lockedbalance.rows[i].total_balance.split(' ')[0];
+      unlockdate = moment.utc(lockedbalance.rows[i].balances[0].unlock_execute_time, moment.ISO_8601).local().format();
     }else{
       amountlocked = 0.0;
       unlockdate = moment().format();
@@ -315,9 +315,17 @@ app.use('/vktapi/v1/account/vkt/:account_id', async (req, res) => {
       unlockdate: unlockdate,
       currency: balarr[1],
       decimals: balarr[0].split(".")[1].length,
+      locked_balances:JSON.parse('[]')
     });
+    if(balarr[1] === "TTMC" && lockedbalance.rows.length > 0){
+      for(let j in lockedbalance.rows[i].balances){
+        vktdatav_accounts_info.balances[i].locked_balances.push({
+          balance:lockedbalance.rows[i].balances[j].balance.split(' ')[0],
+          unlock_execute_time:moment.utc(lockedbalance.rows[i].balances[j].unlock_execute_time, moment.ISO_8601).local().format()
+        });  
+      }
+    }
   }
-
 
   // const accountInfo2 = await rpc.get_account('qingzhudatac');
   // console.log(accountInfo2);
