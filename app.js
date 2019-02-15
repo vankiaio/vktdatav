@@ -15,6 +15,7 @@ const translate = require('google-translate-api');
 // 载入配置文件
 const config = require('./config');
 const fs = require('fs');
+const moment = require('moment');
 require('colors');
 const {
   Api,
@@ -87,6 +88,21 @@ const api = new Api({
   textEncoder: new TextEncoder()
 });
 
+// 路由scatter 多语言数据
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+app.post('/api_oc_personal/v1.0.0/message/auth', async (req, res) => {
+
+  let login = JSON.parse('{}');
+  console.log(req.body);
+  if (req.body.phoneNum != undefined) {
+    console.log('/api_oc_personal/v1.0.0/', req.body);
+    login.data = JSON.parse('{}');
+    login.data.uid = req.body.phoneNum;
+    res.json(login);
+    return;
+  }
+});
 
 // 路由scatter prices数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
@@ -195,7 +211,28 @@ app.post('/vktapi/v1/create_vkt', async (req, res) => {
       blocksBehind: 3,
       expireSeconds: 30,
     });
-    
+/*
+  const result = await api.transact({
+    actions: [{
+      account: 'eosio.token',
+      name: 'transfer',
+      authorization: [{
+        actor: 'makeaccounts',
+        permission: 'active',
+      }],
+      data: {
+        from: 'makeaccounts',
+        to: 'tokyoliyi',
+        quantity: '0.0100 VKT',
+        memo: 'VKT test',
+      },
+    }]
+  }, {
+    blocksBehind: 3,
+    expireSeconds: 30,
+  });
+  console.dir(result);
+*/
     console.log("newaccount result = ",result);
     res.json(JSON.parse('{"created" : true}'));
   } else {
@@ -264,16 +301,46 @@ app.use('/vktapi/v1/account/vkt/:account_id', async (req, res) => {
   vktdatav_accounts_info.account_name = accountInfo.account_name;
   vktdatav_accounts_info.balances = JSON.parse('[]');
 
+  const lockedbalance = await rpc.get_table_rows({
+    json: true,              // Get the response as json
+    code: 'eosio.token',     // Contract that we target
+    scope: accountid,         // Account that owns the data
+    table: 'locked',        // Table name
+    limit: 10,               // maximum number of rows that we want to get
+  });
+
+  console.log(lockedbalance)
+
+  let amountlocked = 0.0;
+  let unlockdate ;
   for (let i in balances) {
     let balarr = balances[i].split(" ");
+    if(balarr[1] === "VKT" && lockedbalance.rows.length > 0){
+      amountlocked = lockedbalance.rows[i].total_balance.split(' ')[0];
+      unlockdate = moment.utc(lockedbalance.rows[i].balances[0].unlock_execute_time, moment.ISO_8601).local().format();
+    }else{
+      amountlocked = 0.0;
+      unlockdate = moment().format();
+    }
     vktdatav_accounts_info.balances.push({
       contract: "eosio.token",
       amount: balarr[0],
+      amountlocked: amountlocked,
+      availableamount: balarr[0] - amountlocked,
+      unlockdate: unlockdate,
       currency: balarr[1],
       decimals: balarr[0].split(".")[1].length,
+      locked_balances:JSON.parse('[]')
     });
+    if(balarr[1] === "VKT" && lockedbalance.rows.length > 0){
+      for(let j in lockedbalance.rows[i].balances){
+        vktdatav_accounts_info.balances[i].locked_balances.push({
+          balance:lockedbalance.rows[i].balances[j].balance.split(' ')[0],
+          unlock_execute_time:moment.utc(lockedbalance.rows[i].balances[j].unlock_execute_time, moment.ISO_8601).local().format()
+        });  
+      }
+    }
   }
-
 
   // const accountInfo2 = await rpc.get_account('qingzhudatac');
   // console.log(accountInfo2);
@@ -440,10 +507,10 @@ const intervalObj4 = setInterval(async () => {
 
   console.log("nodejs app is loading ?", IsLoadingRPCPRODUCER);
 
-  //获取jsons数据
-  const data = await runRpcGetProducers().catch(err => {
-    console.log("runRpcGetProducers error: ", err)
-  });
+  //获取jsons数据 //TODO
+//  const data = await runRpcGetProducers().catch(err => {
+//    console.log("runRpcGetProducers error: ", err)
+//  });
 
   console.log("nodejs app passed runRpcGetProducers!!!");
 
