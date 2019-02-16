@@ -88,19 +88,85 @@ const api = new Api({
   textEncoder: new TextEncoder()
 });
 
-// 路由scatter 多语言数据
+// 路由android 用户信息
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-app.post('/api_oc_personal/v1.0.0/message/auth', async (req, res) => {
+app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) => {
 
-  let login = JSON.parse('{}');
+  let path_param1 = req.params.path_param1;
+  let path_param2 = req.params.path_param2;
+  let auth = JSON.parse('{}');
+  console.log(path_param1);
+  console.log(path_param2);
   console.log(req.body);
-  if (req.body.phoneNum != undefined) {
-    console.log('/api_oc_personal/v1.0.0/', req.body);
-    login.data = JSON.parse('{}');
-    login.data.uid = req.body.phoneNum;
-    res.json(login);
+  if (path_param1 === "message") {
+    if(path_param2 == "auth") {
+      console.log('/api_oc_personal/v1.0.0/message/auth', req.body);
+      auth.data = JSON.parse('{}');
+      auth.data.uid = req.body.phoneNum;
+      res.json(auth);
+      return;
+    }
+  }
+});
+
+// 路由android blockchain信息
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
+
+  let path_param1 = req.params.path_param1;
+  
+  console.log(path_param1);
+  console.log(req.body);
+  if (path_param1 === "get_account") {
+    console.log('/api_oc_blockchain-v1.0.0/get_account', req.body);
+
+    let auth = JSON.parse('{}');
+    // 获取账号qingzhudatac的信息
+    const accountInfo = await rpc.get_account(req.body.name);
+    console.log(accountInfo);
+    auth.data = accountInfo;
+    res.json(auth);
     return;
+  }else if(path_param1 === "get_account_asset") {
+    console.log('/api_oc_blockchain-v1.0.0/get_account_asset', req.body);
+    let asset = JSON.parse('{}');
+
+    //获取账号qingzhudatac的资产,查询资产的时候要加上资产的合约名字eosio.token
+    const balances = await rpc.get_currency_balance('eosio.token', req.body.name);
+    console.log(balances);
+
+    let vkt_balance = '';
+    for (let i in balances) {
+      let balarr = balances[i].split(" ");
+      if(balarr[1] === "VKT"){
+        vkt_balance = balarr[0];
+      }
+    }
+
+    asset.data = {
+        account_name: req.body.name,
+        account_icon: 'http://www.vankia.io',
+        vkt_balance: vkt_balance,
+        vkt_balance_usd : vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].USD,
+        vkt_balance_cny : vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
+        vkt_price_usd : vktdatav_allprices["vkt:eosio.token:vkt"].USD,
+        vkt_price_cny : vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
+        vkt_price_change_in_24h : (vktdatav_vkttracker_info.percent_change_1d * 100.0).toFixed(2),
+        vkt_market_cap_usd : vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].USD * 500000000,
+        vkt_market_cap_cny : vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].CNY * 500000000,
+        oct_balance : '0.00020000',
+        oct_balance_usd : '0.00008678',
+        oct_balance_cny : '0.00055036',
+        oct_price_usd : '0.433908',
+        oct_price_cny : '2.7518011452',
+        oct_price_change_in_24h : '-6.63',
+        oct_market_cap_usd : '13017240.0',
+        oct_market_cap_cny : '82554034.0'
+    };
+
+    res.json(asset);
   }
 });
 
@@ -301,46 +367,16 @@ app.use('/vktapi/v1/account/vkt/:account_id', async (req, res) => {
   vktdatav_accounts_info.account_name = accountInfo.account_name;
   vktdatav_accounts_info.balances = JSON.parse('[]');
 
-  const lockedbalance = await rpc.get_table_rows({
-    json: true,              // Get the response as json
-    code: 'eosio.token',     // Contract that we target
-    scope: accountid,         // Account that owns the data
-    table: 'locked',        // Table name
-    limit: 10,               // maximum number of rows that we want to get
-  });
-
-  console.log(lockedbalance)
-
-  let amountlocked = 0.0;
-  let unlockdate ;
   for (let i in balances) {
     let balarr = balances[i].split(" ");
-    if(balarr[1] === "VKT" && lockedbalance.rows.length > 0){
-      amountlocked = lockedbalance.rows[i].total_balance.split(' ')[0];
-      unlockdate = moment.utc(lockedbalance.rows[i].balances[0].unlock_execute_time, moment.ISO_8601).local().format();
-    }else{
-      amountlocked = 0.0;
-      unlockdate = moment().format();
-    }
     vktdatav_accounts_info.balances.push({
       contract: "eosio.token",
       amount: balarr[0],
-      amountlocked: amountlocked,
-      availableamount: balarr[0] - amountlocked,
-      unlockdate: unlockdate,
       currency: balarr[1],
       decimals: balarr[0].split(".")[1].length,
-      locked_balances:JSON.parse('[]')
     });
-    if(balarr[1] === "VKT" && lockedbalance.rows.length > 0){
-      for(let j in lockedbalance.rows[i].balances){
-        vktdatav_accounts_info.balances[i].locked_balances.push({
-          balance:lockedbalance.rows[i].balances[j].balance.split(' ')[0],
-          unlock_execute_time:moment.utc(lockedbalance.rows[i].balances[j].unlock_execute_time, moment.ISO_8601).local().format()
-        });  
-      }
-    }
   }
+
 
   // const accountInfo2 = await rpc.get_account('qingzhudatac');
   // console.log(accountInfo2);
