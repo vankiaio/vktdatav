@@ -16,6 +16,8 @@ const translate = require('google-translate-api');
 const config = require('./config');
 const fs = require('fs');
 const moment = require('moment');
+const request = require('request');
+
 require('colors');
 const {
   Api,
@@ -89,7 +91,35 @@ const api = new Api({
 });
 
 // 路由android 用户信息
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({
+  extended: false
+}));
+app.use(bodyParser.json());
+app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
+
+  let path_param1 = req.params.path_param1;
+  let auth = JSON.parse('{}');
+  console.log(path_param1);
+  console.log(req.body);
+  if (path_param1 === "follow_list") {
+    console.log('/api_oc_personal/v1.0.0/follow_list', req.body);
+    auth.data = JSON.parse('[]');
+    auth.data.push({
+      uid: '13812345678',
+      name: 'vankiauser1',
+      avatar: '',
+      letter: 'v', //索引字母
+      friend_type: '1' //1代表钱包2代表账号
+    });
+    res.json(auth);
+    return;
+  }
+});
+
+// 路由android 用户信息
+app.use(bodyParser.urlencoded({
+  extended: false
+}));
 app.use(bodyParser.json());
 app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) => {
 
@@ -100,7 +130,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
   console.log(path_param2);
   console.log(req.body);
   if (path_param1 === "message") {
-    if(path_param2 == "auth") {
+    if (path_param2 == "auth") {
       console.log('/api_oc_personal/v1.0.0/message/auth', req.body);
       auth.data = JSON.parse('{}');
       auth.data.uid = req.body.phoneNum;
@@ -111,12 +141,14 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
 });
 
 // 路由android blockchain信息
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({
+  extended: false
+}));
 app.use(bodyParser.json());
 app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
 
   let path_param1 = req.params.path_param1;
-  
+
   console.log(path_param1);
   console.log(req.body);
   if (path_param1 === "get_account") {
@@ -128,45 +160,128 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
     console.log(accountInfo);
     auth.data = accountInfo;
     res.json(auth);
-    return;
-  }else if(path_param1 === "get_account_asset") {
+
+  } else if (path_param1 === "get_account_asset") {
     console.log('/api_oc_blockchain-v1.0.0/get_account_asset', req.body);
     let asset = JSON.parse('{}');
 
-    //获取账号qingzhudatac的资产,查询资产的时候要加上资产的合约名字eosio.token
+    //获取账号xxxx的资产,查询资产的时候要加上资产的合约名字eosio.token
     const balances = await rpc.get_currency_balance('eosio.token', req.body.name);
     console.log(balances);
 
     let vkt_balance = '';
     for (let i in balances) {
       let balarr = balances[i].split(" ");
-      if(balarr[1] === "VKT"){
+      if (balarr[1] === "VKT") {
         vkt_balance = balarr[0];
       }
     }
 
     asset.data = {
-        account_name: req.body.name,
-        account_icon: 'http://www.vankia.io',
-        vkt_balance: vkt_balance,
-        vkt_balance_usd : vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].USD,
-        vkt_balance_cny : vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
-        vkt_price_usd : vktdatav_allprices["vkt:eosio.token:vkt"].USD,
-        vkt_price_cny : vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
-        vkt_price_change_in_24h : (vktdatav_vkttracker_info.percent_change_1d * 100.0).toFixed(2),
-        vkt_market_cap_usd : vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].USD * 500000000,
-        vkt_market_cap_cny : vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].CNY * 500000000,
-        oct_balance : '0.00020000',
-        oct_balance_usd : '0.00008678',
-        oct_balance_cny : '0.00055036',
-        oct_price_usd : '0.433908',
-        oct_price_cny : '2.7518011452',
-        oct_price_change_in_24h : '-6.63',
-        oct_market_cap_usd : '13017240.0',
-        oct_market_cap_cny : '82554034.0'
+      account_name: req.body.name,
+      account_icon: 'http://www.vankia.io',
+      vkt_balance: vkt_balance,
+      vkt_balance_usd: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].USD,
+      vkt_balance_cny: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
+      vkt_price_usd: vktdatav_allprices["vkt:eosio.token:vkt"].USD,
+      vkt_price_cny: vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
+      vkt_price_change_in_24h: (vktdatav_vkttracker_info.percent_change_1d * 100.0).toFixed(2),
+      vkt_market_cap_usd: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].USD * 500000000,
+      vkt_market_cap_cny: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].CNY * 500000000,
+      oct_balance: '0.00020000',
+      oct_balance_usd: '0.00008678',
+      oct_balance_cny: '0.00055036',
+      oct_price_usd: '0.433908',
+      oct_price_cny: '2.7518011452',
+      oct_price_change_in_24h: '-6.63',
+      oct_market_cap_usd: '13017240.0',
+      oct_market_cap_cny: '82554034.0'
     };
 
     res.json(asset);
+  } else if (path_param1 === "get_rate") {
+    console.log('/api_oc_blockchain-v1.0.0/get_rate', req.body);
+    let asset = JSON.parse('{}');
+
+    // data : {"id":"vkt","price_usd":"9.45208","price_cny":"59.586384924","percent_change_24h":"12.31"}
+    asset.data = {
+      id: req.body.coinmarket_id,
+      price_usd: vktdatav_allprices["vkt:eosio.token:vkt"].USD,
+      price_cny: vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
+      percent_change_24h: (vktdatav_vkttracker_info.percent_change_1d * 100.0).toFixed(2)
+    };
+
+    res.json(asset);
+  } else if (path_param1 === "abi_json_to_bin") {
+    console.log('/api_oc_blockchain-v1.0.0/abi_json_to_bin', req.body);
+    let abibin_info = JSON.parse('{}');
+
+    request.post({
+      url: VKTAPI_URL+'/v1/chain/abi_json_to_bin',
+      form: JSON.stringify(req.body)
+    }, 
+    (error, res2, body) => {
+      if (error) {
+        console.error(error)
+        return
+      }
+      console.log(body)
+      abibin_info.data = JSON.parse(body);
+      res.json(abibin_info);
+    })
+  } else if (path_param1 === "get_required_keys") {
+    console.log('/api_oc_blockchain-v1.0.0/get_required_keys', req.body);
+    let required_keys = JSON.parse('{}');
+
+    request.post({
+      url: VKTAPI_URL+'/v1/chain/get_required_keys',
+      form: JSON.stringify(req.body)
+    }, 
+    (error, res2, body) => {
+      if (error) {
+        console.error(error)
+        return
+      }
+      console.log(body)
+      required_keys.data = JSON.parse(body);
+      res.json(required_keys);
+    })
+  } else if (path_param1 === "push_transaction") {
+    console.log('/api_oc_blockchain-v1.0.0/push_transaction', req.body);
+    let transaction = JSON.parse('{}');
+
+    request.post({
+      url: VKTAPI_URL+'/v1/chain/push_transaction',
+      form: JSON.stringify(req.body)
+    }, 
+    (error, res2, body) => {
+      if (error) {
+        console.error(error)
+        return
+      }
+      console.log(body)
+      transaction.data = JSON.parse(body);
+      res.json(transaction);
+    })
+  }
+
+});
+
+// 路由scatter 多语言数据
+//app.use('/vktapi', mockjs(path.join(__dirname, './data')));
+app.use('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
+
+  let path_param1 = req.params.path_param1;
+
+  if (path_param1 === "get_info") {
+    console.log('/api_oc_blockchain-v1.0.0/get_info', req.body);
+    let chain_info = JSON.parse('{}');
+
+    // 获取账号qingzhudatac的信息
+    const chaininfo = await rpc.get_info();
+    console.log(chaininfo);
+    chain_info.data = chaininfo;
+    res.json(chain_info);
   }
 });
 
@@ -198,7 +313,9 @@ app.use('/vktapi/v1/prices', async (req, res) => {
 //      owner: 'VKT64Qv4GnUN4TU3fKqHvfhxGLpnjnMCujwAMNZHLuWn1mYbAbFjk' },
 //   account_name: 'tokyoliyi111' }
 
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({
+  extended: false
+}));
 app.use(bodyParser.json());
 app.post('/vktapi/v1/create_vkt', async (req, res) => {
 
@@ -209,97 +326,98 @@ app.post('/vktapi/v1/create_vkt', async (req, res) => {
     let pubkeyactive = req.body.keys.active;
     let pubkeyowner = req.body.keys.owner;
     let actname = req.body.account_name;
-    
+
     console.log('Public Key:\t', pubkeyactive) // VKTkey...
     let checkHash = ecc.verify(sig, pubkeyactive, pubkeyactive);
     console.log('/vktapi/v1/create_vkt - checkHash=', checkHash);
 
     const result = await api.transact({
       actions: [{
-        account: 'eosio',
-        name: 'newaccount',
-        authorization: [{
-          actor: 'makeaccounts',
-          permission: 'active',
-        }],
-        data: {
-          creator: 'makeaccounts',
-          name: actname,
-          owner: {
-            threshold: 1,
-            keys: [{
-              key: pubkeyowner,
-              weight: 1
-            }],
-            accounts: [],
-            waits: []
-          },
-          active: {
-            threshold: 1,
-            keys: [{
-              key: pubkeyactive,
-              weight: 1
-            }],
-            accounts: [],
-            waits: []
+          account: 'eosio',
+          name: 'newaccount',
+          authorization: [{
+            actor: 'makeaccounts',
+            permission: 'active',
+          }],
+          data: {
+            creator: 'makeaccounts',
+            name: actname,
+            owner: {
+              threshold: 1,
+              keys: [{
+                key: pubkeyowner,
+                weight: 1
+              }],
+              accounts: [],
+              waits: []
+            },
+            active: {
+              threshold: 1,
+              keys: [{
+                key: pubkeyactive,
+                weight: 1
+              }],
+              accounts: [],
+              waits: []
+            },
           },
         },
-      },
-      {
-        account: 'eosio',
-        name: 'buyrambytes',
-        authorization: [{
-          actor: 'makeaccounts',
-          permission: 'active',
-        }],
-        data: {
-          payer: 'makeaccounts',
-          receiver: actname,
-          bytes: 8192,
+        {
+          account: 'eosio',
+          name: 'buyrambytes',
+          authorization: [{
+            actor: 'makeaccounts',
+            permission: 'active',
+          }],
+          data: {
+            payer: 'makeaccounts',
+            receiver: actname,
+            bytes: 8192,
+          },
         },
-      },
-      {
-        account: 'eosio',
-        name: 'delegatebw',
-        authorization: [{
-          actor: 'makeaccounts',
-          permission: 'active',
-        }],
-        data: {
-          from: 'makeaccounts',
-          receiver: actname,
-          stake_net_quantity: '0.0500 VKT',
-          stake_cpu_quantity: '0.0500 VKT',
-          transfer: false,
+        {
+          account: 'eosio',
+          name: 'delegatebw',
+          authorization: [{
+            actor: 'makeaccounts',
+            permission: 'active',
+          }],
+          data: {
+            from: 'makeaccounts',
+            receiver: actname,
+            stake_net_quantity: '0.0500 VKT',
+            stake_cpu_quantity: '0.0500 VKT',
+            transfer: false,
+          }
         }
-      }]
+      ]
     }, {
       blocksBehind: 3,
       expireSeconds: 30,
     });
-/*
-  const result = await api.transact({
-    actions: [{
-      account: 'eosio.token',
-      name: 'transfer',
-      authorization: [{
-        actor: 'makeaccounts',
-        permission: 'active',
-      }],
-      data: {
-        from: 'makeaccounts',
-        to: 'tokyoliyi',
-        quantity: '0.0100 VKT',
-        memo: 'VKT test',
-      },
-    }]
-  }, {
-    blocksBehind: 3,
-    expireSeconds: 30,
-  });
-  console.dir(result);
-*/
-    console.log("newaccount result = ",result);
+    /*
+      const result = await api.transact({
+        actions: [{
+          account: 'eosio.token',
+          name: 'transfer',
+          authorization: [{
+            actor: 'makeaccounts',
+            permission: 'active',
+          }],
+          data: {
+            from: 'makeaccounts',
+            to: 'tokyoliyi',
+            quantity: '0.0100 VKT',
+            memo: 'VKT test',
+          },
+        }]
+      }, {
+        blocksBehind: 3,
+        expireSeconds: 30,
+      });
+      console.dir(result);
+    */
+    console.log("newaccount result = ", result);
     res.json(JSON.parse('{"created" : true}'));
   } else {
     res.json(JSON.parse('{}'));
@@ -544,9 +662,9 @@ const intervalObj4 = setInterval(async () => {
   console.log("nodejs app is loading ?", IsLoadingRPCPRODUCER);
 
   //获取jsons数据 //TODO
-//  const data = await runRpcGetProducers().catch(err => {
-//    console.log("runRpcGetProducers error: ", err)
-//  });
+  //  const data = await runRpcGetProducers().catch(err => {
+  //    console.log("runRpcGetProducers error: ", err)
+  //  });
 
   console.log("nodejs app passed runRpcGetProducers!!!");
 
@@ -1093,7 +1211,7 @@ const runMongodbTPSList = async () => {
 
             for (let i = 0; i < result.length; i++) {
               await Promise.resolve(i).then(async (i) => {
-                vktdatav_tpslist[i].s = i+1;
+                vktdatav_tpslist[i].s = i + 1;
               });
             }
           } else {
@@ -1103,7 +1221,7 @@ const runMongodbTPSList = async () => {
                 vktdatav_tpslist.push({
                   'x': vktdatav.head_block_num - 12 + i,
                   'y': parseInt(0),
-                  's': i+1
+                  's': i + 1
                 });
               });
             }
