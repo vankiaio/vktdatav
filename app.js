@@ -187,8 +187,8 @@ app.post('/vktapi/v1/create_vkt', async (req, res) => {
         data: {
           from: 'makeaccounts',
           receiver: actname,
-          stake_net_quantity: '0.0500 TTMC',
-          stake_cpu_quantity: '0.0500 TTMC',
+          stake_net_quantity: '0.1500 TTMC',
+          stake_cpu_quantity: '0.5000 TTMC',
           transfer: false,
         }
       }]
