@@ -88,6 +88,21 @@ const api = new Api({
   textEncoder: new TextEncoder()
 });
 
+// 路由scatter 多语言数据
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+app.post('/api_oc_personal/v1.0.0/message/auth', async (req, res) => {
+
+  let login = JSON.parse('{}');
+  console.log(req.body);
+  if (req.body.phoneNum != undefined) {
+    console.log('/api_oc_personal/v1.0.0/', req.body);
+    login.data = JSON.parse('{}');
+    login.data.uid = req.body.phoneNum;
+    res.json(login);
+    return;
+  }
+});
 
 // 路由scatter prices数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
