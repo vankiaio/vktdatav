@@ -1277,7 +1277,7 @@ const runCcxt = async () => {
   // console.log(last1wPrice);
   // console.log(ohlcvkteth);
 
-  const ohlcethusd = await bittrex.fetchOHLCV(symbol_ethusd, '1d', last7dTime, 8);
+  const ohlcethusd = await bittrex.fetchOHLCV(symbol_ethusd, '1d', last7dTime, 9);
   // console.log(ohlcethusd);
   // console.log(ohlcethusd[0][4]);
 
