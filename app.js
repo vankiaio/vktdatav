@@ -17,6 +17,7 @@ const config = require('./config');
 const fs = require('fs');
 const moment = require('moment');
 const request = require('request');
+const Ut = require("./common");
 
 require('colors');
 const {
@@ -1251,7 +1252,7 @@ const runCcxt = async () => {
   if (symbol_vkteth in bitforex.markets) {
     ticker_vkteth = await bitforex.fetchTicker(symbol_vkteth);
   }
-  //console.log(ticker_vkteth);
+  // console.log(ticker_vkteth);
 
   // get ethusd price
   let bittrex = new ccxt.bittrex();
@@ -1263,10 +1264,18 @@ const runCcxt = async () => {
   if (symbol_ethusd in bittrex.markets) {
     ticker_ethusd = await bittrex.fetchTicker(symbol_ethusd);
   }
-  //console.log(ticker_ethusd);
+  // console.log(ticker_ethusd);
 
+  console.log("get markets finish sleep start!!!", new Date());
+  await Ut.sleep(5000);
+  console.log("get markets finish sleep end!!!", new Date());
   // get vkteth 1hour price
   const ohlcvkteth = await bitforex.fetchOHLCV(symbol_vkteth, '1d', 8);
+  if(ohlcvkteth.length < 7 ) {
+    console.log("ohlcvkteth fetchOHLCV failed!!!");
+    return;
+  }
+  // console.log(ohlcvkteth);
   const last7dTime = ohlcvkteth[0].time; // 1h ago closing time
   const currentPrice = ohlcvkteth[ohlcvkteth.length - 1].close; // current closing price
   const last1dPrice = ohlcvkteth[ohlcvkteth.length - 2].close; // 1d ago closing price
@@ -1275,9 +1284,12 @@ const runCcxt = async () => {
   // console.log(last1hPrice);
   // console.log(last1dPrice);
   // console.log(last1wPrice);
-  // console.log(ohlcvkteth);
 
-  const ohlcethusd = await bittrex.fetchOHLCV(symbol_ethusd, '1d', last7dTime, 9);
+  const ohlcethusd = await bittrex.fetchOHLCV(symbol_ethusd, '1d', last7dTime, 7);
+  if(ohlcethusd.length < 7 ) {
+    console.log("ohlcethusd fetchOHLCV failed!!!");
+    return;
+  }
   // console.log(ohlcethusd);
   // console.log(ohlcethusd[0][4]);
 
@@ -1307,11 +1319,11 @@ const runCcxt = async () => {
 
   vktdatav_cnyusd_price = [{
     // "name": "",
-    "value": (vktdatav.usdcny * vktdatav_vktprice_list[7].y).toFixed(8)
+    "value": (vktdatav.usdcny * vktdatav_vktprice_list[6].y).toFixed(8)
   }];
 
   vktdatav_vkttracker_info = {
-    'price_vktcny': (vktdatav.usdcny * vktdatav_vktprice_list[7].y).toFixed(8),
+    'price_vktcny': (vktdatav.usdcny * vktdatav_vktprice_list[6].y).toFixed(8),
     'price_vkteth': last1dPrice.toFixed(8),
     'volume_24h': ticker_vkteth.baseVolume,
     'circulating_supply': 500000000,
@@ -1333,18 +1345,19 @@ const runExchange = async (rates) => {
 // rpc对象支持promise，所以使用 async/await 函数运行rpc命令
 const runScatterPrices = async (prices) => {
   //console.log(prices)
-  if (vktdatav.vktusdlast7d && vktdatav.vktusdlast7d.length > 7) {
+  if (vktdatav.vktusdlast7d && vktdatav.vktusdlast7d.length > 6) {
+    console.log("runScatterPrices vktdatav.vktusdlast7d.length=" ,vktdatav.vktusdlast7d.length);
     vktdatav_allprices = prices;
     vktdatav_allprices["vkt:eosio.token:vkt"] = {
-      USD: (vktdatav.vktusdlast7d[7].price * 1.0).toFixed(8),
-      EUR: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.EUR).toFixed(8),
-      CNY: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.CNY).toFixed(8),
-      GBP: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.GBP).toFixed(8),
-      JPY: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.JPY).toFixed(8),
-      CAD: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.CAD).toFixed(8),
-      CHF: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.CHF).toFixed(8),
-      AUD: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.AUD).toFixed(8),
-      KRW: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.KRW).toFixed(8),
+      USD: (vktdatav.vktusdlast7d[6].price * 1.0).toFixed(8),
+      EUR: (vktdatav.vktusdlast7d[6].price * vktdatav.currencies.EUR).toFixed(8),
+      CNY: (vktdatav.vktusdlast7d[6].price * vktdatav.currencies.CNY).toFixed(8),
+      GBP: (vktdatav.vktusdlast7d[6].price * vktdatav.currencies.GBP).toFixed(8),
+      JPY: (vktdatav.vktusdlast7d[6].price * vktdatav.currencies.JPY).toFixed(8),
+      CAD: (vktdatav.vktusdlast7d[6].price * vktdatav.currencies.CAD).toFixed(8),
+      CHF: (vktdatav.vktusdlast7d[6].price * vktdatav.currencies.CHF).toFixed(8),
+      AUD: (vktdatav.vktusdlast7d[6].price * vktdatav.currencies.AUD).toFixed(8),
+      KRW: (vktdatav.vktusdlast7d[6].price * vktdatav.currencies.KRW).toFixed(8),
     };
     vktdatav.allprices = vktdatav_allprices;
   }
