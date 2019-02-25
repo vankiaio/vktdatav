@@ -1333,8 +1333,8 @@ const runExchange = async (rates) => {
 // rpc对象支持promise，所以使用 async/await 函数运行rpc命令
 const runScatterPrices = async (prices) => {
   //console.log(prices)
-  vktdatav_allprices = prices;
   if (vktdatav.vktusdlast7d && vktdatav.vktusdlast7d.length > 0) {
+    vktdatav_allprices = prices;
     vktdatav_allprices["vkt:eosio.token:vkt"] = {
       USD: (vktdatav.vktusdlast7d[7].price * 1.0).toFixed(8),
       EUR: (vktdatav.vktusdlast7d[7].price * vktdatav.currencies.EUR).toFixed(8),
