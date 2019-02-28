@@ -21,7 +21,7 @@
   },
   "homepage": "https://github.com/vankiaio/vktdatav#readme",
   "dependencies": {
-    "ccxt": "^1.17.582",
+    "ccxt": "^1.18.292",
     "colors": "^1.3.2",
     "date-utils": "^1.2.21",
     "eosjs": "^20.0.0-beta2.2",
