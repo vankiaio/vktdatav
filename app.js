@@ -39,8 +39,15 @@ const XE_URL = config.XE_URL;
 const SCATTER_API = config.SCATTER_API;
 const defaultPrivateKey = config.defaultPrivateKey;
 
+const http = require('http');
+const https = require('https');
+let privateKey  = fs.readFileSync('./data/server.key', 'utf8');
+let certificate = fs.readFileSync('./data/server.crt', 'utf8');
+let credentials = {key: privateKey, cert: certificate};
+
 // 服务器端口
 let NODE_PORT = 3030;
+var NODE_SSLPORT = 3033;
 
 // 获取窗口打开标识
 let isOpenWin = utils.localStorage().getItem('ISOPENWIN');
@@ -91,6 +98,17 @@ const api = new Api({
   textEncoder: new TextEncoder()
 });
 
+let httpServer = http.createServer(app);
+let httpsServer = https.createServer(credentials, app);
+
+httpServer.listen(NODE_PORT, function() {
+  console.log('HTTP Server is running on: http://localhost:%s', NODE_PORT);
+});
+httpsServer.listen(NODE_SSLPORT, function() {
+  console.log('HTTPS Server is running on: https://localhost:%s', NODE_SSLPORT);
+});
+
+
 // 路由android 用户信息
 app.use(bodyParser.urlencoded({
   extended: false
@@ -114,7 +132,47 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     });
     res.json(auth);
     return;
+  } else if (path_param1 === "get_token_info") {
+    console.log('/api_oc_blockchain-v1.0.0/get_token_info', req.body);
+    let asset = JSON.parse('{}');
+
+    //获取账号xxxx的资产,查询资产的时候要加上资产的合约名字eosio.token
+    const balances = await rpc.get_currency_balance('eosio.token', req.body.accountName);
+    console.log(balances);
+
+    let vkt_balance = '';
+    for (let i in balances) {
+      let balarr = balances[i].split(" ");
+      if (balarr[1] === "VKT") {
+        vkt_balance = balarr[0];
+      }
+    }
+
+    asset.code = 0;
+    asset.message = 'ok';
+    asset.data = JSON.parse('[]');
+    asset.data.push(
+      {
+        contract_name: "eosio.token",
+        token_symbol: "VKT",
+        coinmarket_id: "bitforex",
+        account_name: req.body.accountName,
+        balance: vkt_balance,
+        balance_usd: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].USD,
+        balance_cny: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
+        asset_price_usd: vktdatav_allprices["vkt:eosio.token:vkt"].USD,
+        asset_price_cny: vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
+        asset_price_change_in_24h: (vktdatav_vkttracker_info.percent_change_1d * 100.0).toFixed(2),
+        iconUrl: "http://tracker.devicexx.com/assets/logo.png",
+        iconUrlHd: "http://tracker.devicexx.com/assets/logo.png",
+        asset_market_cap_cny: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].CNY * 500000000,
+        isRedpacket: true
+      }
+    );
+
+    res.json(asset);
   }
+  
 });
 
 // 路由android 用户信息
@@ -133,8 +191,13 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
   if (path_param1 === "message") {
     if (path_param2 == "auth") {
       console.log('/api_oc_personal/v1.0.0/message/auth', req.body);
+      auth.code = 0;
       auth.data = JSON.parse('{}');
       auth.data.uid = req.body.phoneNum;
+      auth.data.wallet_uid = req.body.phoneNum;
+      auth.data.wallet_avatar = "default";
+      auth.data.wallet_weixin = req.body.phoneNum;
+      auth.data.wallet_qq = req.body.phoneNum;
       res.json(auth);
       return;
     }
@@ -159,6 +222,7 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
     // 获取账号qingzhudatac的信息
     const accountInfo = await rpc.get_account(req.body.name);
     console.log(accountInfo);
+    auth.code = 0;
     auth.data = accountInfo;
     res.json(auth);
 
@@ -264,6 +328,26 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
       transaction.data = JSON.parse(body);
       res.json(transaction);
     })
+  } else if (path_param1 === "get_key_accounts") {
+    console.log('/api_oc_blockchain-v1.0.0/get_key_accounts', req.body);
+    let accouts = JSON.parse('{}');
+
+    request.post({
+      url: VKTAPI_URL+'/v1/history/get_key_accounts',
+      form: JSON.stringify(req.body)
+    }, 
+    (error, res2, body) => {
+      if (error) {
+        console.error(error)
+        return
+      }
+      console.log(body);
+      accouts.code = 0;
+      accouts.message = "ok";
+      accouts.data = JSON.parse(body);
+      console.log(accouts);
+      res.json(accouts);
+    })
   }
 
 });
@@ -285,6 +369,50 @@ app.use('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
     res.json(chain_info);
   }
 });
+
+// 路由scatter 多语言数据
+//app.use('/vktapi', mockjs(path.join(__dirname, './data')));
+app.use('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
+
+  let path_param1 = req.params.path_param1;
+
+  if (path_param1 === "is_open_timeLimitRegister") {
+    console.log('/api_oc_personal/v1.0.0/is_open_timeLimitRegister', req.body);
+    let is_open = JSON.parse('{}');
+
+    // 获取账号qingzhudatac的信息
+    // const chaininfo = await rpc.get_info();
+    // console.log(chaininfo);
+    is_open.data = 'NO';
+    res.json(is_open);
+  }
+});
+
+
+// 路由scatter 多语言数据
+//app.use('/vktapi', mockjs(path.join(__dirname, './data')));
+app.use('/oulianvktaccount/getAccountOrder/:path_param1/:path_param2', async (req, res) => {
+
+  let path_param1 = req.params.path_param1;
+  let path_param2 = req.params.path_param2;
+
+  if (path_param1 === "tokyoliyi555" && path_param2 =="13889365325") {
+    console.log('/oulianvktaccount/getAccountOrder/',path_param1,path_param2, req.body);
+    let accountorder = JSON.parse('{}');
+
+    // 获取账号qingzhudatac的信息
+    // const chaininfo = await rpc.get_info();
+    // console.log(chaininfo);
+    accountorder.code = 0;
+    accountorder.data = JSON.parse('{}');
+    accountorder.data.createStatus = 1;
+    accountorder.data.accountName = path_param1;
+    accountorder.data.message = 'ok';
+    console.log(accountorder);
+    res.json(accountorder);
+  }
+});
+
 
 // 路由scatter prices数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
@@ -935,7 +1063,7 @@ const runMongodb = async () => {
       console.error(err);
       throw err;
     }
-    const dbo = db.db("EOS");
+    const dbo = db.db("VKT");
     // dbo.collection("accounts").find().toArray(function(err, result) {
     //   if (err) throw err;
     //   for (let i in result) {
@@ -1163,7 +1291,7 @@ const runMongodbTPSList = async () => {
       console.error(err);
       throw err;
     }
-    const dbo = db.db("EOS");
+    const dbo = db.db("VKT");
     // dbo.collection("accounts").find().toArray(function(err, result) {
     //   if (err) throw err;
     //   for (let i in result) {
@@ -1430,14 +1558,14 @@ function decode64(g) {
 }
 
 // 监听端口、打开浏览器
-app.listen(NODE_PORT, function () {
-  if (isOpenWin === 'false') {
-    let uri = 'http://' + utils.getIP() + ':' + port + '/api';
-    opn(uri);
+// app.listen(NODE_PORT, function () {
+//   if (isOpenWin === 'false') {
+//     let uri = 'http://' + utils.getIP() + ':' + port + '/api';
+//     opn(uri);
 
-    // 设置窗口打开标识
-    utils.localStorage().setItem('ISOPENWIN', 'true');
+//     // 设置窗口打开标识
+//     utils.localStorage().setItem('ISOPENWIN', 'true');
 
-    console.log("mock server start success.".green);
-  }
-});
+//     console.log("mock server start success.".green);
+//   }
+// });
