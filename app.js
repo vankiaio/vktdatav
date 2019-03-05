@@ -241,7 +241,8 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
         vkt_balance = balarr[0];
       }
     }
-
+    asset.code = 0;
+    asset.message = 'ok';
     asset.data = {
       account_name: req.body.name,
       account_icon: 'http://www.vankia.io',
@@ -291,6 +292,8 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
         return
       }
       console.log(body)
+      abibin_info.code = 0;
+      abibin_info.message = 'ok';
       abibin_info.data = JSON.parse(body);
       res.json(abibin_info);
     })
@@ -308,6 +311,8 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
         return
       }
       console.log(body)
+      required_keys.code = 0;
+      required_keys.message = 'ok';
       required_keys.data = JSON.parse(body);
       res.json(required_keys);
     })
@@ -324,7 +329,9 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
         console.error(error)
         return
       }
-      console.log(body)
+      console.log(body);
+      transaction.code = 0;
+      transaction.message = 'ok';
       transaction.data = JSON.parse(body);
       res.json(transaction);
     })
