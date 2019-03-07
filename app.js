@@ -18,7 +18,7 @@ const fs = require('fs');
 const moment = require('moment');
 const request = require('request');
 const Ut = require("./common");
-
+const util = require('util');
 require('colors');
 const {
   Api,
@@ -82,6 +82,8 @@ let accountid = "";
 
 let m_maxtps = 0;
 let m_maxtps_onehour = 0;
+
+let m_lasttrxid = JSON.parse('[]');
 
 // 创建express
 const app = express();
@@ -192,6 +194,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
     if (path_param2 == "auth") {
       console.log('/api_oc_personal/v1.0.0/message/auth', req.body);
       auth.code = 0;
+      auth.message = 'ok';
       auth.data = JSON.parse('{}');
       auth.data.uid = req.body.phoneNum;
       auth.data.wallet_uid = req.body.phoneNum;
@@ -201,6 +204,37 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
       res.json(auth);
       return;
     }
+  }
+});
+
+// 路由scatter 多语言数据
+//app.use('/vktapi', mockjs(path.join(__dirname, './data')));
+app.use('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
+
+  let path_param1 = req.params.path_param1;
+
+  if (path_param1 === "is_open_timeLimitRegister") {
+    console.log('/api_oc_personal/v1.0.0/is_open_timeLimitRegister', req.body);
+    let is_open = JSON.parse('{}');
+
+    // 获取账号qingzhudatac的信息
+    // const chaininfo = await rpc.get_info();
+    // console.log(chaininfo);
+    is_open.data = 'NO';
+    res.json(is_open);
+  } else if (path_param1 === "get_last_info") {
+    console.log('/api_oc_blockchain-v1.0.0/get_last_info', req.body);
+    let ios_version = JSON.parse('{}');
+    
+    ios_version.code = 0;
+    ios_version.message = 'ok';
+    ios_version.data = JSON.parse('{}');
+    ios_version.data.uploadUrl = 'https://github.com/vankiaio/PocketVKT-IOS';
+    ios_version.data.versionDetail = 'v1.5.1'
+    ios_version.data.versionCode = 'v1.5.1'
+    ios_version.data.versionName = 'v1.5.1'
+    console.log(ios_version);
+    res.json(ios_version);
   }
 });
 
@@ -270,6 +304,8 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
     let asset = JSON.parse('{}');
 
     // data : {"id":"vkt","price_usd":"9.45208","price_cny":"59.586384924","percent_change_24h":"12.31"}
+    asset.code = 0;
+    asset.message = 'ok';
     asset.data = {
       id: req.body.coinmarket_id,
       price_usd: vktdatav_allprices["vkt:eosio.token:vkt"].USD,
@@ -369,29 +405,13 @@ app.use('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
     console.log('/api_oc_blockchain-v1.0.0/get_info', req.body);
     let chain_info = JSON.parse('{}');
 
+    chain_info.code = 0;
+    chain_info.message = 'ok';
     // 获取账号qingzhudatac的信息
     const chaininfo = await rpc.get_info();
     console.log(chaininfo);
     chain_info.data = chaininfo;
     res.json(chain_info);
-  }
-});
-
-// 路由scatter 多语言数据
-//app.use('/vktapi', mockjs(path.join(__dirname, './data')));
-app.use('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
-
-  let path_param1 = req.params.path_param1;
-
-  if (path_param1 === "is_open_timeLimitRegister") {
-    console.log('/api_oc_personal/v1.0.0/is_open_timeLimitRegister', req.body);
-    let is_open = JSON.parse('{}');
-
-    // 获取账号qingzhudatac的信息
-    // const chaininfo = await rpc.get_info();
-    // console.log(chaininfo);
-    is_open.data = 'NO';
-    res.json(is_open);
   }
 });
 
@@ -411,6 +431,7 @@ app.use('/oulianvktaccount/getAccountOrder/:path_param1/:path_param2', async (re
     // const chaininfo = await rpc.get_info();
     // console.log(chaininfo);
     accountorder.code = 0;
+    accountorder.message = 'ok';
     accountorder.data = JSON.parse('{}');
     accountorder.data.createStatus = 1;
     accountorder.data.accountName = path_param1;
@@ -420,6 +441,74 @@ app.use('/oulianvktaccount/getAccountOrder/:path_param1/:path_param2', async (re
   }
 });
 
+// 路由IOS blockchain history信息
+app.use(bodyParser.urlencoded({
+  extended: false
+}));
+app.use(bodyParser.json());
+app.post('/VX/:path_param1', async (req, res) => {
+
+  let path_param1 = req.params.path_param1;
+
+  console.log(path_param1);
+  console.log(req.body);
+  if (path_param1 === "GetActions") {
+    console.log('/VX/GetActions', req.body);
+    let accouts = JSON.parse('{}');
+    let start_pos = req.body.page * req.body.pageSize;
+    let req_json = JSON.stringify({"pos":start_pos,"offset":req.body.pageSize,"account_name":req.body.from});
+    // let req_json = JSON.stringify({"pos":"-1","offset":-1,"account_name":req.body.from});
+    console.log(req_json)
+    request.post({
+      url: VKTAPI_URL+'/v1/history/get_actions',
+      form: req_json
+    }, 
+    (error, res2, body) => {
+      if (error) {
+        console.error(error);
+        return;
+      }
+      // console.log(body);
+      accouts.code = 0;
+      accouts.message = "ok";
+      accouts.data = JSON.parse('{}');
+      accouts.data.pageSize = 1;
+      accouts.data.page = 1;
+      accouts.data.hasMore = 0;
+      accouts.data.actions = JSON.parse('[]');
+      let quantity ;
+      let quantityarr;
+      let index = 0;
+      console.log(m_lasttrxid);
+      for (let i in JSON.parse(body).actions) {
+        if(m_lasttrxid[req.body.from] == JSON.parse(body).actions[i].action_trace.trx_id) {
+          continue;
+        }
+        accouts.data.actions.push({"doc": JSON.parse(body).actions[i].action_trace.act});
+        accouts.data.actions[index].doc.data.expiration = JSON.parse(body).actions[i].action_trace.block_time;
+        accouts.data.actions[index].trxid = JSON.parse(body).actions[i].action_trace.trx_id;
+        accouts.data.actions[index].blockNum = JSON.parse(body).actions[i].action_trace.block_num;
+        accouts.data.actions[index].time = JSON.parse(body).actions[i].action_trace.block_time;
+        accouts.data.actions[index].cpu_usage_us = JSON.parse(body).actions[i].action_trace.cpu_usage;
+        accouts.data.actions[index].net_usage_words = "bytes";
+        quantity = JSON.parse(body).actions[i].action_trace.act.data.quantity;
+        if(quantity != undefined){
+          quantityarr = quantity.split(" ");
+        }else{
+          quantityarr = "0.0 VKT".split(" ");
+        }
+        accouts.data.actions[index].amount = quantityarr[0];
+        accouts.data.actions[index].assestsType = quantityarr[1];
+        //for netxt page Deduplication
+        m_lasttrxid[req.body.from] = accouts.data.actions[index].trxid;
+        index ++;
+      }
+      console.log(util.inspect(accouts, false, null, true))
+      res.json(accouts);
+    })
+  }
+
+});
 
 // 路由scatter prices数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
