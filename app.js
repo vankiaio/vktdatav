@@ -124,13 +124,22 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
   console.log(req.body);
   if (path_param1 === "follow_list") {
     console.log('/api_oc_personal/v1.0.0/follow_list', req.body);
+    auth.code = 0;
+    auth.message = 'ok';
     auth.data = JSON.parse('[]');
     auth.data.push({
       uid: '13812345678',
-      name: 'vankiauser1',
-      avatar: '',
+      displayName: 'Lee',
+      avatar: 'http://worldartsme.com/images/avatar-lady-clipart-1.jpg',
       letter: 'v', //索引字母
-      friend_type: '1' //1代表钱包2代表账号
+      followType: '1' //1代表钱包2代表账号
+    });
+    auth.data.push({
+      uid: '13812342678',
+      displayName: '馨月',
+      avatar: 'http://worldartsme.com/images/avatar-lady-clipart-1.jpg',
+      letter: 'v', //索引字母
+      followType: '1' //1代表钱包2代表账号
     });
     res.json(auth);
     return;
@@ -172,8 +181,104 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
       }
     );
 
+    // asset.data.push(
+    //   {
+    //     contract_name: "token",
+    //     token_symbol: "ETH",
+    //     coinmarket_id: "Ethereum",
+    //     account_name: req.body.accountName,
+    //     balance: vkt_balance,
+    //     balance_usd: vkt_balance * vktdatav_allprices["eth:eth:eth"].USD,
+    //     balance_cny: vkt_balance * vktdatav_allprices["eth:eth:eth"].CNY,
+    //     asset_price_usd: vktdatav_allprices["eth:eth:eth"].USD,
+    //     asset_price_cny: vktdatav_allprices["eth:eth:eth"].CNY,
+    //     asset_price_change_in_24h: (vktdatav_vkttracker_info.percent_change_1d * 100.0).toFixed(2),
+    //     iconUrl: "http://tracker.devicexx.com/assets/logo.png",
+    //     iconUrlHd: "http://tracker.devicexx.com/assets/logo.png",
+    //     asset_market_cap_cny: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].CNY * 500000000,
+    //     isRedpacket: true
+    //   }
+    // );
+
     res.json(asset);
-  }
+    //TODO
+  } else if (path_param1 === "import_accounts") {
+    console.log('/api_oc_personal/v1.0.0/import_accounts', req.body);
+    let import_accounts = JSON.parse('{}');
+    import_accounts.code = 0;
+    import_accounts.message = 'ok';
+    import_accounts.data = JSON.parse('[]');
+    import_accounts.data.push({
+      uid: '13889365325',
+      name: 'vankiauser1',
+      avatar: '#',
+      letter: 'v', //索引字母
+      friend_type: '1' //1代表钱包2代表账号
+    });
+    res.json(import_accounts);
+    return;
+  } else if (path_param1 === "get_asset_token") {
+    console.log('/api_oc_personal/v1.0.0/get_asset_token', req.body);
+    let assets = JSON.parse('{}');
+    assets.code = 0;
+    assets.message = 'ok';
+    assets.data = JSON.parse('{}');
+    assets.data.assetCategoryList = JSON.parse('[]');
+    assets.data.assetCategoryList.push(
+      {
+        tokenInfo:{
+          id:'01',
+          assetName: 'VKT',
+          contractName: 'eosio.token',
+          coinmarketId: 'bitforex',
+          iconUrl: 'http://tracker.devicexx.com/assets/logo.png',
+          iconUrlHd: 'http://tracker.devicexx.com/assets/logo.png',
+        },
+        isFollow:true
+      }
+    );
+    assets.data.assetCategoryList.push(
+      {
+        tokenInfo:{
+          id:'02',
+          assetName: 'ETH',
+          contractName: 'token',
+          coinmarketId: 'bitforex',
+          iconUrl: 'http://icons.iconarchive.com/icons/cjdowner/cryptocurrency-flat/128/Ethereum-ETH-icon.png',
+          iconUrlHd: 'http://icons.iconarchive.com/icons/cjdowner/cryptocurrency-flat/512/Ethereum-ETH-icon.png',
+        },
+        isFollow:false
+      }
+    );
+    assets.data.followAssetIds = JSON.parse('[]');
+    assets.data.assetCategoryList.push('VKT');
+    assets.data.assetCategoryList.push('ETH');
+    console.log(util.inspect(assets, false, null, true));
+    res.json(assets);
+    return;
+  } else if (path_param1 === "news_list") {
+    console.log('/api_oc_personal/v1.0.0/news_list', req.body);
+    let news_list = JSON.parse('{}');
+    news_list.code = 0;
+    news_list.message = 'ok';
+    news_list.data = JSON.parse('[]');
+    news_list.data.push({
+      id: '01',
+      title: '武景刚：物联网要选择合适的技术',
+      summary: '武景刚：物联网要选择合适的技术',
+      scope:1,
+      assetCategoryId:1,
+      imageUrl:'https://i1.7234.cn/system/redactor_assets/pictures_3/000/214/895/214895/2018/513cc6ade80674529d1c0fe224bf8edf.jpeg',
+      newsUrl:'http://www.cneo.com.cn/article-80121-1.html',
+      publisher:'企业观察网',
+      status:'released',
+      releaseTime:'2018-6-26 09:39',
+      createTime:'2018-6-26 09:39',
+      updateTime:'2018-6-26 09:39'
+    });
+    res.json(news_list);
+    return;
+  } 
   
 });
 
@@ -186,25 +291,171 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
 
   let path_param1 = req.params.path_param1;
   let path_param2 = req.params.path_param2;
-  let auth = JSON.parse('{}');
+
   console.log(path_param1);
   console.log(path_param2);
   console.log(req.body);
   if (path_param1 === "message") {
     if (path_param2 == "auth") {
       console.log('/api_oc_personal/v1.0.0/message/auth', req.body);
+      let auth = JSON.parse('{}');
       auth.code = 0;
       auth.message = 'ok';
       auth.data = JSON.parse('{}');
       auth.data.uid = req.body.phoneNum;
       auth.data.wallet_uid = req.body.phoneNum;
-      auth.data.wallet_avatar = "default";
+      auth.data.wallet_avatar = "#";
       auth.data.wallet_weixin = req.body.phoneNum;
       auth.data.wallet_qq = req.body.phoneNum;
       res.json(auth);
       return;
     }
+  }else if (path_param1 === "user") {
+    if (path_param2 === "add_new_vkt") {
+      console.log('/api_oc_personal/v1.0.0/user/add_new_vkt', req.body);
+      let auth = JSON.parse('{}');
+      auth.code = 0;
+      auth.message = 'ok';
+      auth.data = JSON.parse('{}');
+      if (req.body.ownerKey != undefined && req.body.activeKey != undefined &&
+        req.body.uid != undefined && req.body.vktAccountName != undefined &&
+        req.body.ownerKey.substring(0,3) === 'VKT' &&
+        req.body.activeKey.substring(0,3) === 'VKT' &&
+        req.body.ownerKey.length === 53 &&
+        req.body.activeKey.length === 53) {
+
+        let pubkeyactive = req.body.activeKey;
+        let pubkeyowner = req.body.ownerKey;
+        let actname = req.body.vktAccountName;
+    
+        console.log('Public Key:\t', pubkeyactive) // VKTkey...
+        let checkpubkeyactive = ecc.isValidPublic(pubkeyactive, 'VKT');
+        console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyactive=', checkpubkeyactive);
+        let checkpubkeyowner = ecc.isValidPublic(pubkeyowner, 'VKT');
+        console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyowner=', checkpubkeyowner);
+    
+        const result = await api.transact({
+          actions: [{
+              account: 'eosio',
+              name: 'newaccount',
+              authorization: [{
+                actor: 'makeaccounts',
+                permission: 'active',
+              }],
+              data: {
+                creator: 'makeaccounts',
+                name: actname,
+                owner: {
+                  threshold: 1,
+                  keys: [{
+                    key: pubkeyowner,
+                    weight: 1
+                  }],
+                  accounts: [],
+                  waits: []
+                },
+                active: {
+                  threshold: 1,
+                  keys: [{
+                    key: pubkeyactive,
+                    weight: 1
+                  }],
+                  accounts: [],
+                  waits: []
+                },
+              },
+            },
+            {
+              account: 'eosio',
+              name: 'buyrambytes',
+              authorization: [{
+                actor: 'makeaccounts',
+                permission: 'active',
+              }],
+              data: {
+                payer: 'makeaccounts',
+                receiver: actname,
+                bytes: 8192,
+              },
+            },
+            {
+              account: 'eosio',
+              name: 'delegatebw',
+              authorization: [{
+                actor: 'makeaccounts',
+                permission: 'active',
+              }],
+              data: {
+                from: 'makeaccounts',
+                receiver: actname,
+                stake_net_quantity: '0.1500 VKT',
+                stake_cpu_quantity: '0.5000 VKT',
+                transfer: false,
+              }
+            }
+          ]
+        }, {
+          blocksBehind: 3,
+          expireSeconds: 30,
+        });
+
+        console.log("newaccount result = ", result);
+        auth.data = result;
+        res.json(auth);
+      } else {
+        auth.code = 500;
+        auth.message = 'Failed to create account.';
+        auth.data = JSON.parse('{}');
+        res.json(auth);
+      }
+      return;
+    }
+    //user info and icon
+    if (path_param2 === "get_user") {
+      console.log('/api_oc_personal/v1.0.0/user/get_user', req.body);
+      let userinfo = JSON.parse('{}');
+      userinfo.code = 0;
+      userinfo.message = 'ok';
+      userinfo.data = JSON.parse('{}');
+      userinfo.data.uid=13889365325;
+      userinfo.data.walletName = 'tokyoliyi';
+      userinfo.data.avatar = 'https://avatarfiles.alphacoders.com/155/155894.jpg';
+      userinfo.data.phoneNum = '13889365325';
+      userinfo.data.wechat = '1389365325';
+      userinfo.data.qq = 8760358;
+      res.json(userinfo);
+      return;
+    }
+    if (path_param2 === "toggleVktMain") {
+      console.log('/api_oc_personal/v1.0.0/user/toggleVktMain', req.body);
+      let msgs = JSON.parse('{}');
+      msgs.code = 0;
+      msgs.message = 'ok';
+      msgs.data = 'YES';
+      res.json(msgs);
+      return;
+    }
+
+  } else if (path_param1 === "msg") {
+    if (path_param2 === "getMagList") {
+      console.log('/api_oc_personal/v1.0.0/msg/GetMagList', req.body);
+      let msgs = JSON.parse('{}');
+      msgs.code = 0;
+      msgs.message = 'ok';
+      msgs.data = JSON.parse('[]');
+      msgs.data.push({title:'test title 1',
+      summary:'软件还在测试中...',
+      createTime:moment().format("MM/DD"), 
+      updateTime:moment().format("MM/DD")});
+      msgs.data.push({title:'test title 2',
+      summary:'软件还在测试中...',
+      createTime:moment().format("MM/DD"), 
+      updateTime:moment().format("MM/DD")});
+      res.json(msgs);
+      return;
+    }
   }
+
 });
 
 // 路由scatter 多语言数据
@@ -220,7 +471,9 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     // 获取账号qingzhudatac的信息
     // const chaininfo = await rpc.get_info();
     // console.log(chaininfo);
-    is_open.data = 'NO';
+    is_open.code = 0;
+    is_open.message = 'ok';
+    is_open.data = 'YES';
     res.json(is_open);
   } else if (path_param1 === "get_last_info") {
     console.log('/api_oc_blockchain-v1.0.0/get_last_info', req.body);
@@ -230,11 +483,61 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     ios_version.message = 'ok';
     ios_version.data = JSON.parse('{}');
     ios_version.data.uploadUrl = 'https://github.com/vankiaio/PocketVKT-IOS';
-    ios_version.data.versionDetail = 'v1.5.1'
-    ios_version.data.versionCode = 'v1.5.1'
-    ios_version.data.versionName = 'v1.5.1'
+    ios_version.data.versionDetail = '2.5.1'
+    ios_version.data.versionCode = '2.5.1'
+    ios_version.data.versionName = '2.5.1'
     console.log(ios_version);
     res.json(ios_version);
+  }else   if (path_param1 === "recommend_dapp") {
+    console.log('/api_oc_personal/v1.0.0/recommend_dapp', req.body);
+    let recommend_dapp = JSON.parse('{}');
+
+    recommend_dapp.code = 0;
+    recommend_dapp.message = 'ok';
+    recommend_dapp.data = JSON.parse('{}');
+    recommend_dapp.data.bannerDapps = JSON.parse('[]');
+    recommend_dapp.data.bannerDapps.push({
+      dapp_id:'001',
+      dappName:'清竹大数据',
+      dappIntro:'数据确权，数据溯源',
+      dappIcon:'https://5b0988e595225.cdn.sohucs.com/a_auto,c_cut,x_14,y_8,w_386,h_386/images/20180329/f3f82468cf734c0db09ea978801db4f2.jpeg',
+      dappPicture:'https://5b0988e595225.cdn.sohucs.com/a_auto,c_cut,x_14,y_8,w_386,h_386/images/20180329/f3f82468cf734c0db09ea978801db4f2.jpeg',
+      dappUrl:'http://bc.qzbdata.com',
+      status:'released',
+      introReason:'good',
+      dappCategoryName:'1',
+      txtColor:'red',
+      tagColor:'red'
+    });
+    recommend_dapp.data.introDapps = JSON.parse('[]');
+    recommend_dapp.data.introDapps.push({
+      dapp_id:'001',
+      dappName:'清竹大数据',
+      dappIntro:'数据确权，数据溯源',
+      dappIcon:'https://5b0988e595225.cdn.sohucs.com/a_auto,c_cut,x_14,y_8,w_386,h_386/images/20180329/f3f82468cf734c0db09ea978801db4f2.jpeg',
+      dappPicture:'https://5b0988e595225.cdn.sohucs.com/a_auto,c_cut,x_14,y_8,w_386,h_386/images/20180329/f3f82468cf734c0db09ea978801db4f2.jpeg',
+      dappUrl:'http://bc.qzbdata.com',
+      status:'released',
+      introReason:'good',
+      dappCategoryName:'1',
+      txtColor:'red',
+      tagColor:'red'
+    });
+    recommend_dapp.data.starDapps = JSON.parse('[]');
+    recommend_dapp.data.starDapps.push({
+      dapp_id:'001',
+      dappName:'清竹大数据',
+      dappIntro:'数据确权，数据溯源',
+      dappIcon:'https://5b0988e595225.cdn.sohucs.com/a_auto,c_cut,x_14,y_8,w_386,h_386/images/20180329/f3f82468cf734c0db09ea978801db4f2.jpeg',
+      dappPicture:'https://5b0988e595225.cdn.sohucs.com/a_auto,c_cut,x_14,y_8,w_386,h_386/images/20180329/f3f82468cf734c0db09ea978801db4f2.jpeg',
+      dappUrl:'http://bc.qzbdata.com',
+      status:'released',
+      introReason:'good',
+      dappCategoryName:'1',
+      txtColor:'red',
+      tagColor:'red'
+    });
+    res.json(recommend_dapp);
   }
 });
 
@@ -254,10 +557,17 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
 
     let auth = JSON.parse('{}');
     // 获取账号qingzhudatac的信息
-    const accountInfo = await rpc.get_account(req.body.name);
-    console.log(accountInfo);
-    auth.code = 0;
-    auth.data = accountInfo;
+    try {
+      const accountInfo = await rpc.get_account(req.body.name);
+      console.log(accountInfo);
+      auth.code = 0;
+      auth.message = 'ok';
+      auth.data = accountInfo;
+    } catch (error) {
+      auth.code = 0;
+      auth.message = 'The account '+ req.body.name +' was not found.';
+      auth.data = JSON.parse('{}');
+    }
     res.json(auth);
 
   } else if (path_param1 === "get_account_asset") {
@@ -423,7 +733,8 @@ app.use('/oulianvktaccount/getAccountOrder/:path_param1/:path_param2', async (re
   let path_param1 = req.params.path_param1;
   let path_param2 = req.params.path_param2;
 
-  if (path_param1 === "tokyoliyi555" && path_param2 =="13889365325") {
+  if (path_param1.length >= 5 && path_param1.length <= 12 && 
+    path_param2.length == 11) {
     console.log('/oulianvktaccount/getAccountOrder/',path_param1,path_param2, req.body);
     let accountorder = JSON.parse('{}');
 
@@ -438,6 +749,30 @@ app.use('/oulianvktaccount/getAccountOrder/:path_param1/:path_param2', async (re
     accountorder.data.message = 'ok';
     console.log(accountorder);
     res.json(accountorder);
+  }
+});
+
+// 路由scatter 多语言数据
+//app.use('/vktapi', mockjs(path.join(__dirname, './data')));
+app.use('/oulianvktaccount/:path_param1', async (req, res) => {
+
+  let path_param1 = req.params.path_param1;
+  // let path_param2 = req.params.path_param2;
+
+  if (path_param1 === "getAccountCreateResource" ) {
+    console.log('/oulianvktaccount/getAccountCreateResource',path_param1, req.body);
+    let getAccountCreateResource = JSON.parse('{}');
+
+    // 获取账号qingzhudatac的信息
+    // const chaininfo = await rpc.get_info();
+    // console.log(chaininfo);
+    getAccountCreateResource.code = 0;
+    getAccountCreateResource.message = 'ok';
+    getAccountCreateResource.data = JSON.parse('{}');
+    getAccountCreateResource.data.createStatus = 1;
+    getAccountCreateResource.data.message = 'ok';
+    console.log(getAccountCreateResource);
+    res.json(getAccountCreateResource);
   }
 });
 
@@ -481,7 +816,8 @@ app.post('/VX/:path_param1', async (req, res) => {
       let index = 0;
       console.log(m_lasttrxid);
       for (let i in JSON.parse(body).actions) {
-        if(m_lasttrxid[req.body.from] == JSON.parse(body).actions[i].action_trace.trx_id) {
+        if(m_lasttrxid[req.body.from] == JSON.parse(body).actions[i].action_trace.trx_id &&
+        JSON.parse(body).actions.length > 1) {
           continue;
         }
         accouts.data.actions.push({"doc": JSON.parse(body).actions[i].action_trace.act});
@@ -509,6 +845,51 @@ app.post('/VX/:path_param1', async (req, res) => {
   }
 
 });
+
+
+// 路由scatter 多语言数据
+//app.use('/vktapi', mockjs(path.join(__dirname, './data')));
+app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', async (req, res) => {
+
+  let path_param1 = req.params.path_param1;
+  let path_param2 = req.params.path_param2;
+
+  if (path_param1 === "get_candy_score") {
+    console.log('/api_oc_pe_candy_system/get_candy_score', req.body);
+    let candy_score = JSON.parse('{}');
+
+    candy_score.code = 0;
+    candy_score.message = 'ok';
+    // 获取账号qingzhudatac的信息
+
+    candy_score.data = JSON.parse('{}');
+    candy_score.data.scoreNum = 2019888;
+    res.json(candy_score);
+  } else if (path_param1 === "get_user_task") {
+    console.log('/api_oc_pe_candy_system/get_user_task', req.body);
+    let candy_score = JSON.parse('{}');
+
+    candy_score.code = 0;
+    candy_score.message = 'ok';
+    // 获取账号qingzhudatac的信息
+
+    candy_score.data = JSON.parse('[]');
+    candy_score.data.push({
+      candyTask:{
+        id:'001',
+        title:'预言家',
+        description:'预测市场',
+        avatar:'https://cdn1.iconfinder.com/data/icons/easter-2053/64/star-light-night-shapes-512.png',
+        scoreNum:'200',
+        taskUrl:'#',
+        createTime:'2019-03-15 09:08',
+        updateTime:'2019-03-15 09:08'
+      }
+    });
+    res.json(candy_score);
+  }
+});
+
 
 // 路由scatter prices数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
@@ -610,8 +991,8 @@ app.post('/vktapi/v1/create_vkt', async (req, res) => {
           data: {
             from: 'makeaccounts',
             receiver: actname,
-            stake_net_quantity: '0.0500 VKT',
-            stake_cpu_quantity: '0.0500 VKT',
+            stake_net_quantity: '0.1500 VKT',
+            stake_cpu_quantity: '0.5000 VKT',
             transfer: false,
           }
         }
