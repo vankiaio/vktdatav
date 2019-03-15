@@ -342,74 +342,78 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
         console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyactive=', checkpubkeyactive);
         let checkpubkeyowner = ecc.isValidPublic(pubkeyowner, 'VKT');
         console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyowner=', checkpubkeyowner);
-    
-        const result = await api.transact({
-          actions: [{
-              account: 'eosio',
-              name: 'newaccount',
-              authorization: [{
-                actor: 'makeaccounts',
-                permission: 'active',
-              }],
-              data: {
-                creator: 'makeaccounts',
-                name: actname,
-                owner: {
-                  threshold: 1,
-                  keys: [{
-                    key: pubkeyowner,
-                    weight: 1
-                  }],
-                  accounts: [],
-                  waits: []
-                },
-                active: {
-                  threshold: 1,
-                  keys: [{
-                    key: pubkeyactive,
-                    weight: 1
-                  }],
-                  accounts: [],
-                  waits: []
+        try {
+          const result = await api.transact({
+            actions: [{
+                account: 'eosio',
+                name: 'newaccount',
+                authorization: [{
+                  actor: 'makeaccounts',
+                  permission: 'active',
+                }],
+                data: {
+                  creator: 'makeaccounts',
+                  name: actname,
+                  owner: {
+                    threshold: 1,
+                    keys: [{
+                      key: pubkeyowner,
+                      weight: 1
+                    }],
+                    accounts: [],
+                    waits: []
+                  },
+                  active: {
+                    threshold: 1,
+                    keys: [{
+                      key: pubkeyactive,
+                      weight: 1
+                    }],
+                    accounts: [],
+                    waits: []
+                  },
                 },
               },
-            },
-            {
-              account: 'eosio',
-              name: 'buyrambytes',
-              authorization: [{
-                actor: 'makeaccounts',
-                permission: 'active',
-              }],
-              data: {
-                payer: 'makeaccounts',
-                receiver: actname,
-                bytes: 8192,
+              {
+                account: 'eosio',
+                name: 'buyrambytes',
+                authorization: [{
+                  actor: 'makeaccounts',
+                  permission: 'active',
+                }],
+                data: {
+                  payer: 'makeaccounts',
+                  receiver: actname,
+                  bytes: 8192,
+                },
               },
-            },
-            {
-              account: 'eosio',
-              name: 'delegatebw',
-              authorization: [{
-                actor: 'makeaccounts',
-                permission: 'active',
-              }],
-              data: {
-                from: 'makeaccounts',
-                receiver: actname,
-                stake_net_quantity: '0.1500 VKT',
-                stake_cpu_quantity: '0.5000 VKT',
-                transfer: false,
+              {
+                account: 'eosio',
+                name: 'delegatebw',
+                authorization: [{
+                  actor: 'makeaccounts',
+                  permission: 'active',
+                }],
+                data: {
+                  from: 'makeaccounts',
+                  receiver: actname,
+                  stake_net_quantity: '0.1500 VKT',
+                  stake_cpu_quantity: '0.5000 VKT',
+                  transfer: false,
+                }
               }
-            }
-          ]
-        }, {
-          blocksBehind: 3,
-          expireSeconds: 30,
-        });
-
-        console.log("newaccount result = ", result);
-        auth.data = result;
+            ]
+          }, {
+            blocksBehind: 3,
+            expireSeconds: 30,
+          });
+          console.log("newaccount result = ", result);
+          auth.data = result;
+        } catch (error) {
+          auth.code = 500;
+          auth.message = 'Failed to create account.';
+          auth.data = JSON.parse('{}');
+        }
         res.json(auth);
       } else {
         auth.code = 500;
