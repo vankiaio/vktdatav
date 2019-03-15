@@ -129,7 +129,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     auth.data = JSON.parse('[]');
     auth.data.push({
       uid: '13812345678',
-      displayName: 'Lee',
+      displayName: 'tokyoliyi123',
       avatar: 'http://worldartsme.com/images/avatar-lady-clipart-1.jpg',
       letter: 'v', //索引字母
       followType: '1' //1代表钱包2代表账号
@@ -164,7 +164,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     asset.data = JSON.parse('[]');
     asset.data.push(
       {
-        contract_name: "eosio.token",
+        contract_name: "vktio.token",
         token_symbol: "VKT",
         coinmarket_id: "bitforex",
         account_name: req.body.accountName,
@@ -263,11 +263,11 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     news_list.message = 'ok';
     news_list.data = JSON.parse('[]');
     news_list.data.push({
-      id: '01',
+      id: '1',
       title: '武景刚：物联网要选择合适的技术',
       summary: '武景刚：物联网要选择合适的技术',
-      scope:1,
-      assetCategoryId:1,
+      scope:'1',
+      assetCategoryId: '1',
       imageUrl:'https://i1.7234.cn/system/redactor_assets/pictures_3/000/214/895/214895/2018/513cc6ade80674529d1c0fe224bf8edf.jpeg',
       newsUrl:'http://www.cneo.com.cn/article-80121-1.html',
       publisher:'企业观察网',
@@ -277,6 +277,15 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
       updateTime:'2018-6-26 09:39'
     });
     res.json(news_list);
+    return;
+  } else if (path_param1 === "isFollowRecord") {
+    console.log('/api_oc_personal/v1.0.0/isFollowRecord', req.body);
+    let followRecord = JSON.parse('{}');
+    followRecord.code = 0;
+    followRecord.message = 'ok';
+    followRecord.data = 'true';
+    
+    res.json(followRecord);
     return;
   } 
   
@@ -435,6 +444,16 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
       res.json(msgs);
       return;
     }
+    if (path_param2 === "getVktAccount") {
+      console.log('/api_oc_personal/v1.0.0/user/getVktAccount', req.body);
+      let account = JSON.parse('{}');
+      account.code = 0;
+      account.message = 'success';
+      account.data = 'tokyoliyi123';
+      
+      res.json(account);
+      return;
+    } 
 
   } else if (path_param1 === "msg") {
     if (path_param2 === "getMagList") {
@@ -619,6 +638,45 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     }
     console.log(dapp);
     res.json(dapp);
+    //新闻分类
+  } else if (path_param1 === "getAssetCategoryAll") {
+    console.log('/api_oc_personal/v1.0.0/getAssetCategoryAll', req.query);
+    let assetCategory = JSON.parse('{}');
+    
+    assetCategory.code = 0;
+    assetCategory.message = 'ok';
+    assetCategory.data = JSON.parse('[]');
+    assetCategory.data.push({
+      id:'1',
+      assetName: '万加链',
+      selected: true
+    });
+    assetCategory.data.push({
+      id:'2',
+      assetName: '区块链新闻',
+      selected: true
+    });
+    assetCategory.data.push({
+      id:'3',
+      assetName: '币圈大佬',
+      selected: true
+    });
+    console.log(assetCategory);
+    res.json(assetCategory);
+  } else if (path_param1 === "get_pocketvkt_info") {
+    console.log('/api_oc_personal/v1.0.0/get_pocketvkt_info', req.query);
+    let pocketvkt_info = JSON.parse('{}');
+    
+    pocketvkt_info.code = 0;
+    pocketvkt_info.message = 'ok';
+    pocketvkt_info.data = JSON.parse('{}');
+    pocketvkt_info.data.weChatOfficialAccount = '万加物联';
+    pocketvkt_info.data.weChat = 'vankia_asst';
+    pocketvkt_info.data.officiaWebsite = 'http://www.vankia.net';
+    pocketvkt_info.data.companyProfile = 'VANKIA万加链是基于区块链技术的第三代物联网，是一条物联网领域的公链，旨在为中小制造业企业提供产品智能化改造方案。万加链经过多年的研发，积累了很强的技术实力，2018年提交了10项雾计算和区块链的专利申请。';
+    
+    console.log(pocketvkt_info);
+    res.json(pocketvkt_info);
   }
 });
 
@@ -803,6 +861,17 @@ app.use('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
     console.log(chaininfo);
     chain_info.data = chaininfo;
     res.json(chain_info);
+  } else if (path_param1 === "get_sparklines") {
+    console.log('/api_oc_blockchain-v1.0.0/get_sparklines', req.body);
+    let sparklines = JSON.parse('{}');
+
+    sparklines.code = 0;
+    sparklines.message = 'ok';
+    // 获取VKT Sparklines的信息
+    sparklines.data = JSON.parse('{}');
+    sparklines.data.sparkline_vkt_png = 'https://github.com/tokyoliyi/images/blob/master/sparkline_vkt.png?raw=true';
+    console.log(sparklines);
+    res.json(sparklines);
   }
 });
 
