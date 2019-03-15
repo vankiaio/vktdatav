@@ -476,16 +476,16 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     is_open.data = 'YES';
     res.json(is_open);
   } else if (path_param1 === "get_last_info") {
-    console.log('/api_oc_blockchain-v1.0.0/get_last_info', req.body);
+    console.log('/api_oc_personal/v1.0.0/get_last_info', req.body);
     let ios_version = JSON.parse('{}');
     
     ios_version.code = 0;
     ios_version.message = 'ok';
     ios_version.data = JSON.parse('{}');
     ios_version.data.uploadUrl = 'https://github.com/vankiaio/PocketVKT-IOS';
-    ios_version.data.versionDetail = '2.5.1'
-    ios_version.data.versionCode = '2.5.1'
-    ios_version.data.versionName = '2.5.1'
+    ios_version.data.versionDetail = '0.9.0'
+    ios_version.data.versionCode = '090'
+    ios_version.data.versionName = '0.9.0'
     console.log(ios_version);
     res.json(ios_version);
   }else   if (path_param1 === "recommend_dapp") {
@@ -497,11 +497,24 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     recommend_dapp.data = JSON.parse('{}');
     recommend_dapp.data.bannerDapps = JSON.parse('[]');
     recommend_dapp.data.bannerDapps.push({
-      dapp_id:'001',
-      dappName:'清竹大数据',
+      dapp_id:'1',
+      dappName:'清竹大数据1',
       dappIntro:'数据确权，数据溯源',
-      dappIcon:'https://5b0988e595225.cdn.sohucs.com/a_auto,c_cut,x_14,y_8,w_386,h_386/images/20180329/f3f82468cf734c0db09ea978801db4f2.jpeg',
-      dappPicture:'https://5b0988e595225.cdn.sohucs.com/a_auto,c_cut,x_14,y_8,w_386,h_386/images/20180329/f3f82468cf734c0db09ea978801db4f2.jpeg',
+      dappIcon:'https://www.gemalto.com/iot-site/PublishingImages/inspired-iot-modules-banner.jpg?RenditionID=1',
+      dappPicture:'https://www.gemalto.com/iot-site/PublishingImages/inspired-iot-modules-banner.jpg?RenditionID=1',
+      dappUrl:'http://bc.qzbdata.com',
+      status:'released',
+      introReason:'good',
+      dappCategoryName:'1',
+      txtColor:'red',
+      tagColor:'red'
+    });
+    recommend_dapp.data.bannerDapps.push({
+      dapp_id:'2',
+      dappName:'清竹大数据2',
+      dappIntro:'数据确权，数据溯源',
+      dappIcon:'https://www.simplilearn.com/ice9/free_resources_article_thumb/Data-Science-vs.-Big-Data-vs.jpg',
+      dappPicture:'https://www.simplilearn.com/ice9/free_resources_article_thumb/Data-Science-vs.-Big-Data-vs.jpg',
       dappUrl:'http://bc.qzbdata.com',
       status:'released',
       introReason:'good',
@@ -511,7 +524,7 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     });
     recommend_dapp.data.introDapps = JSON.parse('[]');
     recommend_dapp.data.introDapps.push({
-      dapp_id:'001',
+      dapp_id:'1',
       dappName:'清竹大数据',
       dappIntro:'数据确权，数据溯源',
       dappIcon:'https://5b0988e595225.cdn.sohucs.com/a_auto,c_cut,x_14,y_8,w_386,h_386/images/20180329/f3f82468cf734c0db09ea978801db4f2.jpeg',
@@ -519,25 +532,93 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
       dappUrl:'http://bc.qzbdata.com',
       status:'released',
       introReason:'good',
-      dappCategoryName:'1',
+      dappCategoryName:'2',
+      txtColor:'red',
+      tagColor:'red'
+    });
+    recommend_dapp.data.introDapps.push({
+      dapp_id:'2',
+      dappName:'预言家',
+      dappIntro:'预测大盘，谁是预言家',
+      dappIcon:'http://icons.iconarchive.com/icons/hadezign/hobbies/128/Magic-icon.png',
+      dappPicture:'http://icons.iconarchive.com/icons/hadezign/hobbies/128/Magic-icon.png',
+      dappUrl:'http://bc.qzbdata.com',
+      status:'released',
+      introReason:'good',
+      dappCategoryName:'3',
       txtColor:'red',
       tagColor:'red'
     });
     recommend_dapp.data.starDapps = JSON.parse('[]');
     recommend_dapp.data.starDapps.push({
-      dapp_id:'001',
+      dapp_id:'3',
       dappName:'清竹大数据',
       dappIntro:'数据确权，数据溯源',
-      dappIcon:'https://5b0988e595225.cdn.sohucs.com/a_auto,c_cut,x_14,y_8,w_386,h_386/images/20180329/f3f82468cf734c0db09ea978801db4f2.jpeg',
-      dappPicture:'https://5b0988e595225.cdn.sohucs.com/a_auto,c_cut,x_14,y_8,w_386,h_386/images/20180329/f3f82468cf734c0db09ea978801db4f2.jpeg',
+      dappIcon:'https://precise.seas.upenn.edu/content/images/research/domain/banner/banner_iot_r3.png',
+      dappPicture:'https://precise.seas.upenn.edu/content/images/research/domain/banner/banner_iot_r3.png',
       dappUrl:'http://bc.qzbdata.com',
       status:'released',
       introReason:'good',
-      dappCategoryName:'1',
+      dappCategoryName:'3',
       txtColor:'red',
       tagColor:'red'
     });
     res.json(recommend_dapp);
+  } else if (path_param1 === "category_config") {
+    console.log('/api_oc_personal/v1.0.0/category_config', req.body);
+    let category = JSON.parse('{}');
+    
+    category.code = 0;
+    category.message = 'ok';
+    category.data = JSON.parse('[]');
+    category.data.push({
+      id:'1',
+      dappCategoryName:'数据确权类'
+    });
+    category.data.push({
+      id:'2',
+      dappCategoryName:'游戏类'
+    });
+    console.log(category);
+    res.json(category);
+  } else if (path_param1 === "get_dapp_by_config_id") {
+    console.log('/api_oc_personal/v1.0.0/get_dapp_by_config_id?id=', req.query.id);
+    let dapp = JSON.parse('{}');
+    
+    dapp.code = 0;
+    dapp.message = 'ok';
+    dapp.data = JSON.parse('[]');
+    if(req.query.id === '1') {
+      dapp.data.push({
+        dapp_id:'1',
+        dappName:'清竹大数据',
+        dappIntro:'数据确权，数据溯源',
+        dappIcon:'https://5b0988e595225.cdn.sohucs.com/a_auto,c_cut,x_14,y_8,w_386,h_386/images/20180329/f3f82468cf734c0db09ea978801db4f2.jpeg',
+        dappPicture:'https://5b0988e595225.cdn.sohucs.com/a_auto,c_cut,x_14,y_8,w_386,h_386/images/20180329/f3f82468cf734c0db09ea978801db4f2.jpeg',
+        dappUrl:'http://bc.qzbdata.com',
+        status:'released',
+        introReason:'good',
+        dappCategoryName:'3',
+        txtColor:'red',
+        tagColor:'red'
+      });
+    }else if(req.query.id === '2'){
+      dapp.data.push({
+        dapp_id:'1',
+        dappName:'预言家',
+        dappIntro:'预测大盘，谁是预言家',
+        dappIcon:'http://icons.iconarchive.com/icons/hadezign/hobbies/128/Magic-icon.png',
+        dappPicture:'http://icons.iconarchive.com/icons/hadezign/hobbies/128/Magic-icon.png',
+        dappUrl:'http://bc.qzbdata.com',
+        status:'released',
+        introReason:'good',
+        dappCategoryName:'3',
+        txtColor:'red',
+        tagColor:'red'
+      });
+    }
+    console.log(dapp);
+    res.json(dapp);
   }
 });
 
