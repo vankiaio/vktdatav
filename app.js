@@ -325,7 +325,6 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
       let auth = JSON.parse('{}');
       auth.code = 0;
       auth.message = 'ok';
-      auth.data = JSON.parse('{}');
       if (req.body.ownerKey != undefined && req.body.activeKey != undefined &&
         req.body.uid != undefined && req.body.vktAccountName != undefined &&
         req.body.ownerKey.substring(0,3) === 'VKT' &&
@@ -408,18 +407,14 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
             expireSeconds: 30,
           });
           console.log("newaccount result = ", result);
-          auth.data = JSON.parse('{}');
-          auth.data.transaction_id = result.transaction_id;
         } catch (error) {
           auth.code = 500;
           auth.message = 'Failed to create account.';
-          auth.data = JSON.parse('{}');
         }
         res.json(auth);
       } else {
         auth.code = 500;
         auth.message = 'Failed to create account.';
-        auth.data = JSON.parse('{}');
         res.json(auth);
       }
       return;
