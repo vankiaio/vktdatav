@@ -717,7 +717,7 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
     const balances = await rpc.get_currency_balance('eosio.token', req.body.name);
     console.log(balances);
 
-    let vkt_balance = '';
+    let vkt_balance = 0;
     for (let i in balances) {
       let balarr = balances[i].split(" ");
       if (balarr[1] === "VKT") {
