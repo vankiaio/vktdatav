@@ -408,7 +408,8 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
             expireSeconds: 30,
           });
           console.log("newaccount result = ", result);
-          auth.data = result;
+          auth.data = JSON.parse('{}');
+          auth.data.transaction_id = result.transaction_id;
         } catch (error) {
           auth.code = 500;
           auth.message = 'Failed to create account.';
