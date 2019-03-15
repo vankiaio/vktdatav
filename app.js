@@ -272,9 +272,9 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
       newsUrl:'http://www.cneo.com.cn/article-80121-1.html',
       publisher:'企业观察网',
       status:'released',
-      releaseTime:'2018-06-26 09:39',
-      createTime:'2018-06-26 09:39',
-      updateTime:'2018-06-26 09:39'
+      releaseTime:'2018-06-26 09:39:00',
+      createTime:'2018-06-26 09:39:00',
+      updateTime:'2018-06-26 09:39:00'
     });
     res.json(news_list);
     return;
