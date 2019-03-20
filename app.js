@@ -7,7 +7,7 @@ const opn = require('opn');
 const utils = require('./utils');
 const r2 = require('r2');
 // import ccxt
-const ccxt = require('ccxt');
+const ccxt = require('ccxt-vkt');
 // import GeoIP-lite
 const geoip = require('geoip-lite');
 const superagent = require('superagent');
