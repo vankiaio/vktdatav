@@ -25,8 +25,8 @@ const {
   JsonRpc,
   RpcError,
   JsSignatureProvider,
-} = require('eosjs');
-const ecc = require("eosjs-ecc");
+} = require('vktjs');
+const ecc = require("vktjs-ecc");
 const fetch = require('node-fetch'); // node only; not needed in browsers
 const {
   TextDecoder,
