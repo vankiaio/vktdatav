@@ -88,7 +88,8 @@ let m_lasttrxid = JSON.parse('[]');
 // 创建express
 const app = express();
 
-const signatureProvider = new JsSignatureProvider([defaultPrivateKey]);
+// const signatureProvider = new JsSignatureProvider([defaultPrivateKey]);;
+const signatureProvider = require('ttmcjs/dist/eosjs-jssig').default;
 
 const rpc = new JsonRpc(VKTAPI_URL, {
   fetch
