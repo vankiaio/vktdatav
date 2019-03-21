@@ -7,7 +7,7 @@ const opn = require('opn');
 const utils = require('./utils');
 const r2 = require('r2');
 // import ccxt
-const ccxt = require('ccxt');
+const ccxt = require('ccxt-vkt');
 // import GeoIP-lite
 const geoip = require('geoip-lite');
 const superagent = require('superagent');
@@ -25,8 +25,8 @@ const {
   JsonRpc,
   RpcError,
   JsSignatureProvider,
-} = require('eosjs');
-const ecc = require("eosjs-ecc");
+} = require('ttmcjs');
+const ecc = require("ttmcjs-ecc");
 const fetch = require('node-fetch'); // node only; not needed in browsers
 const {
   TextDecoder,

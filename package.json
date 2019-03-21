@@ -21,10 +21,10 @@
   },
   "homepage": "https://github.com/vankiaio/vktdatav#readme",
   "dependencies": {
-    "ccxt": "^1.18.292",
+    "ccxt-vkt": "^1.18.292",
     "colors": "^1.3.2",
     "date-utils": "^1.2.21",
-    "eosjs": "^20.0.0-beta2.2",
+    "ttmcjs": "^20.0.0-beta2.2",
     "express": "^4.16.4",
     "geoip-lite": "^1.3.5",
     "google-translate-api": "^2.3.0",
