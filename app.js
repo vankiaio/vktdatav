@@ -1721,7 +1721,7 @@ const runMongodb = async () => {
       console.error(err);
       throw err;
     }
-    const dbo = db.db("EOS");
+    const dbo = db.db("TTMC");
     // dbo.collection("accounts").find().toArray(function(err, result) {
     //   if (err) throw err;
     //   for (let i in result) {
@@ -1949,7 +1949,7 @@ const runMongodbTPSList = async () => {
       console.error(err);
       throw err;
     }
-    const dbo = db.db("EOS");
+    const dbo = db.db("TTMC");
     // dbo.collection("accounts").find().toArray(function(err, result) {
     //   if (err) throw err;
     //   for (let i in result) {
