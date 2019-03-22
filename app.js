@@ -321,8 +321,8 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
       return;
     }
   }else if (path_param1 === "user") {
-    if (path_param2 === "add_new_vkt") {
-      console.log('/api_oc_personal/v1.0.0/user/add_new_vkt', req.body);
+    if (path_param2 === "add_new_ttmc") {
+      console.log('/api_oc_personal/v1.0.0/user/add_new_ttmc', req.body);
       let auth = JSON.parse('{}');
       auth.code = 0;
       auth.message = 'ok';
@@ -436,8 +436,8 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
       res.json(userinfo);
       return;
     }
-    if (path_param2 === "toggleVktMain") {
-      console.log('/api_oc_personal/v1.0.0/user/toggleVktMain', req.body);
+    if (path_param2 === "toggleTtmcMain") {
+      console.log('/api_oc_personal/v1.0.0/user/toggleTtmcMain', req.body);
       let msgs = JSON.parse('{}');
       msgs.code = 0;
       msgs.message = 'ok';
@@ -445,8 +445,8 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
       res.json(msgs);
       return;
     }
-    if (path_param2 === "getVktAccount") {
-      console.log('/api_oc_personal/v1.0.0/user/getVktAccount', req.body);
+    if (path_param2 === "getTtmcAccount") {
+      console.log('/api_oc_personal/v1.0.0/user/getTtmcAccount', req.body);
       let account = JSON.parse('{}');
       account.code = 0;
       account.message = 'success';
