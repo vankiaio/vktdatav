@@ -24,7 +24,6 @@ const {
   Api,
   JsonRpc,
   RpcError,
-  JsSignatureProvider,
 } = require('ttmcjs');
 const ecc = require("ttmcjs-ecc");
 const fetch = require('node-fetch'); // node only; not needed in browsers
@@ -88,8 +87,8 @@ let m_lasttrxid = JSON.parse('[]');
 // 创建express
 const app = express();
 
-// const signatureProvider = new JsSignatureProvider([defaultPrivateKey]);;
-const signatureProvider = require('ttmcjs/dist/eosjs-jssig').default;
+const JsSignatureProvider = require('ttmcjs/dist/eosjs-jssig').default;
+const signatureProvider = new JsSignatureProvider([defaultPrivateKey]);;
 
 const rpc = new JsonRpc(VKTAPI_URL, {
   fetch
@@ -327,15 +326,15 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
       auth.code = 0;
       auth.message = 'ok';
       if (req.body.ownerKey != undefined && req.body.activeKey != undefined &&
-        req.body.uid != undefined && req.body.vktAccountName != undefined &&
+        req.body.uid != undefined && req.body.ttmcAccountName != undefined &&
         req.body.ownerKey.substring(0,4) === 'TTMC' &&
         req.body.activeKey.substring(0,4) === 'TTMC' &&
-        req.body.ownerKey.length === 53 &&
-        req.body.activeKey.length === 53) {
+        req.body.ownerKey.length === 54 &&
+        req.body.activeKey.length === 54) {
 
         let pubkeyactive = req.body.activeKey;
         let pubkeyowner = req.body.ownerKey;
-        let actname = req.body.vktAccountName;
+        let actname = req.body.ttmcAccountName;
     
         console.log('Public Key:\t', pubkeyactive) // VKTkey...
         let checkpubkeyactive = ecc.isValidPublic(pubkeyactive, 'TTMC');
@@ -411,10 +410,11 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
         } catch (error) {
           auth.code = 500;
           auth.message = 'Failed to create account.';
+          console.log(error);
         }
         res.json(auth);
       } else {
-        auth.code = 500;
+        auth.code = 501;
         auth.message = 'Failed to create account.';
         res.json(auth);
       }
