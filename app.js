@@ -155,7 +155,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     let vkt_balance = '';
     for (let i in balances) {
       let balarr = balances[i].split(" ");
-      if (balarr[1] === "VKT") {
+      if (balarr[1] === "TTMC") {
         vkt_balance = balarr[0];
       }
     }
@@ -166,7 +166,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     asset.data.push(
       {
         contract_name: "vktio.token",
-        token_symbol: "VKT",
+        token_symbol: "TTMC",
         coinmarket_id: "bitforex",
         account_name: req.body.accountName,
         balance: vkt_balance,
@@ -229,7 +229,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
       {
         tokenInfo:{
           id:'01',
-          assetName: 'VKT',
+          assetName: 'TTMC',
           contractName: 'eosio.token',
           coinmarketId: 'bitforex',
           iconUrl: 'http://tracker.devicexx.com/assets/logo.png',
@@ -252,7 +252,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
       }
     );
     assets.data.followAssetIds = JSON.parse('[]');
-    assets.data.assetCategoryList.push('VKT');
+    assets.data.assetCategoryList.push('TTMC');
     assets.data.assetCategoryList.push('ETH');
     console.log(util.inspect(assets, false, null, true));
     res.json(assets);
@@ -328,8 +328,8 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
       auth.message = 'ok';
       if (req.body.ownerKey != undefined && req.body.activeKey != undefined &&
         req.body.uid != undefined && req.body.vktAccountName != undefined &&
-        req.body.ownerKey.substring(0,3) === 'VKT' &&
-        req.body.activeKey.substring(0,3) === 'VKT' &&
+        req.body.ownerKey.substring(0,4) === 'TTMC' &&
+        req.body.activeKey.substring(0,4) === 'TTMC' &&
         req.body.ownerKey.length === 53 &&
         req.body.activeKey.length === 53) {
 
@@ -338,9 +338,9 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
         let actname = req.body.vktAccountName;
     
         console.log('Public Key:\t', pubkeyactive) // VKTkey...
-        let checkpubkeyactive = ecc.isValidPublic(pubkeyactive, 'VKT');
+        let checkpubkeyactive = ecc.isValidPublic(pubkeyactive, 'TTMC');
         console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyactive=', checkpubkeyactive);
-        let checkpubkeyowner = ecc.isValidPublic(pubkeyowner, 'VKT');
+        let checkpubkeyowner = ecc.isValidPublic(pubkeyowner, 'TTMC');
         console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyowner=', checkpubkeyowner);
         try {
           const result = await api.transact({
@@ -397,8 +397,8 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
                 data: {
                   from: 'makeaccounts',
                   receiver: actname,
-                  stake_net_quantity: '0.1500 VKT',
-                  stake_cpu_quantity: '0.5000 VKT',
+                  stake_net_quantity: '0.1500 TTMC',
+                  stake_cpu_quantity: '0.5000 TTMC',
                   transfer: false,
                 }
               }
@@ -721,7 +721,7 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
     let vkt_balance = 0;
     for (let i in balances) {
       let balarr = balances[i].split(" ");
-      if (balarr[1] === "VKT") {
+      if (balarr[1] === "TTMC") {
         vkt_balance = balarr[0];
       }
     }
@@ -982,7 +982,7 @@ app.post('/VX/:path_param1', async (req, res) => {
         if(quantity != undefined){
           quantityarr = quantity.split(" ");
         }else{
-          quantityarr = "0.0 VKT".split(" ");
+          quantityarr = "0.0 TTMC".split(" ");
         }
         accouts.data.actions[index].amount = quantityarr[0];
         accouts.data.actions[index].assestsType = quantityarr[1];
