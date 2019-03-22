@@ -24,9 +24,8 @@ const {
   Api,
   JsonRpc,
   RpcError,
-  JsSignatureProvider,
-} = require('eosjs');
-const ecc = require("eosjs-ecc");
+} = require('vktjs');
+const ecc = require("vktjs-ecc");
 const fetch = require('node-fetch'); // node only; not needed in browsers
 const {
   TextDecoder,
@@ -88,6 +87,7 @@ let m_lasttrxid = JSON.parse('[]');
 // 创建express
 const app = express();
 
+const JsSignatureProvider = require('vktjs/dist/eosjs-jssig').default;
 const signatureProvider = new JsSignatureProvider([defaultPrivateKey]);
 
 const rpc = new JsonRpc(VKTAPI_URL, {
@@ -410,10 +410,11 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
         } catch (error) {
           auth.code = 500;
           auth.message = 'Failed to create account.';
+          console.log(error);
         }
         res.json(auth);
       } else {
-        auth.code = 500;
+        auth.code = 501;
         auth.message = 'Failed to create account.';
         res.json(auth);
       }
