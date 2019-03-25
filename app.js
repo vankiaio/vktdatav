@@ -174,8 +174,8 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
         asset_price_usd: vktdatav_allprices["vkt:eosio.token:vkt"].USD,
         asset_price_cny: vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
         asset_price_change_in_24h: (vktdatav_vkttracker_info.percent_change_1d * 100.0).toFixed(2),
-        iconUrl: "http://tracker.devicexx.com/assets/logo.png",
-        iconUrlHd: "http://tracker.devicexx.com/assets/logo.png",
+        iconUrl: "http://192.178.1.64:3030/images/ttmc.png",
+        iconUrlHd: "http://192.178.1.64:3030/images/ttmc.png",
         asset_market_cap_cny: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].CNY * 500000000,
         isRedpacket: true
       }
@@ -338,9 +338,9 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
     
         console.log('Public Key:\t', pubkeyactive) // VKTkey...
         let checkpubkeyactive = ecc.isValidPublic(pubkeyactive, 'TTMC');
-        console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyactive=', checkpubkeyactive);
+        console.log('/api_oc_personal/v1.0.0/user/add_new_ttmc - checkpubkeyactive=', checkpubkeyactive);
         let checkpubkeyowner = ecc.isValidPublic(pubkeyowner, 'TTMC');
-        console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyowner=', checkpubkeyowner);
+        console.log('/api_oc_personal/v1.0.0/user/add_new_ttmc - checkpubkeyowner=', checkpubkeyowner);
         try {
           const result = await api.transact({
             actions: [{
@@ -664,20 +664,20 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     });
     console.log(assetCategory);
     res.json(assetCategory);
-  } else if (path_param1 === "get_pocketvkt_info") {
-    console.log('/api_oc_personal/v1.0.0/get_pocketvkt_info', req.query);
-    let pocketvkt_info = JSON.parse('{}');
+  } else if (path_param1 === "get_pocketttmc_info") {
+    console.log('/api_oc_personal/v1.0.0/get_pocketttmc_info', req.query);
+    let pocketttmc_info = JSON.parse('{}');
     
-    pocketvkt_info.code = 0;
-    pocketvkt_info.message = 'ok';
-    pocketvkt_info.data = JSON.parse('{}');
-    pocketvkt_info.data.weChatOfficialAccount = '万加物联';
-    pocketvkt_info.data.weChat = 'vankia_asst';
-    pocketvkt_info.data.officiaWebsite = 'http://www.vankia.net';
-    pocketvkt_info.data.companyProfile = 'VANKIA万加链是基于区块链技术的第三代物联网，是一条物联网领域的公链，旨在为中小制造业企业提供产品智能化改造方案。万加链经过多年的研发，积累了很强的技术实力，2018年提交了10项雾计算和区块链的专利申请。';
+    pocketttmc_info.code = 0;
+    pocketttmc_info.message = 'ok';
+    pocketttmc_info.data = JSON.parse('{}');
+    pocketttmc_info.data.weChatOfficialAccount = '万加物联';
+    pocketttmc_info.data.weChat = 'vankia_asst';
+    pocketttmc_info.data.officiaWebsite = 'http://www.vankia.net';
+    pocketttmc_info.data.companyProfile = 'VANKIA万加链是基于区块链技术的第三代物联网，是一条物联网领域的公链，旨在为中小制造业企业提供产品智能化改造方案。万加链经过多年的研发，积累了很强的技术实力，2018年提交了10项雾计算和区块链的专利申请。';
     
-    console.log(pocketvkt_info);
-    res.json(pocketvkt_info);
+    console.log(pocketttmc_info);
+    res.json(pocketttmc_info);
   }
 });
 
@@ -879,39 +879,50 @@ app.use('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
 
 // 路由scatter 多语言数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
-app.use('/oulianvktaccount/getAccountOrder/:path_param1/:path_param2', async (req, res) => {
+app.use('/oulianttmcaccount/getAccountOrder/:path_param1/:path_param2', async (req, res) => {
 
   let path_param1 = req.params.path_param1;
   let path_param2 = req.params.path_param2;
 
-  if (path_param1.length >= 5 && path_param1.length <= 12 && 
-    path_param2.length == 11) {
-    console.log('/oulianvktaccount/getAccountOrder/',path_param1,path_param2, req.body);
+  console.log('/oulianttmcaccount/getAccountOrder/',path_param1,path_param2, req.body);
+
+  if (path_param1.length >= 5 && path_param1.length <= 12 ) {
     let accountorder = JSON.parse('{}');
 
     // 获取账号qingzhudatac的信息
     // const chaininfo = await rpc.get_info();
     // console.log(chaininfo);
-    accountorder.code = 0;
-    accountorder.message = 'ok';
-    accountorder.data = JSON.parse('{}');
-    accountorder.data.createStatus = 1;
-    accountorder.data.accountName = path_param1;
-    accountorder.data.message = 'ok';
-    console.log(accountorder);
-    res.json(accountorder);
+    try {
+      const accountInfo = await rpc.get_account(path_param1);
+      console.log(accountInfo);
+      accountorder.code = 0;
+      accountorder.message = 'ok';
+      accountorder.data = JSON.parse('{}');
+      accountorder.data.createStatus = 1;
+      accountorder.data.accountName = accountInfo.account_name;
+      accountorder.data.message = 'ok';
+      console.log(accountorder);
+      res.json(accountorder);
+    } catch (error) {
+      accountorder.code = 0;
+      accountorder.message = 'ok';
+      accountorder.data = JSON.parse('{}');
+      accountorder.data.createStatus = 0;
+      accountorder.data.accountName = path_param1;
+      accountorder.data.message = 'Account does not exist!';
+    }
   }
 });
 
 // 路由scatter 多语言数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
-app.use('/oulianvktaccount/:path_param1', async (req, res) => {
+app.use('/oulianttmcaccount/:path_param1', async (req, res) => {
 
   let path_param1 = req.params.path_param1;
   // let path_param2 = req.params.path_param2;
 
   if (path_param1 === "getAccountCreateResource" ) {
-    console.log('/oulianvktaccount/getAccountCreateResource',path_param1, req.body);
+    console.log('/oulianttmcaccount/getAccountCreateResource',path_param1, req.body);
     let getAccountCreateResource = JSON.parse('{}');
 
     // 获取账号qingzhudatac的信息
@@ -1041,6 +1052,8 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', async (req, res) =>
   }
 });
 
+// 访问静态资源
+app.use('/images', express.static(path.join(__dirname, './images')));
 
 // 路由scatter prices数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
