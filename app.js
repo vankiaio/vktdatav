@@ -911,6 +911,13 @@ app.use('/oulianttmcaccount/getAccountOrder/:path_param1/:path_param2', async (r
       accountorder.data.accountName = path_param1;
       accountorder.data.message = 'Account does not exist!';
     }
+  }else{
+    accountorder.code = 0;
+    accountorder.message = 'ok';
+    accountorder.data = JSON.parse('{}');
+    accountorder.data.createStatus = 0;
+    accountorder.data.accountName = path_param1;
+    accountorder.data.message = 'Account does not exist!';
   }
 });
 
