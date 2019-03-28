@@ -823,7 +823,7 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
     })
   } else if (path_param1 === "get_key_accounts") {
     console.log('/api_oc_blockchain-v1.0.0/get_key_accounts', req.body);
-    let accouts = JSON.parse('{}');
+    let accounts = JSON.parse('{}');
 
     request.post({
       url: VKTAPI_URL+'/v1/history/get_key_accounts',
@@ -835,11 +835,11 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
         return
       }
       console.log(body);
-      accouts.code = 0;
-      accouts.message = "ok";
-      accouts.data = JSON.parse(body);
-      console.log(accouts);
-      res.json(accouts);
+      accounts.code = 0;
+      accounts.message = "ok";
+      accounts.data = JSON.parse(body);
+      console.log(accounts);
+      res.json(accounts);
     })
   }
 
@@ -958,7 +958,7 @@ app.post('/VX/:path_param1', async (req, res) => {
   console.log(req.body);
   if (path_param1 === "GetActions") {
     console.log('/VX/GetActions', req.body);
-    let accouts = JSON.parse('{}');
+    let accounts = JSON.parse('{}');
     let start_pos = req.body.page * req.body.pageSize;
     let req_json = JSON.stringify({"pos":start_pos,"offset":req.body.pageSize,"account_name":req.body.from});
     // let req_json = JSON.stringify({"pos":"-1","offset":-1,"account_name":req.body.from});
@@ -973,13 +973,13 @@ app.post('/VX/:path_param1', async (req, res) => {
         return;
       }
       // console.log(body);
-      accouts.code = 0;
-      accouts.message = "ok";
-      accouts.data = JSON.parse('{}');
-      accouts.data.pageSize = 1;
-      accouts.data.page = 1;
-      accouts.data.hasMore = 0;
-      accouts.data.actions = JSON.parse('[]');
+      accounts.code = 0;
+      accounts.message = "ok";
+      accounts.data = JSON.parse('{}');
+      accounts.data.pageSize = 1;
+      accounts.data.page = 1;
+      accounts.data.hasMore = 0;
+      accounts.data.actions = JSON.parse('[]');
       let quantity ;
       let quantityarr;
       let index = 0;
@@ -989,28 +989,87 @@ app.post('/VX/:path_param1', async (req, res) => {
         JSON.parse(body).actions.length > 1) {
           continue;
         }
-        accouts.data.actions.push({"doc": JSON.parse(body).actions[i].action_trace.act});
-        accouts.data.actions[index].doc.data.expiration = JSON.parse(body).actions[i].action_trace.block_time;
-        accouts.data.actions[index].trxid = JSON.parse(body).actions[i].action_trace.trx_id;
-        accouts.data.actions[index].blockNum = JSON.parse(body).actions[i].action_trace.block_num;
-        accouts.data.actions[index].time = JSON.parse(body).actions[i].action_trace.block_time;
-        accouts.data.actions[index].cpu_usage_us = JSON.parse(body).actions[i].action_trace.cpu_usage;
-        accouts.data.actions[index].net_usage_words = "bytes";
+        accounts.data.actions.push({"doc": JSON.parse(body).actions[i].action_trace.act});
+        accounts.data.actions[index].doc.data.expiration = JSON.parse(body).actions[i].action_trace.block_time;
+        accounts.data.actions[index].trxid = JSON.parse(body).actions[i].action_trace.trx_id;
+        accounts.data.actions[index].blockNum = JSON.parse(body).actions[i].action_trace.block_num;
+        accounts.data.actions[index].time = JSON.parse(body).actions[i].action_trace.block_time;
+        accounts.data.actions[index].cpu_usage_us = JSON.parse(body).actions[i].action_trace.cpu_usage;
+        accounts.data.actions[index].net_usage_words = "bytes";
         quantity = JSON.parse(body).actions[i].action_trace.act.data.quantity;
         if(quantity != undefined){
           quantityarr = quantity.split(" ");
         }else{
           quantityarr = "0.0 TTMC".split(" ");
         }
-        accouts.data.actions[index].amount = quantityarr[0];
-        accouts.data.actions[index].assestsType = quantityarr[1];
+        accounts.data.actions[index].amount = quantityarr[0];
+        accounts.data.actions[index].assestsType = quantityarr[1];
         //for netxt page Deduplication
-        m_lasttrxid[req.body.from] = accouts.data.actions[index].trxid;
+        m_lasttrxid[req.body.from] = accounts.data.actions[index].trxid;
         index ++;
       }
-      console.log(util.inspect(accouts, false, null, true))
-      res.json(accouts);
+      console.log(util.inspect(accounts, false, null, true))
+      res.json(accounts);
     })
+  }else if (path_param1 === "GetAssestLockRecords") {
+    console.log('/VX/GetAssestLockRecords', req.body);
+    let accounts = JSON.parse('{}');
+    let accountid = req.body.account_id;
+    
+    // 获取账号ios的信息
+    const accountInfo = await rpc.get_account(accountid);
+    console.log(accountInfo);
+
+    //获取账号ios的资产,查询资产的时候要加上资产的合约名字eosio.token
+    const balances = await rpc.get_currency_balance('eosio.token', accountid);
+    console.log(balances);
+
+    const lockedbalance = await rpc.get_table_rows({
+      json: true,              // Get the response as json
+      code: 'eosio.token',     // Contract that we target
+      scope: accountid,         // Account that owns the data
+      table: 'locked',        // Table name
+      limit: 10,               // maximum number of rows that we want to get
+    });
+  
+    console.log(lockedbalance)
+  
+    let amountlocked = 0.0;
+    let unlockdate ;
+    for (let i in balances) {
+      let balarr = balances[i].split(" ");
+      if(balarr[1] === "TTMC" && lockedbalance.rows.length > 0){
+        amountlocked = lockedbalance.rows[i].total_balance.split(' ')[0];
+        unlockdate = moment.utc(lockedbalance.rows[i].balances[0].unlock_execute_time, moment.ISO_8601).local().format();
+      }else{
+        amountlocked = 0.0;
+        unlockdate = moment().format();
+      }
+
+      accounts.code = 0;
+      accounts.message = "ok";
+      accounts.data = JSON.parse('{}');
+      accounts.data.account_name = accountInfo.account_name;
+      accounts.data.contract = "eosio.token";
+      accounts.data.amount = balarr[0];
+      accounts.data.amountlocked = amountlocked;
+      accounts.data.availableamount = balarr[0] - amountlocked;
+      accounts.data.unlockdate = unlockdate;
+      accounts.data.token = balarr[1];
+      accounts.data.decimals = balarr[0].split(".")[1].length;
+      accounts.data.lockedassets = JSON.parse('[]');
+
+      if(balarr[1] === "TTMC" && lockedbalance.rows.length > 0){
+        for(let j in lockedbalance.rows[i].balances){
+            accounts.data.lockedassets.push({
+            assets:lockedbalance.rows[i].balances[j].balance.split(' ')[0],
+            unlocktime:moment.utc(lockedbalance.rows[i].balances[j].unlock_execute_time, moment.ISO_8601).local().format()
+          });
+        }
+      }
+    }
+
+    res.json(accounts);
   }
 
 });
