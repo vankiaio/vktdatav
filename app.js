@@ -170,11 +170,14 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     console.log(lockedbalance)
   
     let amountlocked = 0.0;
-    let balarr = balances[0].split(" ");
-    if(balarr[1] === "TTMC" && lockedbalance.rows.length > 0){
-      amountlocked = lockedbalance.rows[0].total_balance.split(' ')[0];
+    try{
+      let balarr = balances[0].split(" ");
+      if(balarr[1] === "TTMC" && lockedbalance.rows.length > 0){
+        amountlocked = lockedbalance.rows[0].total_balance.split(' ')[0];
+      }
+    } catch (error) {
+      amountlocked = 0.0;
     }
-
     asset.code = 0;
     asset.message = 'ok';
     asset.data = JSON.parse('[]');
