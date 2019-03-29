@@ -901,10 +901,10 @@ app.use('/oulianttmcaccount/getAccountOrder/:path_param1/:path_param2', async (r
   let path_param1 = req.params.path_param1;
   let path_param2 = req.params.path_param2;
   let accountorder = JSON.parse('{}');
-  
+
   console.log('/oulianttmcaccount/getAccountOrder/',path_param1,path_param2, req.body);
 
-  if (path_param1 !== "(null)" && path_param1.length >= 5 && path_param1.length <= 12 ) {
+  if (path_param1.indexOf("null") === -1  && path_param1.length >= 5 && path_param1.length <= 12 ) {
 
     // 获取账号qingzhudatac的信息
     // const chaininfo = await rpc.get_info();
