@@ -904,38 +904,38 @@ app.use('/oulianttmcaccount/getAccountOrder/:path_param1/:path_param2', async (r
 
   console.log('/oulianttmcaccount/getAccountOrder/',path_param1,path_param2, req.body);
 
-  if (path_param1.indexOf("null") === -1  && path_param1.length >= 5 && path_param1.length <= 12 ) {
+  // if (path_param1.indexOf("null") === -1  && path_param1.length >= 5 && path_param1.length <= 12 ) {
 
-    // 获取账号qingzhudatac的信息
-    // const chaininfo = await rpc.get_info();
-    // console.log(chaininfo);
-    try {
-      const accountInfo = await rpc.get_account(path_param1);
-      console.log(accountInfo);
+  //   // 获取账号qingzhudatac的信息
+  //   // const chaininfo = await rpc.get_info();
+  //   // console.log(chaininfo);
+  //   try {
+  //     const accountInfo = await rpc.get_account(path_param1);
+  //     console.log(accountInfo);
       accountorder.code = 0;
       accountorder.message = 'ok';
       accountorder.data = JSON.parse('{}');
       accountorder.data.createStatus = 1;
-      accountorder.data.accountName = accountInfo.account_name;
+      accountorder.data.accountName = path_param1;
       accountorder.data.message = 'ok';
       console.log(accountorder);
       res.json(accountorder);
-    } catch (error) {
-      accountorder.code = 0;
-      accountorder.message = 'ok';
-      accountorder.data = JSON.parse('{}');
-      accountorder.data.createStatus = 0;
-      accountorder.data.accountName = path_param1;
-      accountorder.data.message = 'Account does not exist!';
-    }
-  }else{
-    accountorder.code = 0;
-    accountorder.message = 'ok';
-    accountorder.data = JSON.parse('{}');
-    accountorder.data.createStatus = 0;
-    accountorder.data.accountName = path_param1;
-    accountorder.data.message = 'Account does not exist!';
-  }
+  //   } catch (error) {
+  //     accountorder.code = 0;
+  //     accountorder.message = 'ok';
+  //     accountorder.data = JSON.parse('{}');
+  //     accountorder.data.createStatus = 0;
+  //     accountorder.data.accountName = path_param1;
+  //     accountorder.data.message = 'Account does not exist!';
+  //   }
+  // }else{
+  //   accountorder.code = 0;
+  //   accountorder.message = 'ok';
+  //   accountorder.data = JSON.parse('{}');
+  //   accountorder.data.createStatus = 0;
+  //   accountorder.data.accountName = path_param1;
+  //   accountorder.data.message = 'Account does not exist!';
+  // }
 });
 
 // 路由scatter 多语言数据
