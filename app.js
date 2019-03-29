@@ -146,7 +146,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
   } else if (path_param1 === "get_token_info") {
     console.log('/api_oc_blockchain-v1.0.0/get_token_info', req.body);
     let asset = JSON.parse('{}');
-
+    let accountName = req.body.accountName;
     //获取账号xxxx的资产,查询资产的时候要加上资产的合约名字eosio.token
     const balances = await rpc.get_currency_balance('eosio.token', req.body.accountName);
     console.log(balances);
@@ -159,16 +159,33 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
       }
     }
 
+    const lockedbalance = await rpc.get_table_rows({
+      json: true,              // Get the response as json
+      code: 'eosio.token',     // Contract that we target
+      scope: accountName,         // Account that owns the data
+      table: 'locked',        // Table name
+      limit: 10,               // maximum number of rows that we want to get
+    });
+  
+    console.log(lockedbalance)
+  
+    let amountlocked = 0.0;
+    let balarr = balances[0].split(" ");
+    if(balarr[1] === "TTMC" && lockedbalance.rows.length > 0){
+      amountlocked = lockedbalance.rows[0].total_balance.split(' ')[0];
+    }
+
     asset.code = 0;
     asset.message = 'ok';
     asset.data = JSON.parse('[]');
     asset.data.push(
       {
-        contract_name: "vktio.token",
+        contract_name: "eosio.token",
         token_symbol: "TTMC",
         coinmarket_id: "bitforex",
-        account_name: req.body.accountName,
+        account_name: accountName,
         balance: vkt_balance,
+        locked_amount: amountlocked,
         balance_usd: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].USD,
         balance_cny: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
         asset_price_usd: vktdatav_allprices["vkt:eosio.token:vkt"].USD,
@@ -186,7 +203,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     //     contract_name: "token",
     //     token_symbol: "ETH",
     //     coinmarket_id: "Ethereum",
-    //     account_name: req.body.accountName,
+    //     account_name: accountName,
     //     balance: vkt_balance,
     //     balance_usd: vkt_balance * vktdatav_allprices["eth:eth:eth"].USD,
     //     balance_cny: vkt_balance * vktdatav_allprices["eth:eth:eth"].CNY,
@@ -883,11 +900,11 @@ app.use('/oulianttmcaccount/getAccountOrder/:path_param1/:path_param2', async (r
 
   let path_param1 = req.params.path_param1;
   let path_param2 = req.params.path_param2;
-
+  let accountorder = JSON.parse('{}');
+  
   console.log('/oulianttmcaccount/getAccountOrder/',path_param1,path_param2, req.body);
 
-  if (path_param1.length >= 5 && path_param1.length <= 12 ) {
-    let accountorder = JSON.parse('{}');
+  if (path_param1 !== "(null)" && path_param1.length >= 5 && path_param1.length <= 12 ) {
 
     // 获取账号qingzhudatac的信息
     // const chaininfo = await rpc.get_info();
@@ -1011,8 +1028,8 @@ app.post('/VX/:path_param1', async (req, res) => {
       console.log(util.inspect(accounts, false, null, true))
       res.json(accounts);
     })
-  }else if (path_param1 === "GetAssestLockRecords") {
-    console.log('/VX/GetAssestLockRecords', req.body);
+  }else if (path_param1 === "GetAssetsLockRecords") {
+    console.log('/VX/GetAssetsLockRecords', req.body);
     let accounts = JSON.parse('{}');
     let accountid = req.body.account_id;
     
