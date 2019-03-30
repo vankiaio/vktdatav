@@ -526,7 +526,7 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     ios_version.code = 0;
     ios_version.message = 'ok';
     ios_version.data = JSON.parse('{}');
-    ios_version.data.uploadUrl = 'https://github.com/vankiaio/PocketVKT-IOS';
+    ios_version.data.uploadUrl = 'http://ttmc_api.vankia.net/upgrade/ttmc.apk';
     ios_version.data.versionDetail = '0.9.0'
     ios_version.data.versionCode = '090'
     ios_version.data.versionName = '0.9.0'
@@ -1177,6 +1177,9 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', async (req, res) =>
 
 // 访问静态资源
 app.use('/images', express.static(path.join(__dirname, './images')));
+
+// 访问静态资源
+app.use('/upgrade', express.static(path.join(__dirname, './upgrade')));
 
 // 路由scatter prices数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
