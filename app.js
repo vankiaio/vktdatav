@@ -695,10 +695,10 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     pocketttmc_info.code = 0;
     pocketttmc_info.message = 'ok';
     pocketttmc_info.data = JSON.parse('{}');
-    pocketttmc_info.data.weChatOfficialAccount = '万加物联';
-    pocketttmc_info.data.weChat = 'vankia_asst';
-    pocketttmc_info.data.officiaWebsite = 'http://www.vankia.net';
-    pocketttmc_info.data.companyProfile = 'VANKIA万加链是基于区块链技术的第三代物联网，是一条物联网领域的公链，旨在为中小制造业企业提供产品智能化改造方案。万加链经过多年的研发，积累了很强的技术实力，2018年提交了10项雾计算和区块链的专利申请。';
+    pocketttmc_info.data.weChatOfficialAccount = 'TTMC Platform';
+    pocketttmc_info.data.weChat = 'ttmc_asst';
+    pocketttmc_info.data.officiaWebsite = 'http://www.ttmc.io';
+    pocketttmc_info.data.companyProfile = 'TTMC는 데이터이력추적과 관련해 연구해온 중국 칭화대학교 청죽 빅데이타 연구소와 마이크로니들 기술을 갖고 있는 일본 동경대학교의 기술 합작으로 만들어낸 메디컬 블록체인으로 블록체인 기술을 활용하여 제품에 대한 정보, 거래이력에 대한 정보 등등 제품 및 서비스의 유통과 관련한 Data를 축적하고, Data가 필요한 사용자들이 이를 활용할 수 있는 Big Data Platform을 제공하려고 한다. Data를 제공하는 정보제공자나 Data를 활용하는 측은 TTMC Platform에 정보를 제공하거나 제공받을 수 있고 이를 위해 TTMC Coin을 거래수단으로 활용하게 된다.';
     
     console.log(pocketttmc_info);
     res.json(pocketttmc_info);
@@ -746,7 +746,7 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
     if(balances.length === 0){
       balances.push("0.0000 TTMC");
     }
-    
+
     let vkt_balance = 0;
     for (let i in balances) {
       let balarr = balances[i].split(" ");
