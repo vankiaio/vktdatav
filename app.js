@@ -1035,6 +1035,10 @@ app.post('/VX/:path_param1', async (req, res) => {
         }
         accounts.data.actions.push({"doc": JSON.parse(body).actions[i].action_trace.act});
         accounts.data.actions[index].doc.data.expiration = JSON.parse(body).actions[i].action_trace.block_time;
+        accounts.data.actions[index].doc.account = "ttmcio.token";
+        if(accounts.data.actions[index].doc.data.from.indexOf("eosio") != -1){
+          accounts.data.actions[index].doc.data.from = "ttmcio";
+        }
         accounts.data.actions[index].trxid = JSON.parse(body).actions[i].action_trace.trx_id;
         accounts.data.actions[index].blockNum = JSON.parse(body).actions[i].action_trace.block_num;
         accounts.data.actions[index].time = JSON.parse(body).actions[i].action_trace.block_time;
