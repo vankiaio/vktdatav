@@ -151,6 +151,10 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     const balances = await rpc.get_currency_balance('eosio.token', req.body.accountName);
     console.log(balances);
 
+    if(balances.length === 0){
+      balances.push("0.0000 TTMC");
+    }
+
     let vkt_balance = '';
     for (let i in balances) {
       let balarr = balances[i].split(" ");
@@ -739,7 +743,10 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
     //获取账号xxxx的资产,查询资产的时候要加上资产的合约名字eosio.token
     const balances = await rpc.get_currency_balance('eosio.token', accountName);
     console.log(balances);
-
+    if(balances.length === 0){
+      balances.push("0.0000 TTMC");
+    }
+    
     let vkt_balance = 0;
     for (let i in balances) {
       let balarr = balances[i].split(" ");
@@ -1071,6 +1078,9 @@ app.post('/VX/:path_param1', async (req, res) => {
     //获取账号ios的资产,查询资产的时候要加上资产的合约名字eosio.token
     const balances = await rpc.get_currency_balance('eosio.token', accountid);
     console.log(balances);
+    if(balances.length === 0){
+      balances.push("0.0000 TTMC");
+    }
 
     const lockedbalance = await rpc.get_table_rows({
       json: true,              // Get the response as json
@@ -1365,6 +1375,10 @@ app.use('/vktapi/v1/account/vkt/:account_id', async (req, res) => {
   //获取账号qingzhudatac的资产,查询资产的时候要加上资产的合约名字eosio.token
   const balances = await rpc.get_currency_balance('eosio.token', accountid);
   console.log(balances);
+
+  if(balances.length === 0){
+    balances.push("0.0000 TTMC");
+  }
 
   vktdatav_accounts_info.account_name = accountInfo.account_name;
   vktdatav_accounts_info.balances = JSON.parse('[]');
