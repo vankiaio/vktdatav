@@ -734,8 +734,10 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
     console.log('/api_oc_blockchain-v1.0.0/get_account_asset', req.body);
     let asset = JSON.parse('{}');
 
+    let accountName = req.body.name;
+
     //获取账号xxxx的资产,查询资产的时候要加上资产的合约名字eosio.token
-    const balances = await rpc.get_currency_balance('eosio.token', req.body.name);
+    const balances = await rpc.get_currency_balance('eosio.token', accountName);
     console.log(balances);
 
     let vkt_balance = 0;
@@ -745,12 +747,34 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
         vkt_balance = balarr[0];
       }
     }
+
+    const lockedbalance = await rpc.get_table_rows({
+      json: true,              // Get the response as json
+      code: 'eosio.token',     // Contract that we target
+      scope: accountName,         // Account that owns the data
+      table: 'locked',        // Table name
+      limit: 10,               // maximum number of rows that we want to get
+    });
+  
+    console.log(lockedbalance)
+  
+    let amountlocked = 0.0;
+    try{
+      let balarr = balances[0].split(" ");
+      if(balarr[1] === "TTMC" && lockedbalance.rows.length > 0){
+        amountlocked = lockedbalance.rows[0].total_balance.split(' ')[0];
+      }
+    } catch (error) {
+      amountlocked = 0.0;
+    }
+
     asset.code = 0;
     asset.message = 'ok';
     asset.data = {
-      account_name: req.body.name,
+      account_name: accountName,
       account_icon: 'http://www.vankia.io',
       vkt_balance: vkt_balance,
+      vkt_balance_locked: amountlocked,
       vkt_balance_usd: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].USD,
       vkt_balance_cny: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
       vkt_price_usd: vktdatav_allprices["vkt:eosio.token:vkt"].USD,
