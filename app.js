@@ -1972,8 +1972,8 @@ const runMongodb = async () => {
                 "url": ""
               }];
             }
+            db.close();
           });
-          db.close();
         });
     } else {
       // 最后一小时TPS
@@ -2020,6 +2020,7 @@ const runMongodb = async () => {
                 "url": ""
               }];
             }
+            dbo.close();
           });
         });
       //nowtps取得
@@ -2074,8 +2075,8 @@ const runMongodb = async () => {
                 "value": 0
               }];
             }
+            db.close();
           });
-          db.close();
         });
     }
   });
@@ -2156,8 +2157,8 @@ const runMongodbTPSList = async () => {
               });
             }
           }
+          db.close();
         });
-        db.close();
       });
   });
   return vktdatav;
