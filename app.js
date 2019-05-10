@@ -16,6 +16,7 @@ const translate = require('google-translate-api');
 const config = require('./config');
 const fs = require('fs');
 const moment = require('moment');
+const async	= require('async');
 const request = require('request');
 const Ut = require("./common");
 const util = require('util');
@@ -83,6 +84,9 @@ let m_maxtps = 0;
 let m_maxtps_onehour = 0;
 
 let m_lasttrxid = JSON.parse('[]');
+
+const MAX_ELEMENTS 	= 1000;
+const MAX_SKIP 		= config.maxSkip;
 
 // 创建express
 const app = express();
@@ -996,76 +1000,280 @@ app.use('/oulianttmcaccount/:path_param1', async (req, res) => {
   }
 });
 
-// 路由IOS blockchain history信息
+// // 路由IOS blockchain history信息
+// app.use(bodyParser.urlencoded({
+//   extended: false
+// }));
+// app.use(bodyParser.json());
+// app.post('/VX/:path_param1', async (req, res) => {
+
+//   let path_param1 = req.params.path_param1;
+
+//   console.log(path_param1);
+//   console.log(req.body);
+//   if (path_param1 === "GetActions") {
+//     console.log('/VX/GetActions', req.body);
+//     let accounts = JSON.parse('{}');
+//     let start_pos = req.body.page * req.body.pageSize;
+//     let req_json = JSON.stringify({"pos":start_pos,"offset":req.body.pageSize,"account_name":req.body.from});
+//     // let req_json = JSON.stringify({"pos":"-1","offset":-1,"account_name":req.body.from});
+//     console.log(req_json)
+//     request.post({
+//       url: VKTAPI_URL+'/v1/history/get_actions',
+//       form: req_json
+//     }, 
+//     (error, res2, body) => {
+//       if (error) {
+//         console.error(error);
+//         return;
+//       }
+//       // console.log(body);
+//       accounts.code = 0;
+//       accounts.message = "ok";
+//       accounts.data = JSON.parse('{}');
+//       accounts.data.pageSize = 1;
+//       accounts.data.page = 1;
+//       accounts.data.hasMore = 0;
+//       accounts.data.actions = JSON.parse('[]');
+//       let quantity ;
+//       let quantityarr;
+//       let index = 0;
+//       console.log(m_lasttrxid);
+//       for (let i in JSON.parse(body).actions) {
+//         if(m_lasttrxid[req.body.from] == JSON.parse(body).actions[i].action_trace.trx_id &&
+//         JSON.parse(body).actions.length > 1) {
+//           continue;
+//         }
+//         accounts.data.actions.push({"doc": JSON.parse(body).actions[i].action_trace.act});
+//         accounts.data.actions[index].doc.data.expiration = JSON.parse(body).actions[i].action_trace.block_time;
+//         if(accounts.data.actions[index].doc.data.from === "eosio"){
+//           accounts.data.actions[index].doc.data.from = "ttmcio";
+//         }
+//         accounts.data.actions[index].trxid = JSON.parse(body).actions[i].action_trace.trx_id;
+//         accounts.data.actions[index].blockNum = JSON.parse(body).actions[i].action_trace.block_num;
+//         accounts.data.actions[index].time = JSON.parse(body).actions[i].action_trace.block_time;
+//         accounts.data.actions[index].cpu_usage_us = JSON.parse(body).actions[i].action_trace.cpu_usage;
+//         accounts.data.actions[index].net_usage_words = "bytes";
+//         quantity = JSON.parse(body).actions[i].action_trace.act.data.quantity;
+//         if(quantity != undefined){
+//           quantityarr = quantity.split(" ");
+//         }else{
+//           quantityarr = "0.0 TTMC".split(" ");
+//         }
+//         accounts.data.actions[index].amount = quantityarr[0];
+//         accounts.data.actions[index].assestsType = quantityarr[1];
+//         //for netxt page Deduplication
+//         m_lasttrxid[req.body.from] = accounts.data.actions[index].trxid;
+//         index ++;
+//       }
+//       console.log(util.inspect(accounts, false, null, true))
+//       res.json(accounts);
+//     })
+//   }else if (path_param1 === "GetAssetsLockRecords") {
+//     console.log('/VX/GetAssetsLockRecords', req.body);
+//     let accounts = JSON.parse('{}');
+//     let accountid = req.body.account_id;
+    
+//     // 获取账号ios的信息
+//     const accountInfo = await rpc.get_account(accountid);
+//     console.log(accountInfo);
+
+//     //获取账号ios的资产,查询资产的时候要加上资产的合约名字eosio.token
+//     const balances = await rpc.get_currency_balance('eosio.token', accountid);
+//     console.log(balances);
+//     if(balances.length === 0){
+//       balances.push("0.0000 TTMC");
+//     }
+
+//     const lockedbalance = await rpc.get_table_rows({
+//       json: true,              // Get the response as json
+//       code: 'eosio.token',     // Contract that we target
+//       scope: accountid,         // Account that owns the data
+//       table: 'locked',        // Table name
+//       limit: 10,               // maximum number of rows that we want to get
+//     });
+  
+//     console.log(lockedbalance)
+  
+//     let amountlocked = 0.0;
+//     let unlockdate ;
+//     for (let i in balances) {
+//       let balarr = balances[i].split(" ");
+//       if(balarr[1] === "TTMC" && lockedbalance.rows.length > 0){
+//         amountlocked = lockedbalance.rows[i].total_balance.split(' ')[0];
+//         unlockdate = moment.utc(lockedbalance.rows[i].balances[0].unlock_execute_time, moment.ISO_8601).local().format();
+//       }else{
+//         amountlocked = 0.0;
+//         unlockdate = moment().format();
+//       }
+
+//       accounts.code = 0;
+//       accounts.message = "ok";
+//       accounts.data = JSON.parse('{}');
+//       accounts.data.account_name = accountInfo.account_name;
+//       accounts.data.contract = "eosio.token";
+//       accounts.data.amount = balarr[0];
+//       accounts.data.amountlocked = amountlocked;
+//       accounts.data.availableamount = balarr[0] - amountlocked;
+//       accounts.data.unlockdate = unlockdate;
+//       accounts.data.token = balarr[1];
+//       accounts.data.decimals = balarr[0].split(".")[1].length;
+//       accounts.data.lockedassets = JSON.parse('[]');
+
+//       if(balarr[1] === "TTMC" && lockedbalance.rows.length > 0){
+//         for(let j in lockedbalance.rows[i].balances){
+//             accounts.data.lockedassets.push({
+//             assets:lockedbalance.rows[i].balances[j].balance.split(' ')[0],
+//             unlocktime:moment.utc(lockedbalance.rows[i].balances[j].unlock_execute_time, moment.ISO_8601).local().format()
+//           });
+//         }
+//       }
+//     }
+
+//     res.json(accounts);
+//   }
+
+// });
+
 app.use(bodyParser.urlencoded({
   extended: false
 }));
 app.use(bodyParser.json());
-app.post('/VX/:path_param1', async (req, res) => {
+app.post('/VX/GetActions', getActionsDistinct);
+app.post('/VX/GetAssetsLockRecords', getAssetsLockRecords);
 
-  let path_param1 = req.params.path_param1;
+function getActionsDistinct(req, res){
+  console.log('/VX/GetActions', req.body,req.query);
+  MongoClient.connect(MONGO_URL, async function (err, db) {
+    if (err) {
+      console.error(err);
+      return res.status(500).end();
+    }
+    const dbo = db.db("TTMC");
 
-  console.log(path_param1);
-  console.log(req.body);
-  if (path_param1 === "GetActions") {
-    console.log('/VX/GetActions', req.body);
+    // default values
+    let skip = (isNaN(Number(req.body.skip))) ? 0 : Number(req.body.skip);
+    let limit = (isNaN(Number(req.body.limit))) ? 10 : Number(req.body.limit);
+    let sort = (isNaN(Number(req.body.sort))) ? -1 : Number(req.body.sort);
+    
+    let pageSize = (isNaN(Number(req.body.pageSize))) ? 0 : Number(req.body.pageSize);
+    let curpage = (isNaN(Number(req.body.page))) ? 0 : Number(req.body.page);
+    skip = curpage * pageSize;
+    limit = pageSize;
+
+    if (limit > MAX_ELEMENTS){
+      return res.status(401).send(`Max elements ${MAX_ELEMENTS}!`);
+    }
+    if (skip < 0 || limit <= 0){
+      return res.status(401).send(`Skip (${skip}) || (${limit}) limit <= 0`);
+    }
+    if (sort !== -1 && sort !== 1){
+      return res.status(401).send(`Sort param must be 1 or -1`);
+    }
+    if (skip > MAX_SKIP){
+      return res.status(500).send("Large skip for account! Max skip per request " + MAX_SKIP);
+    }
+
+    let accountName = String(req.body.from);
+    let action = String(req.body.action);
+    let counter = Number(req.body.counter);
+    let actionsNamesArr = (typeof req.body.filter === "string") ? req.body.filter.split(","): null;
+    action = "transfer";
+
+    /*if (latencySkip[accountName] > +new Date()){
+      return res.status(500).send("Large skip for account, please wait until previous request will end! Max skip per request " + MAX_SKIP);
+    }
+  if (!latencySkip[accountName] && skip > MAX_SKIP){
+    latencySkip[accountName] = +new Date() + 60000;
+    }*/
+
+    let query = {
+      $or: [
+      {"act.account": accountName}, 
+      {"act.data.receiver": accountName}, 
+      {"act.data.from": accountName}, 
+      {"act.data.to": accountName},
+      {"act.data.name": accountName},
+      {"act.data.voter": accountName},
+      {"act.authorization.actor": accountName}
+    ]};
+    if (action !== "undefined" && action !== "all"){
+      query["act.name"] = action;
+    }
+    if (actionsNamesArr){
+      query['act.name'] = { $in : [query['act.name']]};
+      actionsNamesArr.forEach(elem => {
+          query['act.name']['$in'].push(elem);
+      });
+    }
+
+    console.log(query);
+    let parallelObject = {
+      actions: (callback) => {
+        dbo.collection("action_traces").find(query).sort({ "createdAt": sort }).skip(skip).limit(limit).toArray(callback);
+          }
+    };
+
+    if (counter === 1){
+      parallelObject["actionsTotal"] = (callback) => {
+      callback(null, 'Under construction');
+        }
+    }
+    
+    async.parallel(parallelObject, (err, result) => {
+    if (err){
+        console.error(err);
+        return res.status(500).end();
+    }
+    /*if (latencySkip[accountName] && skip > MAX_SKIP){
+      delete latencySkip[accountName];
+    }*/
     let accounts = JSON.parse('{}');
-    let start_pos = req.body.page * req.body.pageSize;
-    let req_json = JSON.stringify({"pos":start_pos,"offset":req.body.pageSize,"account_name":req.body.from});
-    // let req_json = JSON.stringify({"pos":"-1","offset":-1,"account_name":req.body.from});
-    console.log(req_json)
-    request.post({
-      url: VKTAPI_URL+'/v1/history/get_actions',
-      form: req_json
-    }, 
-    (error, res2, body) => {
-      if (error) {
-        console.error(error);
-        return;
+    accounts.code = 0;
+    accounts.message = "ok";
+    accounts.data = JSON.parse('{}');
+    accounts.data.pageSize = 1;
+    accounts.data.page = 1;
+    accounts.data.hasMore = 0;
+    accounts.data.actions = JSON.parse('[]');
+    let quantity ;
+    let quantityarr;
+    let index = 0;
+    console.log(m_lasttrxid);
+    for (let i in result.actions) {
+      // if(m_lasttrxid[req.body.from] == JSON.parse(result).actions[i].trx_id &&
+      // JSON.parse(result).actions.length > 1) {
+      //   continue;
+      // }
+      accounts.data.actions.push({"doc": result.actions[i].act});
+      accounts.data.actions[index].doc.data.expiration = result.actions[i].block_time;
+      if(accounts.data.actions[index].doc.data.from === "eosio"){
+        accounts.data.actions[index].doc.data.from = "ttmcio";
       }
-      // console.log(body);
-      accounts.code = 0;
-      accounts.message = "ok";
-      accounts.data = JSON.parse('{}');
-      accounts.data.pageSize = 1;
-      accounts.data.page = 1;
-      accounts.data.hasMore = 0;
-      accounts.data.actions = JSON.parse('[]');
-      let quantity ;
-      let quantityarr;
-      let index = 0;
-      console.log(m_lasttrxid);
-      for (let i in JSON.parse(body).actions) {
-        if(m_lasttrxid[req.body.from] == JSON.parse(body).actions[i].action_trace.trx_id &&
-        JSON.parse(body).actions.length > 1) {
-          continue;
-        }
-        accounts.data.actions.push({"doc": JSON.parse(body).actions[i].action_trace.act});
-        accounts.data.actions[index].doc.data.expiration = JSON.parse(body).actions[i].action_trace.block_time;
-        if(accounts.data.actions[index].doc.data.from === "eosio"){
-          accounts.data.actions[index].doc.data.from = "ttmcio";
-        }
-        accounts.data.actions[index].trxid = JSON.parse(body).actions[i].action_trace.trx_id;
-        accounts.data.actions[index].blockNum = JSON.parse(body).actions[i].action_trace.block_num;
-        accounts.data.actions[index].time = JSON.parse(body).actions[i].action_trace.block_time;
-        accounts.data.actions[index].cpu_usage_us = JSON.parse(body).actions[i].action_trace.cpu_usage;
-        accounts.data.actions[index].net_usage_words = "bytes";
-        quantity = JSON.parse(body).actions[i].action_trace.act.data.quantity;
-        if(quantity != undefined){
-          quantityarr = quantity.split(" ");
-        }else{
-          quantityarr = "0.0 TTMC".split(" ");
-        }
-        accounts.data.actions[index].amount = quantityarr[0];
-        accounts.data.actions[index].assestsType = quantityarr[1];
-        //for netxt page Deduplication
-        m_lasttrxid[req.body.from] = accounts.data.actions[index].trxid;
-        index ++;
+      accounts.data.actions[index].trxid = result.actions[i].trx_id;
+      accounts.data.actions[index].blockNum = result.actions[i].block_num;
+      accounts.data.actions[index].time = result.actions[i].block_time;
+      accounts.data.actions[index].cpu_usage_us = result.actions[i].cpu_usage;
+      accounts.data.actions[index].net_usage_words = "bytes";
+      quantity = result.actions[i].act.data.quantity;
+      if(quantity != undefined){
+        quantityarr = quantity.split(" ");
+      }else{
+        quantityarr = "0.0 TTMC".split(" ");
       }
-      console.log(util.inspect(accounts, false, null, true))
-      res.json(accounts);
-    })
-  }else if (path_param1 === "GetAssetsLockRecords") {
+      accounts.data.actions[index].amount = quantityarr[0];
+      accounts.data.actions[index].assestsType = quantityarr[1];
+      //for netxt page Deduplication
+      // m_lasttrxid[req.body.from] = accounts.data.actions[index].trxid;
+      index ++;
+    }
+    // console.log(util.inspect(accounts, false, null, true))
+    res.json(accounts);
+    });
+  });
+}
+
+async function getAssetsLockRecords (req, res) {
     console.log('/VX/GetAssetsLockRecords', req.body);
     let accounts = JSON.parse('{}');
     let accountid = req.body.account_id;
@@ -1125,11 +1333,9 @@ app.post('/VX/:path_param1', async (req, res) => {
         }
       }
     }
-
     res.json(accounts);
-  }
+}
 
-});
 
 
 // 路由scatter 多语言数据
