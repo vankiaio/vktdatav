@@ -1189,28 +1189,28 @@ function getActionsDistinct(req, res){
 
     let query = {
       $or: [
-      {"act.account": accountName}, 
-      {"act.data.receiver": accountName}, 
-      {"act.data.from": accountName}, 
-      {"act.data.to": accountName},
-      {"act.data.name": accountName},
-      {"act.data.voter": accountName},
-      {"act.authorization.actor": accountName}
+      {"action_traces.act.account": accountName}, 
+      {"action_traces.act.data.receiver": accountName}, 
+      {"action_traces.act.data.from": accountName}, 
+      {"action_traces.act.data.to": accountName},
+      {"action_traces.act.data.name": accountName},
+      {"action_traces.act.data.voter": accountName},
+      {"action_traces.act.authorization.actor": accountName}
     ]};
     if (action !== "undefined" && action !== "all"){
-      query["act.name"] = action;
+      query["action_traces.act.name"] = action;
     }
     if (actionsNamesArr){
-      query['act.name'] = { $in : [query['act.name']]};
+      query['action_traces.act.name'] = { $in : [query['action_traces.act.name']]};
       actionsNamesArr.forEach(elem => {
-          query['act.name']['$in'].push(elem);
+          query['action_traces.act.name']['$in'].push(elem);
       });
     }
 
     console.log(query);
     let parallelObject = {
       actions: (callback) => {
-        dbo.collection("action_traces").find(query).sort({ "createdAt": sort }).skip(skip).limit(limit).toArray(callback);
+        dbo.collection("transaction_traces").find(query).sort({ "block_time": sort }).skip(skip).limit(limit).toArray(callback);
           }
     };
 
@@ -1240,22 +1240,23 @@ function getActionsDistinct(req, res){
     let quantityarr;
     let index = 0;
     console.log(m_lasttrxid);
+    console.log(result);
     for (let i in result.actions) {
       // if(m_lasttrxid[req.body.from] == JSON.parse(result).actions[i].trx_id &&
       // JSON.parse(result).actions.length > 1) {
       //   continue;
       // }
-      accounts.data.actions.push({"doc": result.actions[i].act});
+      accounts.data.actions.push({"doc": result.actions[i].action_traces[0].act});
       accounts.data.actions[index].doc.data.expiration = result.actions[i].block_time;
       if(accounts.data.actions[index].doc.data.from === "eosio"){
         accounts.data.actions[index].doc.data.from = "ttmcio";
       }
-      accounts.data.actions[index].trxid = result.actions[i].trx_id;
+      accounts.data.actions[index].trxid = result.actions[i].action_traces[0].trx_id;
       accounts.data.actions[index].blockNum = result.actions[i].block_num;
       accounts.data.actions[index].time = result.actions[i].block_time;
       accounts.data.actions[index].cpu_usage_us = result.actions[i].cpu_usage;
       accounts.data.actions[index].net_usage_words = "bytes";
-      quantity = result.actions[i].act.data.quantity;
+      quantity = result.actions[i].action_traces[0].act.data.quantity;
       if(quantity != undefined){
         quantityarr = quantity.split(" ");
       }else{
