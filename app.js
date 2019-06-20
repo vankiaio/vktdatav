@@ -164,7 +164,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     asset.data = JSON.parse('[]');
     asset.data.push(
       {
-        contract_name: "vktio.token",
+        contract_name: "eosio.token",
         token_symbol: "VKT",
         coinmarket_id: "bitforex",
         account_name: req.body.accountName,
@@ -885,7 +885,7 @@ app.use('/oulianvktaccount/getAccountOrder/:path_param1/:path_param2', async (re
   let path_param2 = req.params.path_param2;
 
   if (path_param1.length >= 5 && path_param1.length <= 12 && 
-    path_param2.length == 11) {
+    path_param2.length >= 11) {
     console.log('/oulianvktaccount/getAccountOrder/',path_param1,path_param2, req.body);
     let accountorder = JSON.parse('{}');
 
@@ -1074,6 +1074,13 @@ app.use(bodyParser.urlencoded({
   extended: false
 }));
 app.use(bodyParser.json());
+
+// 访问静态资源
+app.use('/images', express.static(path.join(__dirname, './images')));
+
+// 访问静态资源
+app.use('/upgrade', express.static(path.join(__dirname, './upgrade')));
+
 app.post('/vktapi/v1/create_vkt', async (req, res) => {
 
   console.log('/vktapi/v1/create_vkt', req.body);
@@ -1419,9 +1426,9 @@ const intervalObj4 = setInterval(async () => {
   console.log("nodejs app is loading ?", IsLoadingRPCPRODUCER);
 
   //获取jsons数据 //TODO
-  //  const data = await runRpcGetProducers().catch(err => {
-  //    console.log("runRpcGetProducers error: ", err)
-  //  });
+  const data = await runRpcGetProducers().catch(err => {
+    console.log("runRpcGetProducers error: ", err)
+  });
 
   console.log("nodejs app passed runRpcGetProducers!!!");
 
@@ -1433,7 +1440,7 @@ const intervalObj4 = setInterval(async () => {
 
   IsLoadingRPCPRODUCER = false;
 
-}, 8000);
+}, 18000);
 
 const intervalObj5 = setInterval(async () => {
 
@@ -1549,6 +1556,8 @@ const runRpcGetProducers = async () => {
     vktdatav_producers_list.length != producer_count ||
     vktdatav_producer_location.length != producer_count) {
     vktdatav.producers_num = producer_count;
+    //vktdatav_producers_list = [];
+    //vktdatav_producer_location = [];
     vktdatav_producers_num = [{
       // "name": "节点数量",
       "value": producer_count
@@ -1571,7 +1580,7 @@ const runRpcGetProducers = async () => {
             dumapLocal_en = producersinfo.rows[i].url.substr(dumapLocal_start, producersinfo.rows[i].url.length - dumapLocal_start)
           }
           console.log("start ---- 1", dumapLocal_en)
-          if (dumapLocal_en != "") {
+          if (dumapLocal_en != "" ) {
             console.log("start ---- 2", dumapLocal_en)
             if (dumapLocal_en.indexOf("shi") < 0) {
               dumapLocal_en += "shi"
@@ -1655,11 +1664,40 @@ const runRpcGetProducers = async () => {
                       //     "state": "超级节点"
                       //   },
                       // ]
+                      if(producersinfo.rows[i].owner === "vktbeijing"){
+                      vktdatav_producers_list.push({
+                        "name": "vktjingjinji",
+                        "location": "京津冀地区",
+                        "state": producer_state
+                      })
+                      }
+                      else if(producersinfo.rows[i].owner === "vktshenzhen"){
+                      vktdatav_producers_list.push({
+                        "name": "vktlangfang",
+                        "location": "廊坊",
+                        "state": producer_state
+                      })
+                      }
+					  else if(producersinfo.rows[i].owner === "vktshanghai"){
+                      vktdatav_producers_list.push({
+                        "name": "vkttongzhou",
+                        "location": "通州",
+                        "state": producer_state
+                      })
+                      }
+					  else if(producersinfo.rows[i].owner === "vktchengdu"){
+                      vktdatav_producers_list.push({
+                        "name": "vktwuqing",
+                        "location": "武清",
+                        "state": producer_state
+                      })
+                      }else{
                       vktdatav_producers_list.push({
                         "name": producersinfo.rows[i].owner,
                         "location": dumapLocal_cn,
                         "state": producer_state
                       })
+                      }
                       console.log("end ---- 1", dumapLocal_cn)
                     }
                   })
@@ -1668,7 +1706,7 @@ const runRpcGetProducers = async () => {
               console.error(err);
             });
           }
-        }, 800 * i);
+        }, 1200 * i);
       })();
     }
   }
@@ -1747,7 +1785,7 @@ const runMongodb = async () => {
       vktdatav.contracks_num = result.count;
       //console.log(result);
     });
-    if (m_maxtps < 2000 || m_maxtps_onehour > m_maxtps) {
+    if (false) {
       //aggregate({$group : {_id : "$block_num", max_transactions : {$sum : 1}}},{$group:{_id:null,max:{$max:"$max_transactions"}}})
       await dbo.collection("transaction_traces").aggregate({
           $match: {
@@ -1843,7 +1881,7 @@ const runMongodb = async () => {
             if (result.length >= 1) {
               m_maxtps_onehour = parseInt(result[0].max / 3) > 1 ? parseInt(result[0].max / 3) : 1;
               vktdatav_maxtps_onehour = [{
-                "value": m_maxtps_onehour + "MAX/H",
+                "value": m_maxtps_onehour,
                 "url": ""
               }];
             }
