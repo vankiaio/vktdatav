@@ -146,10 +146,14 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
   } else if (path_param1 === "get_token_info") {
     console.log('/api_oc_blockchain-v1.0.0/get_token_info', req.body);
     let asset = JSON.parse('{}');
-
+    let accountName = req.body.accountName;
     //获取账号xxxx的资产,查询资产的时候要加上资产的合约名字eosio.token
     const balances = await rpc.get_currency_balance('eosio.token', req.body.accountName);
     console.log(balances);
+
+    if(balances.length === 0){
+      balances.push("0.0000 VKT");
+    }
 
     let vkt_balance = '';
     for (let i in balances) {
@@ -159,6 +163,25 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
       }
     }
 
+    const lockedbalance = await rpc.get_table_rows({
+      json: true,              // Get the response as json
+      code: 'eosio.token',     // Contract that we target
+      scope: accountName,         // Account that owns the data
+      table: 'locked',        // Table name
+      limit: 10,               // maximum number of rows that we want to get
+    });
+  
+    console.log(lockedbalance)
+  
+    let amountlocked = 0.0;
+    try{
+      let balarr = balances[0].split(" ");
+      if(balarr[1] === "VKT" && lockedbalance.rows.length > 0){
+        amountlocked = lockedbalance.rows[0].total_balance.split(' ')[0];
+      }
+    } catch (error) {
+      amountlocked = 0.0;
+    }
     asset.code = 0;
     asset.message = 'ok';
     asset.data = JSON.parse('[]');
@@ -167,8 +190,9 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
         contract_name: "eosio.token",
         token_symbol: "VKT",
         coinmarket_id: "bitforex",
-        account_name: req.body.accountName,
+        account_name: accountName,
         balance: vkt_balance,
+        locked_amount: amountlocked,
         balance_usd: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].USD,
         balance_cny: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
         asset_price_usd: vktdatav_allprices["vkt:eosio.token:vkt"].USD,
@@ -186,7 +210,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     //     contract_name: "token",
     //     token_symbol: "ETH",
     //     coinmarket_id: "Ethereum",
-    //     account_name: req.body.accountName,
+    //     account_name: accountName,
     //     balance: vkt_balance,
     //     balance_usd: vkt_balance * vktdatav_allprices["eth:eth:eth"].USD,
     //     balance_cny: vkt_balance * vktdatav_allprices["eth:eth:eth"].CNY,
@@ -714,9 +738,14 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
     console.log('/api_oc_blockchain-v1.0.0/get_account_asset', req.body);
     let asset = JSON.parse('{}');
 
+    let accountName = req.body.name;
+
     //获取账号xxxx的资产,查询资产的时候要加上资产的合约名字eosio.token
-    const balances = await rpc.get_currency_balance('eosio.token', req.body.name);
+    const balances = await rpc.get_currency_balance('eosio.token', accountName);
     console.log(balances);
+    if(balances.length === 0){
+      balances.push("0.0000 VKT");
+    }
 
     let vkt_balance = 0;
     for (let i in balances) {
@@ -725,12 +754,34 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
         vkt_balance = balarr[0];
       }
     }
+
+    const lockedbalance = await rpc.get_table_rows({
+      json: true,              // Get the response as json
+      code: 'eosio.token',     // Contract that we target
+      scope: accountName,         // Account that owns the data
+      table: 'locked',        // Table name
+      limit: 10,               // maximum number of rows that we want to get
+    });
+  
+    console.log(lockedbalance)
+  
+    let amountlocked = 0.0;
+    try{
+      let balarr = balances[0].split(" ");
+      if(balarr[1] === "VKT" && lockedbalance.rows.length > 0){
+        amountlocked = lockedbalance.rows[0].total_balance.split(' ')[0];
+      }
+    } catch (error) {
+      amountlocked = 0.0;
+    }
+
     asset.code = 0;
     asset.message = 'ok';
     asset.data = {
-      account_name: req.body.name,
+      account_name: accountName,
       account_icon: 'http://www.vankia.io',
       vkt_balance: vkt_balance,
+      vkt_balance_locked: amountlocked,
       vkt_balance_usd: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].USD,
       vkt_balance_cny: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
       vkt_price_usd: vktdatav_allprices["vkt:eosio.token:vkt"].USD,
@@ -823,7 +874,7 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
     })
   } else if (path_param1 === "get_key_accounts") {
     console.log('/api_oc_blockchain-v1.0.0/get_key_accounts', req.body);
-    let accouts = JSON.parse('{}');
+    let accounts = JSON.parse('{}');
 
     request.post({
       url: VKTAPI_URL+'/v1/history/get_key_accounts',
@@ -835,11 +886,11 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
         return
       }
       console.log(body);
-      accouts.code = 0;
-      accouts.message = "ok";
-      accouts.data = JSON.parse(body);
-      console.log(accouts);
-      res.json(accouts);
+      accounts.code = 0;
+      accounts.message = "ok";
+      accounts.data = JSON.parse(body);
+      console.log(accounts);
+      res.json(accounts);
     })
   }
 
@@ -927,75 +978,343 @@ app.use('/oulianvktaccount/:path_param1', async (req, res) => {
   }
 });
 
-// 路由IOS blockchain history信息
+// // 路由IOS blockchain history信息
+// app.use(bodyParser.urlencoded({
+//   extended: false
+// }));
+// app.use(bodyParser.json());
+// app.post('/VX/:path_param1', async (req, res) => {
+
+//   let path_param1 = req.params.path_param1;
+
+//   console.log(path_param1);
+//   console.log(req.body);
+//   if (path_param1 === "GetActions") {
+//     console.log('/VX/GetActions', req.body);
+//     let accounts = JSON.parse('{}');
+//     let start_pos = req.body.page * req.body.pageSize;
+//     let req_json = JSON.stringify({"pos":start_pos,"offset":req.body.pageSize,"account_name":req.body.from});
+//     // let req_json = JSON.stringify({"pos":"-1","offset":-1,"account_name":req.body.from});
+//     console.log(req_json)
+//     request.post({
+//       url: VKTAPI_URL+'/v1/history/get_actions',
+//       form: req_json
+//     }, 
+//     (error, res2, body) => {
+//       if (error) {
+//         console.error(error);
+//         return;
+//       }
+//       // console.log(body);
+//       accounts.code = 0;
+//       accounts.message = "ok";
+//       accounts.data = JSON.parse('{}');
+//       accounts.data.pageSize = 1;
+//       accounts.data.page = 1;
+//       accounts.data.hasMore = 0;
+//       accounts.data.actions = JSON.parse('[]');
+//       let quantity ;
+//       let quantityarr;
+//       let index = 0;
+//       console.log(m_lasttrxid);
+//       for (let i in JSON.parse(body).actions) {
+//         if(m_lasttrxid[req.body.from] == JSON.parse(body).actions[i].action_trace.trx_id &&
+//         JSON.parse(body).actions.length > 1) {
+//           continue;
+//         }
+//         accounts.data.actions.push({"doc": JSON.parse(body).actions[i].action_trace.act});
+//         accounts.data.actions[index].doc.data.expiration = JSON.parse(body).actions[i].action_trace.block_time;
+//         if(accounts.data.actions[index].doc.data.from === "eosio"){
+//           accounts.data.actions[index].doc.data.from = "vktio";
+//         }
+//         accounts.data.actions[index].trxid = JSON.parse(body).actions[i].action_trace.trx_id;
+//         accounts.data.actions[index].blockNum = JSON.parse(body).actions[i].action_trace.block_num;
+//         accounts.data.actions[index].time = JSON.parse(body).actions[i].action_trace.block_time;
+//         accounts.data.actions[index].cpu_usage_us = JSON.parse(body).actions[i].action_trace.cpu_usage;
+//         accounts.data.actions[index].net_usage_words = "bytes";
+//         quantity = JSON.parse(body).actions[i].action_trace.act.data.quantity;
+//         if(quantity != undefined){
+//           quantityarr = quantity.split(" ");
+//         }else{
+//           quantityarr = "0.0 VKT".split(" ");
+//         }
+//         accounts.data.actions[index].amount = quantityarr[0];
+//         accounts.data.actions[index].assestsType = quantityarr[1];
+//         //for netxt page Deduplication
+//         m_lasttrxid[req.body.from] = accounts.data.actions[index].trxid;
+//         index ++;
+//       }
+//       console.log(util.inspect(accounts, false, null, true))
+//       res.json(accounts);
+//     })
+//   }else if (path_param1 === "GetAssetsLockRecords") {
+//     console.log('/VX/GetAssetsLockRecords', req.body);
+//     let accounts = JSON.parse('{}');
+//     let accountid = req.body.account_id;
+    
+//     // 获取账号ios的信息
+//     const accountInfo = await rpc.get_account(accountid);
+//     console.log(accountInfo);
+
+//     //获取账号ios的资产,查询资产的时候要加上资产的合约名字eosio.token
+//     const balances = await rpc.get_currency_balance('eosio.token', accountid);
+//     console.log(balances);
+//     if(balances.length === 0){
+//       balances.push("0.0000 VKT");
+//     }
+
+//     const lockedbalance = await rpc.get_table_rows({
+//       json: true,              // Get the response as json
+//       code: 'eosio.token',     // Contract that we target
+//       scope: accountid,         // Account that owns the data
+//       table: 'locked',        // Table name
+//       limit: 10,               // maximum number of rows that we want to get
+//     });
+  
+//     console.log(lockedbalance)
+  
+//     let amountlocked = 0.0;
+//     let unlockdate ;
+//     for (let i in balances) {
+//       let balarr = balances[i].split(" ");
+//       if(balarr[1] === "TTMC" && lockedbalance.rows.length > 0){
+//         amountlocked = lockedbalance.rows[i].total_balance.split(' ')[0];
+//         unlockdate = moment.utc(lockedbalance.rows[i].balances[0].unlock_execute_time, moment.ISO_8601).local().format();
+//       }else{
+//         amountlocked = 0.0;
+//         unlockdate = moment().format();
+//       }
+
+//       accounts.code = 0;
+//       accounts.message = "ok";
+//       accounts.data = JSON.parse('{}');
+//       accounts.data.account_name = accountInfo.account_name;
+//       accounts.data.contract = "eosio.token";
+//       accounts.data.amount = balarr[0];
+//       accounts.data.amountlocked = amountlocked;
+//       accounts.data.availableamount = balarr[0] - amountlocked;
+//       accounts.data.unlockdate = unlockdate;
+//       accounts.data.token = balarr[1];
+//       accounts.data.decimals = balarr[0].split(".")[1].length;
+//       accounts.data.lockedassets = JSON.parse('[]');
+
+//       if(balarr[1] === "VKT" && lockedbalance.rows.length > 0){
+//         for(let j in lockedbalance.rows[i].balances){
+//             accounts.data.lockedassets.push({
+//             assets:lockedbalance.rows[i].balances[j].balance.split(' ')[0],
+//             unlocktime:moment.utc(lockedbalance.rows[i].balances[j].unlock_execute_time, moment.ISO_8601).local().format()
+//           });
+//         }
+//       }
+//     }
+
+//     res.json(accounts);
+//   }
+
+// });
+
 app.use(bodyParser.urlencoded({
   extended: false
 }));
 app.use(bodyParser.json());
-app.post('/VX/:path_param1', async (req, res) => {
+app.post('/VX/GetActions', getActionsDistinct);
+app.post('/VX/GetAssetsLockRecords', getAssetsLockRecords);
 
-  let path_param1 = req.params.path_param1;
+function getActionsDistinct(req, res){
+  console.log('/VX/GetActions', req.body,req.query);
+  MongoClient.connect(MONGO_URL, async function (err, db) {
+    if (err) {
+      console.error(err);
+      return res.status(500).end();
+    }
+    const dbo = db.db("VKT");
 
-  console.log(path_param1);
-  console.log(req.body);
-  if (path_param1 === "GetActions") {
-    console.log('/VX/GetActions', req.body);
-    let accouts = JSON.parse('{}');
-    let start_pos = req.body.page * req.body.pageSize;
-    let req_json = JSON.stringify({"pos":start_pos,"offset":req.body.pageSize,"account_name":req.body.from});
-    // let req_json = JSON.stringify({"pos":"-1","offset":-1,"account_name":req.body.from});
-    console.log(req_json)
-    request.post({
-      url: VKTAPI_URL+'/v1/history/get_actions',
-      form: req_json
-    }, 
-    (error, res2, body) => {
-      if (error) {
-        console.error(error);
-        return;
-      }
-      // console.log(body);
-      accouts.code = 0;
-      accouts.message = "ok";
-      accouts.data = JSON.parse('{}');
-      accouts.data.pageSize = 1;
-      accouts.data.page = 1;
-      accouts.data.hasMore = 0;
-      accouts.data.actions = JSON.parse('[]');
-      let quantity ;
-      let quantityarr;
-      let index = 0;
-      console.log(m_lasttrxid);
-      for (let i in JSON.parse(body).actions) {
-        if(m_lasttrxid[req.body.from] == JSON.parse(body).actions[i].action_trace.trx_id &&
-        JSON.parse(body).actions.length > 1) {
-          continue;
+    // default values
+    let skip = (isNaN(Number(req.body.skip))) ? 0 : Number(req.body.skip);
+    let limit = (isNaN(Number(req.body.limit))) ? 10 : Number(req.body.limit);
+    let sort = (isNaN(Number(req.body.sort))) ? -1 : Number(req.body.sort);
+    
+    let pageSize = (isNaN(Number(req.body.pageSize))) ? 0 : Number(req.body.pageSize);
+    let curpage = (isNaN(Number(req.body.page))) ? 0 : Number(req.body.page);
+    skip = curpage * pageSize;
+    limit = pageSize;
+
+    if (limit > MAX_ELEMENTS){
+      return res.status(401).send(`Max elements ${MAX_ELEMENTS}!`);
+    }
+    if (skip < 0 || limit <= 0){
+      return res.status(401).send(`Skip (${skip}) || (${limit}) limit <= 0`);
+    }
+    if (sort !== -1 && sort !== 1){
+      return res.status(401).send(`Sort param must be 1 or -1`);
+    }
+    if (skip > MAX_SKIP){
+      return res.status(500).send("Large skip for account! Max skip per request " + MAX_SKIP);
+    }
+
+    let accountName = String(req.body.from);
+    let action = String(req.body.action);
+    let counter = Number(req.body.counter);
+    let actionsNamesArr = (typeof req.body.filter === "string") ? req.body.filter.split(","): null;
+    action = "transfer";
+
+    /*if (latencySkip[accountName] > +new Date()){
+      return res.status(500).send("Large skip for account, please wait until previous request will end! Max skip per request " + MAX_SKIP);
+    }
+  if (!latencySkip[accountName] && skip > MAX_SKIP){
+    latencySkip[accountName] = +new Date() + 60000;
+    }*/
+
+    let query = {
+      $or: [
+      {"action_traces.act.account": accountName}, 
+      {"action_traces.act.data.receiver": accountName}, 
+      {"action_traces.act.data.from": accountName}, 
+      {"action_traces.act.data.to": accountName},
+      {"action_traces.act.data.name": accountName},
+      {"action_traces.act.data.voter": accountName},
+      {"action_traces.act.authorization.actor": accountName}
+    ]};
+    if (action !== "undefined" && action !== "all"){
+      query["action_traces.act.name"] = action;
+    }
+    if (actionsNamesArr){
+      query['action_traces.act.name'] = { $in : [query['action_traces.act.name']]};
+      actionsNamesArr.forEach(elem => {
+          query['action_traces.act.name']['$in'].push(elem);
+      });
+    }
+
+    console.log(query);
+    let parallelObject = {
+      actions: (callback) => {
+        dbo.collection("transaction_traces").find(query).sort({ "block_time": sort }).skip(skip).limit(limit).toArray(callback);
+          }
+    };
+
+    if (counter === 1){
+      parallelObject["actionsTotal"] = (callback) => {
+      callback(null, 'Under construction');
         }
-        accouts.data.actions.push({"doc": JSON.parse(body).actions[i].action_trace.act});
-        accouts.data.actions[index].doc.data.expiration = JSON.parse(body).actions[i].action_trace.block_time;
-        accouts.data.actions[index].trxid = JSON.parse(body).actions[i].action_trace.trx_id;
-        accouts.data.actions[index].blockNum = JSON.parse(body).actions[i].action_trace.block_num;
-        accouts.data.actions[index].time = JSON.parse(body).actions[i].action_trace.block_time;
-        accouts.data.actions[index].cpu_usage_us = JSON.parse(body).actions[i].action_trace.cpu_usage;
-        accouts.data.actions[index].net_usage_words = "bytes";
-        quantity = JSON.parse(body).actions[i].action_trace.act.data.quantity;
-        if(quantity != undefined){
-          quantityarr = quantity.split(" ");
-        }else{
-          quantityarr = "0.0 VKT".split(" ");
-        }
-        accouts.data.actions[index].amount = quantityarr[0];
-        accouts.data.actions[index].assestsType = quantityarr[1];
-        //for netxt page Deduplication
-        m_lasttrxid[req.body.from] = accouts.data.actions[index].trxid;
-        index ++;
+    }
+    
+    async.parallel(parallelObject, (err, result) => {
+    if (err){
+        console.error(err);
+        return res.status(500).end();
+    }
+    /*if (latencySkip[accountName] && skip > MAX_SKIP){
+      delete latencySkip[accountName];
+    }*/
+    let accounts = JSON.parse('{}');
+    accounts.code = 0;
+    accounts.message = "ok";
+    accounts.data = JSON.parse('{}');
+    accounts.data.pageSize = 1;
+    accounts.data.page = 1;
+    accounts.data.hasMore = 0;
+    accounts.data.actions = JSON.parse('[]');
+    let quantity ;
+    let quantityarr;
+    let index = 0;
+    console.log(m_lasttrxid);
+    console.log(result);
+    for (let i in result.actions) {
+      // if(m_lasttrxid[req.body.from] == JSON.parse(result).actions[i].trx_id &&
+      // JSON.parse(result).actions.length > 1) {
+      //   continue;
+      // }
+      accounts.data.actions.push({"doc": result.actions[i].action_traces[0].act});
+      accounts.data.actions[index].doc.data.expiration = result.actions[i].block_time;
+      if(accounts.data.actions[index].doc.data.from === "eosio"){
+        accounts.data.actions[index].doc.data.from = "vktio";
       }
-      console.log(util.inspect(accouts, false, null, true))
-      res.json(accouts);
-    })
-  }
+      accounts.data.actions[index].trxid = result.actions[i].action_traces[0].trx_id;
+      accounts.data.actions[index].blockNum = result.actions[i].block_num;
+      accounts.data.actions[index].time = result.actions[i].block_time;
+      accounts.data.actions[index].cpu_usage_us = result.actions[i].cpu_usage;
+      accounts.data.actions[index].net_usage_words = "bytes";
+      quantity = result.actions[i].action_traces[0].act.data.quantity;
+      if(quantity != undefined){
+        quantityarr = quantity.split(" ");
+      }else{
+        quantityarr = "0.0 VKT".split(" ");
+      }
+      accounts.data.actions[index].amount = quantityarr[0];
+      accounts.data.actions[index].assestsType = quantityarr[1];
+      //for netxt page Deduplication
+      // m_lasttrxid[req.body.from] = accounts.data.actions[index].trxid;
+      index ++;
+    }
+    // console.log(util.inspect(accounts, false, null, true))
+    res.json(accounts);
+    });
+  });
+}
 
-});
+async function getAssetsLockRecords (req, res) {
+    console.log('/VX/GetAssetsLockRecords', req.body);
+    let accounts = JSON.parse('{}');
+    let accountid = req.body.account_id;
+    
+    // 获取账号ios的信息
+    const accountInfo = await rpc.get_account(accountid);
+    console.log(accountInfo);
+
+    //获取账号ios的资产,查询资产的时候要加上资产的合约名字eosio.token
+    const balances = await rpc.get_currency_balance('eosio.token', accountid);
+    console.log(balances);
+    if(balances.length === 0){
+      balances.push("0.0000 VKT");
+    }
+
+    const lockedbalance = await rpc.get_table_rows({
+      json: true,              // Get the response as json
+      code: 'eosio.token',     // Contract that we target
+      scope: accountid,         // Account that owns the data
+      table: 'locked',        // Table name
+      limit: 10,               // maximum number of rows that we want to get
+    });
+  
+    console.log(lockedbalance)
+  
+    let amountlocked = 0.0;
+    let unlockdate ;
+    for (let i in balances) {
+      let balarr = balances[i].split(" ");
+      if(balarr[1] === "VKT" && lockedbalance.rows.length > 0){
+        amountlocked = lockedbalance.rows[i].total_balance.split(' ')[0];
+        unlockdate = moment.utc(lockedbalance.rows[i].balances[0].unlock_execute_time, moment.ISO_8601).local().format();
+      }else{
+        amountlocked = 0.0;
+        unlockdate = moment().format();
+      }
+
+      accounts.code = 0;
+      accounts.message = "ok";
+      accounts.data = JSON.parse('{}');
+      accounts.data.account_name = accountInfo.account_name;
+      accounts.data.contract = "eosio.token";
+      accounts.data.amount = balarr[0];
+      accounts.data.amountlocked = amountlocked;
+      accounts.data.availableamount = balarr[0] - amountlocked;
+      accounts.data.unlockdate = unlockdate;
+      accounts.data.token = balarr[1];
+      accounts.data.decimals = balarr[0].split(".")[1].length;
+      accounts.data.lockedassets = JSON.parse('[]');
+
+      if(balarr[1] === "VKT" && lockedbalance.rows.length > 0){
+        for(let j in lockedbalance.rows[i].balances){
+            accounts.data.lockedassets.push({
+            assets:lockedbalance.rows[i].balances[j].balance.split(' ')[0],
+            unlocktime:moment.utc(lockedbalance.rows[i].balances[j].unlock_execute_time, moment.ISO_8601).local().format()
+          });
+        }
+      }
+    }
+    res.json(accounts);
+}
+
 
 
 // 路由scatter 多语言数据
@@ -1041,6 +1360,11 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', async (req, res) =>
   }
 });
 
+// 访问静态资源
+app.use('/images', express.static(path.join(__dirname, './images')));
+
+// 访问静态资源
+app.use('/upgrade', express.static(path.join(__dirname, './upgrade')));
 
 // 路由scatter prices数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
@@ -1074,13 +1398,6 @@ app.use(bodyParser.urlencoded({
   extended: false
 }));
 app.use(bodyParser.json());
-
-// 访问静态资源
-app.use('/images', express.static(path.join(__dirname, './images')));
-
-// 访问静态资源
-app.use('/upgrade', express.static(path.join(__dirname, './upgrade')));
-
 app.post('/vktapi/v1/create_vkt', async (req, res) => {
 
   console.log('/vktapi/v1/create_vkt', req.body);
@@ -1246,19 +1563,53 @@ app.use('/vktapi/v1/account/vkt/:account_id', async (req, res) => {
   const balances = await rpc.get_currency_balance('eosio.token', accountid);
   console.log(balances);
 
+  if(balances.length === 0){
+    balances.push("0.0000 VKT");
+  }
+
   vktdatav_accounts_info.account_name = accountInfo.account_name;
   vktdatav_accounts_info.balances = JSON.parse('[]');
 
+  const lockedbalance = await rpc.get_table_rows({
+    json: true,              // Get the response as json
+    code: 'eosio.token',     // Contract that we target
+    scope: accountid,         // Account that owns the data
+    table: 'locked',        // Table name
+    limit: 10,               // maximum number of rows that we want to get
+  });
+
+  console.log(lockedbalance)
+
+  let amountlocked = 0.0;
+  let unlockdate ;
   for (let i in balances) {
     let balarr = balances[i].split(" ");
+    if(balarr[1] === "VKT" && lockedbalance.rows.length > 0){
+      amountlocked = lockedbalance.rows[i].total_balance.split(' ')[0];
+      unlockdate = moment.utc(lockedbalance.rows[i].balances[0].unlock_execute_time, moment.ISO_8601).local().format();
+    }else{
+      amountlocked = 0.0;
+      unlockdate = moment().format();
+    }
     vktdatav_accounts_info.balances.push({
       contract: "eosio.token",
       amount: balarr[0],
+      amountlocked: amountlocked,
+      availableamount: balarr[0] - amountlocked,
+      unlockdate: unlockdate,
       currency: balarr[1],
       decimals: balarr[0].split(".")[1].length,
+      locked_balances:JSON.parse('[]')
     });
+    if(balarr[1] === "VKT" && lockedbalance.rows.length > 0){
+      for(let j in lockedbalance.rows[i].balances){
+        vktdatav_accounts_info.balances[i].locked_balances.push({
+          balance:lockedbalance.rows[i].balances[j].balance.split(' ')[0],
+          unlock_execute_time:moment.utc(lockedbalance.rows[i].balances[j].unlock_execute_time, moment.ISO_8601).local().format()
+        });  
+      }
+    }
   }
-
 
   // const accountInfo2 = await rpc.get_account('qingzhudatac');
   // console.log(accountInfo2);
