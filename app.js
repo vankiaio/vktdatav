@@ -174,8 +174,8 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
         asset_price_usd: vktdatav_allprices["vkt:eosio.token:vkt"].USD,
         asset_price_cny: vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
         asset_price_change_in_24h: (vktdatav_vkttracker_info.percent_change_1d * 100.0).toFixed(2),
-        iconUrl: "http://tracker.devicexx.com/assets/logo.png",
-        iconUrlHd: "http://tracker.devicexx.com/assets/logo.png",
+        iconUrl: "http://wapi.devicexx.com:3030/images/logo_van_green.png",
+        iconUrlHd: "http://wapi.devicexx.com:3030/images/logo_van_green@3x.png",
         asset_market_cap_cny: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].CNY * 500000000,
         isRedpacket: true
       }
