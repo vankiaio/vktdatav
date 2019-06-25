@@ -84,6 +84,9 @@ let m_maxtps_onehour = 0;
 
 let m_lasttrxid = JSON.parse('[]');
 
+const MAX_ELEMENTS 	= 1000;
+const MAX_SKIP 		= config.maxSkip;
+
 // 创建express
 const app = express();
 
