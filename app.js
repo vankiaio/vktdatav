@@ -16,6 +16,7 @@ const translate = require('google-translate-api');
 const config = require('./config');
 const fs = require('fs');
 const moment = require('moment');
+const async	= require('async');
 const request = require('request');
 const Ut = require("./common");
 const util = require('util');
