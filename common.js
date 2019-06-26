@@ -10,6 +10,13 @@ class Ut {
         }, time);
       })
     };
+    /**
+    * 字符串是否为空
+    * @param {string} value 字符串
+    */
+    static isEmpty(value) {
+      return typeof value == 'string' && !value.trim() || typeof value == 'undefined' || value === null;
+    }
   }
    
   module.exports = Ut;

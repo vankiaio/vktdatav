@@ -1156,11 +1156,22 @@ function getActionsDistinct(req, res){
       return res.status(500).send("Large skip for account! Max skip per request " + MAX_SKIP);
     }
 
-    let accountName = String(req.body.from);
+    let filterClass = 0;
+    let accountName = "";
     let action = String(req.body.action);
     let counter = Number(req.body.counter);
     let actionsNamesArr = (typeof req.body.filter === "string") ? req.body.filter.split(","): null;
     action = "transfer";
+    if(Ut.isEmpty(String(req.body.from)) && !Ut.isEmpty(String(req.body.to))){
+      filterClass = 1;
+      accountName = String(req.body.to);
+    }else if(!Ut.isEmpty(String(req.body.from)) && Ut.isEmpty(String(req.body.to))){
+      filterClass = 2;
+      accountName = String(req.body.from);
+    }else{
+      filterClass = 0;
+      accountName = String(req.body.from);
+    }
 
     /*if (latencySkip[accountName] > +new Date()){
       return res.status(500).send("Large skip for account, please wait until previous request will end! Max skip per request " + MAX_SKIP);
@@ -1168,20 +1179,42 @@ function getActionsDistinct(req, res){
   if (!latencySkip[accountName] && skip > MAX_SKIP){
     latencySkip[accountName] = +new Date() + 60000;
     }*/
+    // query = {
+    //   $or: [
+    //   {"action_traces.act.account": accountName}, 
+    //   {"action_traces.act.data.receiver": accountName}, 
+    //   {"action_traces.act.data.from": accountName}, 
+    //   {"action_traces.act.data.to": accountName},
+    //   {"action_traces.act.data.name": accountName},
+    //   {"action_traces.act.data.voter": accountName},
+    //   {"action_traces.act.authorization.actor": accountName}
+    // ]};
+    let query = "";
+    if(filterClass === 0){
+      query = {
+        $or: [
+        {"action_traces.act.data.from": accountName}, 
+        {"action_traces.act.data.to": accountName}
+      ]};
+    }else if(filterClass === 1){
+      query = {
+        $or: [
+        {"action_traces.act.data.to": accountName}
+      ]};
+    }else if(filterClass === 2){
+      query = {
+        $or: [
+        {"action_traces.act.data.from": accountName}
+      ]};
+    }
 
-    let query = {
-      $or: [
-      {"action_traces.act.account": accountName}, 
-      {"action_traces.act.data.receiver": accountName}, 
-      {"action_traces.act.data.from": accountName}, 
-      {"action_traces.act.data.to": accountName},
-      {"action_traces.act.data.name": accountName},
-      {"action_traces.act.data.voter": accountName},
-      {"action_traces.act.authorization.actor": accountName}
-    ]};
     if (action !== "undefined" && action !== "all"){
       query["action_traces.act.name"] = action;
     }
+ 
+    //filter duplicate data
+    query["producer_block_id"] ={ $ne: null};
+
     if (actionsNamesArr){
       query['action_traces.act.name'] = { $in : [query['action_traces.act.name']]};
       actionsNamesArr.forEach(elem => {
