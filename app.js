@@ -38,6 +38,7 @@ const VKTAPI_URL = config.VKTAPI_URL;
 const XE_URL = config.XE_URL;
 const SCATTER_API = config.SCATTER_API;
 const defaultPrivateKey = config.defaultPrivateKey;
+const candyPrivateKey = config.candyPrivateKey;
 
 const http = require('http');
 const https = require('https');
@@ -92,7 +93,7 @@ const MAX_SKIP 		= config.maxSkip;
 const app = express();
 
 const JsSignatureProvider = require('vktjs/dist/eosjs-jssig').default;
-const signatureProvider = new JsSignatureProvider([defaultPrivateKey]);
+const signatureProvider = new JsSignatureProvider([defaultPrivateKey,candyPrivateKey]);
 
 const rpc = new JsonRpc(VKTAPI_URL, {
   fetch
@@ -1363,14 +1364,66 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', async (req, res) =>
 
   if (path_param1 === "get_candy_score") {
     console.log('/api_oc_pe_candy_system/get_candy_score', req.body);
+    let actname = path_param2;
+
     let candy_score = JSON.parse('{}');
 
     candy_score.code = 0;
     candy_score.message = 'ok';
     // 获取账号qingzhudatac的信息
+    const result = await api.transact({
+        actions: [{
+          account: 'vktokendapps',
+          name: 'reward',
+          authorization: [{
+            actor: 'vktokendapps',
+            permission: 'active',
+          }],
+          data: {"account":actname},
+        }]
+      }, {
+        blocksBehind: 3,
+        expireSeconds: 30,
+      });
+    
+    const reward_list = await rpc.get_table_rows({
+      json: true,              // Get the response as json
+      code: 'vktokendapps',     // Contract that we target
+      scope: 'vktokendapps',         // Account that owns the data
+      table: 'usertable',        // Table name
+      limit: -1,               // maximum number of rows that we want to get
+    });
 
+    var reward_info = reward_list.rows.filter(function(p){
+      return p.account === actname;
+    });
+    
+    console.log(reward_info)
+    console.log("----------------------------------")
+    console.dir(result,{depth: null});
     candy_score.data = JSON.parse('{}');
-    candy_score.data.scoreNum = 2019888;
+
+    if(reward_info.length > 0){
+      let last_reward_time = moment.utc(reward_info[0].last_reward_time, moment.ISO_8601).local().format("YYYY-MM-DD");
+      let now_time = moment().format("YYYY-MM-DD");
+      console.log({"last_reward_time":last_reward_time,"now_time":now_time})
+
+      if(moment(last_reward_time).isSame(now_time)){
+        console.log({"last_reward_time":last_reward_time,"now_time":now_time,"is":"same"})
+        candy_score.data.scoreNum = reward_info[0].last_reward_amount;
+      }else{
+        candy_score.data.scoreNum = "";
+      }
+    }else{
+      candy_score.data.scoreNum = "";
+    }
+    
+    // console.dir(result.processed.action_traces[0].inline_traces,{depth: null});
+    // if(result && result.processed.action_traces.length > 0 && result.processed.action_traces[0].inline_traces.length > 0){
+    //   candy_score.data.scoreNum = result.processed.action_traces[0].inline_traces[0].act.data.quantity;
+    // }else{
+    //   candy_score.data.scoreNum = "";
+    // }
     res.json(candy_score);
   } else if (path_param1 === "get_user_task") {
     console.log('/api_oc_pe_candy_system/get_user_task', req.body);
