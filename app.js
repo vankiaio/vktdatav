@@ -1411,11 +1411,14 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', async (req, res) =>
       if(moment(last_reward_time).isSame(now_time)){
         console.log({"last_reward_time":last_reward_time,"now_time":now_time,"is":"same"})
         candy_score.data.scoreNum = reward_info[0].last_reward_amount;
+        candy_score.data.totalscoreNum = reward_info[0].balance;
       }else{
         candy_score.data.scoreNum = "";
+        candy_score.data.totalscoreNum = "";
       }
     }else{
       candy_score.data.scoreNum = "";
+      candy_score.data.totalscoreNum = "";
     }
     
     // console.dir(result.processed.action_traces[0].inline_traces,{depth: null});
