@@ -354,8 +354,8 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
       let auth = JSON.parse('{}');
       auth.code = 0;
       auth.message = 'ok';
-      if (req.body.ownerKey != undefined && req.body.activeKey != undefined &&
-        req.body.uid != undefined && req.body.vktAccountName != undefined &&
+      if (!Ut.isEmpty(String(req.body.ownerKey)) && !Ut.isEmpty(String(req.body.activeKey)) &&
+        !Ut.isEmpty(String(req.body.uid)) && !Ut.isEmpty(String(req.body.vktAccountName)) &&
         req.body.ownerKey.substring(0,3) === 'VKT' &&
         req.body.activeKey.substring(0,3) === 'VKT' &&
         req.body.ownerKey.length === 53 &&
@@ -1209,7 +1209,7 @@ function getActionsDistinct(req, res){
       ]};
     }
 
-    if (action !== "undefined" && action !== "all"){
+    if (!Ut.isEmpty(String(action)) && action !== "all"){
       query["action_traces.act.name"] = action;
     }
  
@@ -1273,7 +1273,7 @@ function getActionsDistinct(req, res){
       accounts.data.actions[index].cpu_usage_us = result.actions[i].cpu_usage;
       accounts.data.actions[index].net_usage_words = "bytes";
       quantity = result.actions[i].action_traces[0].act.data.quantity;
-      if(quantity != undefined){
+      if(!Ut.isEmpty(String(quantity))){
         quantityarr = quantity.split(" ");
       }else{
         quantityarr = "0.0 VKT".split(" ");
@@ -1398,9 +1398,9 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', async (req, res) =>
       return p.account === actname;
     });
     
-    console.log(reward_info)
-    console.log("----------------------------------")
-    console.dir(result,{depth: null});
+    // console.log(reward_info)
+    // console.log("----------------------------------")
+    // console.dir(result,{depth: null});
     candy_score.data = JSON.parse('{}');
 
     if(reward_info.length > 0){
@@ -1494,8 +1494,8 @@ app.use(bodyParser.json());
 app.post('/vktapi/v1/create_vkt', async (req, res) => {
 
   console.log('/vktapi/v1/create_vkt', req.body);
-  if (req.body.signature != undefined && req.body.keys.active != undefined &&
-    req.body.transaction_id != undefined && req.body.transaction_id === "vankiawallet") {
+  if (!Ut.isEmpty(String(req.body.signature)) && !Ut.isEmpty(String(req.body.keys.active)) &&
+     !Ut.isEmpty(String(req.body.transaction_id)) && req.body.transaction_id === "vankiawallet") {
     let sig = req.body.signature;
     let pubkeyactive = req.body.keys.active;
     let pubkeyowner = req.body.keys.owner;
@@ -1606,14 +1606,14 @@ app.use('/vktapi/v1/languages', async (req, res) => {
   let file;
   let Isfound = false;
   let lang = JSON.parse('{}');
-  if (req.query.names != undefined) {
+  if (!Ut.isEmpty(String(req.query.names))) {
     console.log('/vktapi/v1/languages?names=', req.query.names);
     file = path.join(__dirname, './data/lang/1.json');
     lang = JSON.parse(fs.readFileSync(file));
     res.json(lang);
     return;
   }
-  if (req.query.name != undefined) {
+  if (!Ut.isEmpty(String(req.query.name))) {
     console.log('/vktapi/v1/languages?name=', req.query.name);
     file = path.join(__dirname, './data/lang/1.json');
     let alllang = JSON.parse(fs.readFileSync(file));
