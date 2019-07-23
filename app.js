@@ -1287,6 +1287,7 @@ function getActionsDistinct(req, res){
     // console.log(util.inspect(accounts, false, null, true))
     res.json(accounts);
     });
+    db.close();
   });
 }
 
@@ -2384,9 +2385,9 @@ const runMongodb = async () => {
               }];
             }
           });
-          db.close();
         });
     }
+    db.close();
   });
 
   return vktdatav;
@@ -2466,8 +2467,8 @@ const runMongodbTPSList = async () => {
             }
           }
         });
-        db.close();
       });
+      db.close();
   });
   return vktdatav;
 }
