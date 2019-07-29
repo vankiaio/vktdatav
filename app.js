@@ -20,6 +20,7 @@ const async	= require('async');
 const request = require('request');
 const Ut = require("./common");
 const util = require('util');
+const Hashids = require('hashids');
 require('colors');
 const {
   Api,
@@ -1124,6 +1125,7 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json());
 app.post('/VX/GetActions', getActionsDistinct);
 app.post('/VX/GetAssetsLockRecords', getAssetsLockRecords);
+app.post('/VX/GenInviteCode', genInviteCode);
 
 function getActionsDistinct(req, res){
   console.log('/VX/GetActions', req.body,req.query);
@@ -1354,6 +1356,23 @@ async function getAssetsLockRecords (req, res) {
     res.json(accounts);
 }
 
+
+async function genInviteCode (req, res) {
+  console.log('/VX/GenInviteCode', req.body);
+  let inviteCode = JSON.parse('{}');
+  let accountid = req.body.account_id;
+
+  var hashids = new Hashids(accountid, 5);
+  console.log(hashids.encode(1));
+
+  inviteCode.code = 0;
+  inviteCode.message = "ok";
+  inviteCode.data = JSON.parse('{}');
+  inviteCode.data.code = hashids.encode(1);
+
+  res.json(inviteCode);
+
+}
 
 
 // 路由scatter 多语言数据
