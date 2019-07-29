@@ -69,7 +69,8 @@ let vktdatav_blocks_list = [];
 let vktdatav_vktprice_list = [];
 let vktdatav_vkttracker_info = [];
 let vktdatav_allprices = {};
-let vktdatav_currencies = ["USD", "EUR", "CNY", "GBP", "JPY", "CAD", "CHF", "AUD", "KRW"];
+// let vktdatav_currencies = ["USD", "EUR", "CNY", "GBP", "JPY", "CAD", "CHF", "AUD", "KRW"];
+let vktdatav_currencies = ["USD", "CNY", "KRW"];
 let vktdatav_producer_now = {};
 let vktdatav_producer_location = {};
 let vktdatav_mproducer_location = {};
@@ -201,8 +202,10 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
         locked_amount: amountlocked,
         balance_usd: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].USD,
         balance_cny: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
+        balance_krw: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].KRW,
         asset_price_usd: vktdatav_allprices["vkt:eosio.token:vkt"].USD,
         asset_price_cny: vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
+        asset_price_krw: vktdatav_allprices["vkt:eosio.token:vkt"].KRW,
         asset_price_change_in_24h: (vktdatav_vkttracker_info.percent_change_1d * 100.0).toFixed(2),
         iconUrl: "http://wapi.devicexx.com:3030/images/logo_van_green.png",
         iconUrlHd: "http://wapi.devicexx.com:3030/images/logo_van_green@3x.png",
