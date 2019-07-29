@@ -69,8 +69,8 @@ let vktdatav_blocks_list = [];
 let vktdatav_vktprice_list = [];
 let vktdatav_vkttracker_info = [];
 let vktdatav_allprices = {};
-// let vktdatav_currencies = ["USD", "EUR", "CNY", "GBP", "JPY", "CAD", "CHF", "AUD", "KRW"];
-let vktdatav_currencies = ["USD", "CNY", "KRW"];
+let vktdatav_currencies = ["USD", "EUR", "CNY", "GBP", "JPY", "CAD", "CHF", "AUD", "KRW"];
+let vktdatav_vktoken_currencies = ["USD", "CNY", "KRW"];
 let vktdatav_producer_now = {};
 let vktdatav_producer_location = {};
 let vktdatav_mproducer_location = {};
@@ -1488,6 +1488,18 @@ app.use('/vktapi/v1/currencies', async (req, res) => {
 
   console.log('/vktapi/v1/currencies', req);
   res.json(vktdatav_currencies);
+});
+
+app.use('/vktapi/v1/getcurrencies', async (req, res) => {
+
+  console.log('/vktapi/v1/getcurrencies', req);
+  let currencies = JSON.parse('{}');
+
+  currencies.code = 0;
+  currencies.message = 'ok';
+  currencies.data = vktdatav_vktoken_currencies;
+
+  res.json(currencies);
 });
 
 // 路由scatter prices数据
