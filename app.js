@@ -1368,6 +1368,39 @@ async function genInviteCode (req, res) {
   var hashids = new Hashids(accountid, 5);
   console.log(hashids.encode(1));
 
+  // make client connect to mongo service
+  MongoClient.connect(MONGO_URL, function(err, db) {
+    if (err) throw err;
+
+    const dbo = db.db("VKT");
+
+    // db pointing to newdb
+    console.log("Switched to "+dbo.databaseName+" database");
+
+      dbo.collection("InviteCode").find({
+        "name": {
+          $eq: accountid
+        }
+      }).count(function (err, result) {
+        if (err) throw err;
+        if (result >= 1) {
+          console.log("InviteCode duplicated!");
+          db.close();
+        }else{
+          // document to be inserted
+          var doc = { name: accountid, inviteCode: hashids.encode(1) };
+
+          // insert document to 'users' collection using insertOne
+          dbo.collection("InviteCode").insertOne(doc, function(err, res) {
+              if (err) throw err;
+              console.log("InviteCode inserted");
+              // close the connection to db when you are done with it
+              db.close();
+          });
+        }
+      });
+  });
+
   inviteCode.code = 0;
   inviteCode.message = "ok";
   inviteCode.data = JSON.parse('{}');
