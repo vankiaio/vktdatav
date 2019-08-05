@@ -488,6 +488,33 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
       res.json(account);
       return;
     } 
+    if(path_param2 === "get_infoFeedback") {
+      console.log('/api_oc_personal/v1.0.0/user/get_infoFeedback', req.body);
+      let feedbackinfo = JSON.parse('{}');
+
+      feedbackinfo.code = 0;
+      feedbackinfo.message = 'ok';
+      feedbackinfo.data = JSON.parse('[]');
+      feedbackinfo.data.push({
+        uid:'tokyoliyi',
+        content:'软件不会用',
+        comment:"看说明",
+        status:"完结"
+      });
+
+      console.log(feedbackinfo);
+      res.json(feedbackinfo);
+    } else if(path_param2 === "add_infoFeedback") {
+      console.log('/api_oc_personal/v1.0.0/user/add_infoFeedback', req.body);
+      let add_infoFeedback = JSON.parse('{}');
+
+      add_infoFeedback.code = 0;
+      add_infoFeedback.message = 'ok';
+      add_infoFeedback.data = JSON.parse('{}');
+
+      console.log(add_infoFeedback);
+      res.json(add_infoFeedback);
+    }
 
   } else if (path_param1 === "msg") {
     if (path_param2 === "getMagList") {
@@ -711,34 +738,6 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     
     console.log(pocketvkt_info);
     res.json(pocketvkt_info);
-  } else if (path_param1 === "user") {
-    if(path_param2 === "get_infoFeedback") {
-      console.log('/api_oc_personal/v1.0.0/user/get_infoFeedback', req.query);
-      let feedbackinfo = JSON.parse('{}');
-      
-      feedbackinfo.code = 0;
-      feedbackinfo.message = 'ok';
-      feedbackinfo.data = JSON.parse('[]');
-      feedbackinfo.data.push({
-        uid:'tokyoliyi',
-        content:'软件不会用',
-        comment:"看说明",
-        status:"完结"
-      });
-
-      console.log(feedbackinfo);
-      res.json(feedbackinfo);
-    } else if(path_param2 === "add_infoFeedback") {
-      console.log('/api_oc_personal/v1.0.0/user/add_infoFeedback', req.query);
-      let add_infoFeedback = JSON.parse('{}');
-      
-      add_infoFeedback.code = 0;
-      add_infoFeedback.message = 'ok';
-      add_infoFeedback.data = JSON.parse('{}');
-
-      console.log(add_infoFeedback);
-      res.json(add_infoFeedback);
-    }
   }
 });
 
