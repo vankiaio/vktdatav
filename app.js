@@ -497,7 +497,13 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
       feedbackinfo.data = JSON.parse('[]');
       feedbackinfo.data.push({
         uid:'tokyoliyi',
-        content:'软件不会用',
+        content:'软件不会用？',
+        comment:"看说明",
+        status:"完结"
+      });
+      feedbackinfo.data.push({
+        uid:'tokyoliyi',
+        content:'软件怎么转账？',
         comment:"看说明",
         status:"完结"
       });
@@ -531,6 +537,16 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
       summary:'软件还在测试中...',
       createTime:moment().format("MM/DD"), 
       updateTime:moment().format("MM/DD")});
+      res.json(msgs);
+      return;
+    }
+    if (path_param2 === "hasUnreadMsg") {
+      console.log('/api_oc_personal/v1.0.0/msg/hasUnreadMsg', req.body);
+      let msgs = JSON.parse('{}');
+      msgs.code = 0;
+      msgs.message = 'ok';
+      msgs.data = JSON.parse('{}');
+      msgs.data.unreadMsg = '1';
       res.json(msgs);
       return;
     }
