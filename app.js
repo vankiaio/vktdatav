@@ -151,7 +151,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     res.json(auth);
     return;
   } else if (path_param1 === "get_token_info") {
-    console.log('/api_oc_blockchain-v1.0.0/get_token_info', req.body);
+    console.log('/api_oc_personal/v1.0.0/get_token_info', req.body);
     let asset = JSON.parse('{}');
     let accountName = req.body.accountName;
     //获取账号xxxx的资产,查询资产的时候要加上资产的合约名字eosio.token
@@ -711,6 +711,34 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     
     console.log(pocketvkt_info);
     res.json(pocketvkt_info);
+  } else if (path_param1 === "user") {
+    if(path_param2 === "get_infoFeedback") {
+      console.log('/api_oc_personal/v1.0.0/user/get_infoFeedback', req.query);
+      let feedbackinfo = JSON.parse('{}');
+      
+      feedbackinfo.code = 0;
+      feedbackinfo.message = 'ok';
+      feedbackinfo.data = JSON.parse('[]');
+      feedbackinfo.data.push({
+        uid:'tokyoliyi',
+        content:'软件不会用',
+        comment:"看说明",
+        status:"完结"
+      });
+
+      console.log(feedbackinfo);
+      res.json(feedbackinfo);
+    } else if(path_param2 === "add_infoFeedback") {
+      console.log('/api_oc_personal/v1.0.0/user/add_infoFeedback', req.query);
+      let add_infoFeedback = JSON.parse('{}');
+      
+      add_infoFeedback.code = 0;
+      add_infoFeedback.message = 'ok';
+      add_infoFeedback.data = JSON.parse('{}');
+
+      console.log(add_infoFeedback);
+      res.json(add_infoFeedback);
+    }
   }
 });
 
