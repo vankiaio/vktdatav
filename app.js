@@ -153,66 +153,70 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
   } else if (path_param1 === "get_token_info") {
     console.log('/api_oc_personal/v1.0.0/get_token_info', req.body);
     let asset = JSON.parse('{}');
-    let accountName = req.body.accountName;
-    //获取账号xxxx的资产,查询资产的时候要加上资产的合约名字eosio.token
-    const balances = await rpc.get_currency_balance('eosio.token', req.body.accountName);
-    console.log(balances);
+    // let accountName = req.body.accountName;
+    let accountNameArr = req.body.accountNameArr;
+    accountNameArr.forEach(async(accountName) =>{
+      //获取账号xxxx的资产,查询资产的时候要加上资产的合约名字eosio.token
+      const balances = await rpc.get_currency_balance('eosio.token', req.body.accountName);
+      console.log(balances);
 
-    if(balances.length === 0){
-      balances.push("0.0000 VKT");
-    }
-
-    let vkt_balance = '';
-    for (let i in balances) {
-      let balarr = balances[i].split(" ");
-      if (balarr[1] === "VKT") {
-        vkt_balance = balarr[0];
+      if(balances.length === 0){
+        balances.push("0.0000 VKT");
       }
-    }
 
-    const lockedbalance = await rpc.get_table_rows({
-      json: true,              // Get the response as json
-      code: 'eosio.token',     // Contract that we target
-      scope: accountName,         // Account that owns the data
-      table: 'locked',        // Table name
-      limit: 10,               // maximum number of rows that we want to get
+      let vkt_balance = '';
+      for (let i in balances) {
+        let balarr = balances[i].split(" ");
+        if (balarr[1] === "VKT") {
+          vkt_balance = balarr[0];
+        }
+      }
+
+      const lockedbalance = await rpc.get_table_rows({
+        json: true,              // Get the response as json
+        code: 'eosio.token',     // Contract that we target
+        scope: accountName,         // Account that owns the data
+        table: 'locked',        // Table name
+        limit: 10,               // maximum number of rows that we want to get
+      });
+    
+      console.log(lockedbalance)
+    
+      let amountlocked = 0.0;
+      try{
+        let balarr = balances[0].split(" ");
+        if(balarr[1] === "VKT" && lockedbalance.rows.length > 0){
+          amountlocked = lockedbalance.rows[0].total_balance.split(' ')[0];
+        }
+      } catch (error) {
+        amountlocked = 0.0;
+      }
+      asset.code = 0;
+      asset.message = 'ok';
+      asset.data = JSON.parse('[]');
+      asset.data.push(
+        {
+          contract_name: "eosio.token",
+          token_symbol: "VKT",
+          coinmarket_id: "bitforex",
+          account_name: accountName,
+          balance: vkt_balance,
+          locked_amount: amountlocked,
+          balance_usd: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].USD,
+          balance_cny: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
+          balance_krw: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].KRW,
+          asset_price_usd: vktdatav_allprices["vkt:eosio.token:vkt"].USD,
+          asset_price_cny: vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
+          asset_price_krw: vktdatav_allprices["vkt:eosio.token:vkt"].KRW,
+          asset_price_change_in_24h: (vktdatav_vkttracker_info.percent_change_1d * 100.0).toFixed(2),
+          iconUrl: "http://wapi.devicexx.com:3030/images/logo_van_green.png",
+          iconUrlHd: "http://wapi.devicexx.com:3030/images/logo_van_green@3x.png",
+          asset_market_cap_cny: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].CNY * 500000000,
+          isRedpacket: true
+        }
+      );
     });
-  
-    console.log(lockedbalance)
-  
-    let amountlocked = 0.0;
-    try{
-      let balarr = balances[0].split(" ");
-      if(balarr[1] === "VKT" && lockedbalance.rows.length > 0){
-        amountlocked = lockedbalance.rows[0].total_balance.split(' ')[0];
-      }
-    } catch (error) {
-      amountlocked = 0.0;
-    }
-    asset.code = 0;
-    asset.message = 'ok';
-    asset.data = JSON.parse('[]');
-    asset.data.push(
-      {
-        contract_name: "eosio.token",
-        token_symbol: "VKT",
-        coinmarket_id: "bitforex",
-        account_name: accountName,
-        balance: vkt_balance,
-        locked_amount: amountlocked,
-        balance_usd: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].USD,
-        balance_cny: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
-        balance_krw: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].KRW,
-        asset_price_usd: vktdatav_allprices["vkt:eosio.token:vkt"].USD,
-        asset_price_cny: vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
-        asset_price_krw: vktdatav_allprices["vkt:eosio.token:vkt"].KRW,
-        asset_price_change_in_24h: (vktdatav_vkttracker_info.percent_change_1d * 100.0).toFixed(2),
-        iconUrl: "http://wapi.devicexx.com:3030/images/logo_van_green.png",
-        iconUrlHd: "http://wapi.devicexx.com:3030/images/logo_van_green@3x.png",
-        asset_market_cap_cny: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].CNY * 500000000,
-        isRedpacket: true
-      }
-    );
+    
 
     // asset.data.push(
     //   {
