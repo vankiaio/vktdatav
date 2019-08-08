@@ -748,20 +748,26 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     });
     console.log(assetCategory);
     res.json(assetCategory);
-  } else if (path_param1 === "get_pocketvkt_info") {
-    console.log('/api_oc_personal/v1.0.0/get_pocketvkt_info', req.query);
-    let pocketvkt_info = JSON.parse('{}');
-    
-    pocketvkt_info.code = 0;
-    pocketvkt_info.message = 'ok';
-    pocketvkt_info.data = JSON.parse('{}');
-    pocketvkt_info.data.weChatOfficialAccount = '万加物联';
-    pocketvkt_info.data.weChat = 'vankia_asst';
-    pocketvkt_info.data.officiaWebsite = 'http://www.vankia.net';
-    pocketvkt_info.data.companyProfile = 'VANKIA万加链是基于区块链技术的第三代物联网，是一条物联网领域的公链，旨在为中小制造业企业提供产品智能化改造方案。万加链经过多年的研发，积累了很强的技术实力，2018年提交了10项雾计算和区块链的专利申请。';
-    
-    console.log(pocketvkt_info);
-    res.json(pocketvkt_info);
+  } else if (path_param1 === "get_VKToken_info") {
+    console.log('/api_oc_personal/v1.0.0/get_VKToken_info?language=', req.query.language);
+    let VKToken_info = JSON.parse('{}');
+    VKToken_info.code = 0;
+    VKToken_info.message = 'ok';
+    VKToken_info.data = JSON.parse('{}');
+    let language = req.query.language;
+    if(language === "en"){
+      VKToken_info.data.weChatOfficialAccount = 'Vankia';
+      VKToken_info.data.weChat = 'vankia_asst';
+      VKToken_info.data.officiaWebsite = 'http://www.vankia.net';
+      VKToken_info.data.companyProfile = 'Vankia Chain is the third generation of Internet of Things based on blockchain technology. It is a public chain in the field of Internet of Things. It aims to provide intelligent transformation programs for small and medium-sized manufacturing enterprises. After years of research and development, Wanjia Chain has accumulated strong technical strength. In 2018, it submitted 10 patent applications for fog calculation and blockchain.';
+    }else{
+      VKToken_info.data.weChatOfficialAccount = '万加物联';
+      VKToken_info.data.weChat = 'vankia_asst';
+      VKToken_info.data.officiaWebsite = 'http://www.vankia.net';
+      VKToken_info.data.companyProfile = 'VANKIA万加链是基于区块链技术的第三代物联网，是一条物联网领域的公链，旨在为中小制造业企业提供产品智能化改造方案。万加链经过多年的研发，积累了很强的技术实力，2018年提交了10项雾计算和区块链的专利申请。';
+    }
+    console.log(VKToken_info);
+    res.json(VKToken_info);
   }
 });
 
@@ -1563,6 +1569,9 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', async (req, res) =>
 
 // 访问静态资源
 app.use('/images', express.static(path.join(__dirname, './images')));
+
+// 访问静态资源
+app.use('/images', express.static(path.join(__dirname, './resource')));
 
 // 访问静态资源
 app.use('/upgrade', express.static(path.join(__dirname, './upgrade')));
