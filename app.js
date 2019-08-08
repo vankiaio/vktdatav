@@ -1571,7 +1571,7 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', async (req, res) =>
 app.use('/images', express.static(path.join(__dirname, './images')));
 
 // 访问静态资源
-app.use('/images', express.static(path.join(__dirname, './resource')));
+app.use('/resource', express.static(path.join(__dirname, './resource')));
 
 // 访问静态资源
 app.use('/upgrade', express.static(path.join(__dirname, './upgrade')));
