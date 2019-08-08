@@ -153,11 +153,16 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
   } else if (path_param1 === "get_token_info") {
     console.log('/api_oc_personal/v1.0.0/get_token_info', req.body);
     let asset = JSON.parse('{}');
+    asset.code = 0;
+    asset.message = 'ok';
+    asset.data = JSON.parse('[]');
     // let accountName = req.body.accountName;
     let accountNameArr = req.body.accountNameArr;
-    accountNameArr.forEach(async(accountName) =>{
+    // accountNameArr.forEach((accountName) =>{
+    await async.eachSeries(accountNameArr,async(accountName, cb) =>{
+      console.log(accountName);
       //获取账号xxxx的资产,查询资产的时候要加上资产的合约名字eosio.token
-      const balances = await rpc.get_currency_balance('eosio.token', req.body.accountName);
+      const balances = await rpc.get_currency_balance('eosio.token', accountName);
       console.log(balances);
 
       if(balances.length === 0){
@@ -191,9 +196,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
       } catch (error) {
         amountlocked = 0.0;
       }
-      asset.code = 0;
-      asset.message = 'ok';
-      asset.data = JSON.parse('[]');
+
       asset.data.push(
         {
           contract_name: "eosio.token",
@@ -215,9 +218,12 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
           isRedpacket: true
         }
       );
+    }, 
+    (err) =>
+    {
+      res.json(asset);
     });
     
-
     // asset.data.push(
     //   {
     //     contract_name: "token",
@@ -236,8 +242,6 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     //     isRedpacket: true
     //   }
     // );
-
-    res.json(asset);
     //TODO
   } else if (path_param1 === "import_accounts") {
     console.log('/api_oc_personal/v1.0.0/import_accounts', req.body);
@@ -1452,6 +1456,7 @@ async function genInviteCode (req, res) {
   inviteCode.message = "ok";
   inviteCode.data = JSON.parse('{}');
   inviteCode.data.code = hashids.encode(1);
+  inviteCode.data.qrcodeurl = "http://www.vankia.net";
 
   res.json(inviteCode);
 
@@ -2102,6 +2107,24 @@ const runRpcGetProducers = async () => {
 
   const producersinfo = await rpc.get_producers();
   //console.log(producersinfo);
+  // { rows: 
+  //   [ { owner: 'vktbeijing',
+  //       total_votes: '1578603255546462464.00000000000000000',
+  //       producer_key: 'VKT8mVLMTiuocf8n89uHxhdPYjZrDkpgRYE8tW6N8bGK2GJpBM94R',
+  //       is_active: 1,
+  //       url: 'http://vankia.io/vktbeijing',
+  //       unpaid_blocks: 1568563,
+  //       last_claim_time: 0,
+  //       location: 0 },
+  //     { owner: 'vktqingdao',
+  //       total_votes: '1578603255546462464.00000000000000000',
+  //       producer_key: 'VKT53u9A41ZHmbhNEcst7rM6vCXKSppufbNQmsNVQKQukgLhmbAMk',
+  //       is_active: 1,
+  //       url: 'http://vankia.io/vktqingdao',
+  //       unpaid_blocks: 1385845,
+  //       last_claim_time: 0,
+  //       location: 0 },
+ 
 
   producer_count = 0;
   for (let i in producersinfo.rows) {
@@ -2130,150 +2153,149 @@ const runRpcGetProducers = async () => {
     vktdatav_flyline = JSON.parse('[]');
     let producer_state = "";
 
-    for (let i in producersinfo.rows) {
-      (function () {
-        setTimeout(async function () {
-          dumapLocal_start = producersinfo.rows[i].url.indexOf("vkt") + 3;
+    let i = 0;
+    await async.eachSeries(producersinfo.rows,async(producer, cb) =>{
 
-          if (dumapLocal_start > 3) {
-            dumapLocal_en = producersinfo.rows[i].url.substr(dumapLocal_start, producersinfo.rows[i].url.length - dumapLocal_start)
+        dumapLocal_start = producer.url.indexOf("vkt") + 3;
+
+        if (dumapLocal_start > 3) {
+          dumapLocal_en = producer.url.substr(dumapLocal_start, producer.url.length - dumapLocal_start)
+        }
+        console.log("start ---- 1", dumapLocal_en)
+        if (dumapLocal_en != "" ) {
+          console.log("start ---- 2", dumapLocal_en)
+          if (dumapLocal_en.indexOf("shi") < 0) {
+            dumapLocal_en += "shi"
           }
-          console.log("start ---- 1", dumapLocal_en)
-          if (dumapLocal_en != "" ) {
-            console.log("start ---- 2", dumapLocal_en)
-            if (dumapLocal_en.indexOf("shi") < 0) {
-              dumapLocal_en += "shi"
-            }
-            console.log(dumapLocal_en)
-            await translate(dumapLocal_en, {
-              to: 'zh-CN'
-            }).then(async (res) => {
-              dumapLocal_cn = res.text;
-              console.log("start ---- 3", dumapLocal_cn)
-              console.log(res.text);
-              //=> 北京市
-              console.log(res.from.language.iso);
-              //=> zh-CN
-              dumapLocal_en = "";
+          console.log(dumapLocal_en)
+          await translate(dumapLocal_en, {
+            to: 'zh-CN'
+          }).then(async (res) => {
+            dumapLocal_cn = res.text;
+            console.log("start ---- 3", dumapLocal_cn)
+            console.log(res.text);
+            //=> 北京市
+            console.log(res.from.language.iso);
+            //=> zh-CN
+            dumapLocal_en = "";
 
-              if (dumapLocal_cn != "") {
-                var sk = '5iRbwByNvoPafZvsYE6GWoGm5vooaS9F' // 创建应用的sk
-                  ,
-                  address = dumapLocal_cn;
+            if (dumapLocal_cn != "") {
+              var sk = '5iRbwByNvoPafZvsYE6GWoGm5vooaS9F' // 创建应用的sk
+                ,
+                address = dumapLocal_cn;
 
-                await superagent.get('http://api.map.baidu.com/geocoder/v2/')
-                  .query({
-                    address: address
-                  })
-                  .query({
-                    output: 'json'
-                  })
-                  .query({
-                    ak: sk
-                  })
-                  .end((err, sres) => {
-                    if (err) {
-                      console.log('err:', err);
-                      return;
-                    }
-                    console.log('location:', sres.text);
+              await superagent.get('http://api.map.baidu.com/geocoder/v2/')
+                .query({
+                  address: address
+                })
+                .query({
+                  output: 'json'
+                })
+                .query({
+                  ak: sk
+                })
+                .end((err, sres) => {
+                  if (err) {
+                    console.log('err:', err);
+                    return;
+                  }
+                  console.log('location:', sres.text);
 
-                    if (producersinfo.rows[i].is_active == 1) {
+                  if (producer.is_active == 1) {
 
-                      vktdatav_producer_location.push({
+                    vktdatav_producer_location.push({
+                      lat: JSON.parse(sres.text).result.location.lat,
+                      lng: JSON.parse(sres.text).result.location.lng,
+                      value: 100
+                    });
+                    //res.send(sres.text);
+                    vktdatav.producers.push({
+                      owner: producer.owner,
+                      location: {
+                        city: dumapLocal_cn,
+                        lat: JSON.parse(sres.text).result.location.lat,
+                        lng: JSON.parse(sres.text).result.location.lng
+                      }
+                    });
+                    if (i < 7) {
+                      vktdatav_mproducer_location.push({
                         lat: JSON.parse(sres.text).result.location.lat,
                         lng: JSON.parse(sres.text).result.location.lng,
                         value: 100
                       });
-                      //res.send(sres.text);
-                      vktdatav.producers.push({
-                        owner: producersinfo.rows[i].owner,
-                        location: {
-                          city: dumapLocal_cn,
-                          lat: JSON.parse(sres.text).result.location.lat,
-                          lng: JSON.parse(sres.text).result.location.lng
-                        }
+                      producer_state = "超级节点"
+                    } else {
+                      vktdatav_bproducer_location.push({
+                        lat: JSON.parse(sres.text).result.location.lat,
+                        lng: JSON.parse(sres.text).result.location.lng,
+                        value: 100
                       });
-                      if (i < 7) {
-                        vktdatav_mproducer_location.push({
-                          lat: JSON.parse(sres.text).result.location.lat,
-                          lng: JSON.parse(sres.text).result.location.lng,
-                          value: 100
+                      producer_state = "备用节点"
+                      if (vktdatav_mproducer_location.length > 0) {
+                        let idx = parseInt(Math.random() * vktdatav_mproducer_location.length, 10);
+                        vktdatav_flyline.push({
+                          from: JSON.parse(sres.text).result.location.lng + ',' + JSON.parse(sres.text).result.location.lat,
+                          to: vktdatav_mproducer_location[idx].lng + ',' + vktdatav_mproducer_location[idx].lat
                         });
-                        producer_state = "超级节点"
-                      } else {
-                        vktdatav_bproducer_location.push({
-                          lat: JSON.parse(sres.text).result.location.lat,
-                          lng: JSON.parse(sres.text).result.location.lng,
-                          value: 100
-                        });
-                        producer_state = "备用节点"
-                        if (vktdatav_mproducer_location.length > 0) {
-                          let idx = parseInt(Math.random() * vktdatav_mproducer_location.length, 10);
-                          vktdatav_flyline.push({
-                            from: JSON.parse(sres.text).result.location.lng + ',' + JSON.parse(sres.text).result.location.lat,
-                            to: vktdatav_mproducer_location[idx].lng + ',' + vktdatav_mproducer_location[idx].lat
-                          });
-                        }
                       }
-                      // [
-                      //   {
-                      //     "name": "vankia",
-                      //     "location": "北京",
-                      //     "state": "超级节点"
-                      //   },
-                      // ]
-                      if(producersinfo.rows[i].owner === "vktbeijing"){
-                      vktdatav_producers_list.push({
-                        "name": "vktjingjinji",
-                        "location": "京津冀地区",
-                        "state": producer_state
-                      })
-                      }
-                      else if(producersinfo.rows[i].owner === "vktshenzhen"){
-                      vktdatav_producers_list.push({
-                        "name": "vktlangfang",
-                        "location": "廊坊",
-                        "state": producer_state
-                      })
-                      }
-					  else if(producersinfo.rows[i].owner === "vktshanghai"){
-                      vktdatav_producers_list.push({
-                        "name": "vkttongzhou",
-                        "location": "通州",
-                        "state": producer_state
-                      })
-                      }
-					  else if(producersinfo.rows[i].owner === "vktchengdu"){
-                      vktdatav_producers_list.push({
-                        "name": "vktwuqing",
-                        "location": "武清",
-                        "state": producer_state
-                      })
-                      }else{
-                      vktdatav_producers_list.push({
-                        "name": producersinfo.rows[i].owner,
-                        "location": dumapLocal_cn,
-                        "state": producer_state
-                      })
-                      }
-                      console.log("end ---- 1", dumapLocal_cn)
                     }
-                  })
-              }
-            }).catch(err => {
-              console.error(err);
-            });
-          }
-        }, 1200 * i);
-      })();
+                    // [
+                    //   {
+                    //     "name": "vankia",
+                    //     "location": "北京",
+                    //     "state": "超级节点"
+                    //   },
+                    // ]
+                    if(producer.owner === "vktbeijing"){
+                    vktdatav_producers_list.push({
+                      "name": "vktjingjinji",
+                      "location": "京津冀地区",
+                      "state": producer_state
+                    })
+                    }
+                    else if(producer.owner === "vktshenzhen"){
+                    vktdatav_producers_list.push({
+                      "name": "vktlangfang",
+                      "location": "廊坊",
+                      "state": producer_state
+                    })
+                    }
+                    else if(producer.owner === "vktshanghai"){
+                    vktdatav_producers_list.push({
+                      "name": "vkttongzhou",
+                      "location": "通州",
+                      "state": producer_state
+                    })
+                    }
+                    else if(producer.owner === "vktchengdu"){
+                    vktdatav_producers_list.push({
+                      "name": "vktwuqing",
+                      "location": "武清",
+                      "state": producer_state
+                    })
+                    }else{
+                    vktdatav_producers_list.push({
+                      "name": producer.owner,
+                      "location": dumapLocal_cn,
+                      "state": producer_state
+                    })
+                    }
+                    console.log("end ---- 1", dumapLocal_cn)
+                  }
+                })
+            }
+          }).catch(err => {
+            console.error(err);
+          });
+        }
+        i++;
+      });
     }
-  }
 
-  // var ip = "124.200.176.166";
-  // var geo = geoip.lookup(ip);
+    // var ip = "124.200.176.166";
+    // var geo = geoip.lookup(ip);
 
-  // console.log(geo);
+    // console.log(geo);
 
   return (vktdatav);
 
