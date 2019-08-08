@@ -11,7 +11,7 @@ const ccxt = require('ccxt-vkt');
 // import GeoIP-lite
 const geoip = require('geoip-lite');
 const superagent = require('superagent');
-const translate = require('google-translate-api');
+const translate = require('google-translate-cn-api');
 // 载入配置文件
 const config = require('./config');
 const fs = require('fs');
