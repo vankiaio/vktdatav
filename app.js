@@ -590,6 +590,7 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     ios_version.data.versionDetail = '0.9.0'
     ios_version.data.versionCode = '090'
     ios_version.data.versionName = '0.9.0'
+    ios_version.data.versionDescription = ['1.新增xxx功能','2.修改了xxx，修复若干bug','3.修改了xxx，修复若干bug','4.新增xxx功能']
     console.log(ios_version);
     res.json(ios_version);
   }else   if (path_param1 === "recommend_dapp") {
@@ -1462,7 +1463,7 @@ async function genInviteCode (req, res) {
   inviteCode.message = "ok";
   inviteCode.data = JSON.parse('{}');
   inviteCode.data.code = hashids.encode(1);
-  inviteCode.data.qrcodeurl = "http://www.vankia.net";
+  inviteCode.data.qrcodeurl = "https://vktokendev.github.io/download/vktoken/index.html";
 
   res.json(inviteCode);
 
