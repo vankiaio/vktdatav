@@ -1476,6 +1476,7 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', async (req, res) =>
 
   let path_param1 = req.params.path_param1;
   let path_param2 = req.params.path_param2;
+  let needtoRewardToday = false;
 
   if (path_param1 === "get_candy_score") {
     console.log('/api_oc_pe_candy_system/get_candy_score', req.body);
@@ -1485,21 +1486,6 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', async (req, res) =>
 
     candy_score.code = 0;
     candy_score.message = 'ok';
-    // 获取账号qingzhudatac的信息
-    const result = await api.transact({
-        actions: [{
-          account: 'vktokendapps',
-          name: 'reward',
-          authorization: [{
-            actor: 'vktokendapps',
-            permission: 'active',
-          }],
-          data: {"account":actname},
-        }]
-      }, {
-        blocksBehind: 3,
-        expireSeconds: 30,
-      });
     
     const reward_list = await rpc.get_table_rows({
       json: true,              // Get the response as json
@@ -1513,11 +1499,8 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', async (req, res) =>
       return p.account === actname;
     });
     
-    // console.log(reward_info)
-    // console.log("----------------------------------")
-    // console.dir(result,{depth: null});
     candy_score.data = JSON.parse('{}');
-
+   
     if(reward_info.length > 0){
       let last_reward_time = moment.utc(reward_info[0].last_reward_time, moment.ISO_8601).local().format("YYYY-MM-DD");
       let now_time = moment().format("YYYY-MM-DD");
@@ -1528,13 +1511,59 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', async (req, res) =>
         candy_score.data.scoreNum = reward_info[0].last_reward_amount;
         candy_score.data.totalscoreNum = reward_info[0].balance;
         candy_score.data.totalscoreDays = reward_info[0].sign_in_accumulate_days;
+        candy_score.data.isRewardedToday = true;
       }else{
-        candy_score.data.scoreNum = "";
-        candy_score.data.totalscoreNum = "";
+        needtoRewardToday = true;
       }
     }else{
-      candy_score.data.scoreNum = "";
-      candy_score.data.totalscoreNum = "";
+      needtoRewardToday = true;
+    }
+
+    if(needtoRewardToday){
+      // 签到
+      const result = await api.transact({
+        actions: [{
+          account: 'vktokendapps',
+          name: 'reward',
+          authorization: [{
+            actor: 'vktokendapps',
+            permission: 'active',
+          }],
+          data: {"account":actname},
+        }]
+      }, {
+        blocksBehind: 3,
+        expireSeconds: 30,
+      });
+
+      const reward_again_list = await rpc.get_table_rows({
+        json: true,              // Get the response as json
+        code: 'vktokendapps',     // Contract that we target
+        scope: 'vktokendapps',         // Account that owns the data
+        table: 'usertable',        // Table name
+        limit: -1,               // maximum number of rows that we want to get
+      });
+
+      // console.log(reward_again_info)
+      // console.log("----------------------------------")
+      // console.dir(result,{depth: null});
+
+      var reward_again_info = reward_again_list.rows.filter(function(p){
+        return p.account === actname;
+      });
+      if(reward_again_info.length > 0){
+        let last_reward_time = moment.utc(reward_again_info[0].last_reward_time, moment.ISO_8601).local().format("YYYY-MM-DD");
+        let now_time = moment().format("YYYY-MM-DD");
+        console.log({"last_reward_time":last_reward_time,"now_time":now_time})
+
+        if(moment(last_reward_time).isSame(now_time)){
+          console.log({"last_reward_time":last_reward_time,"now_time":now_time,"is":"same"})
+          candy_score.data.scoreNum = reward_again_info[0].last_reward_amount;
+          candy_score.data.totalscoreNum = reward_again_info[0].balance;
+          candy_score.data.totalscoreDays = reward_again_info[0].sign_in_accumulate_days;
+          candy_score.data.isRewardedToday = false;
+        }
+      }
     }
     
     // console.dir(result.processed.action_traces[0].inline_traces,{depth: null});
