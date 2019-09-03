@@ -1527,6 +1527,7 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', async (req, res) =>
         console.log({"last_reward_time":last_reward_time,"now_time":now_time,"is":"same"})
         candy_score.data.scoreNum = reward_info[0].last_reward_amount;
         candy_score.data.totalscoreNum = reward_info[0].balance;
+        candy_score.data.totalscoreDays = reward_info[0].sign_in_accumulate_days;
       }else{
         candy_score.data.scoreNum = "";
         candy_score.data.totalscoreNum = "";
