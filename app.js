@@ -382,6 +382,36 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
         console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyactive=', checkpubkeyactive);
         let checkpubkeyowner = ecc.isValidPublic(pubkeyowner, 'VKT');
         console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyowner=', checkpubkeyowner);
+
+        if(!checkpubkeyactive || !checkpubkeyowner){
+          auth.code = 400;
+          auth.message = 'Failed to create account.';
+          res.json(auth);
+        }
+
+        // 检查重复公钥注册
+        let query = JSON.parse('{}');
+        query["public_key"][$eq] = pubkeyactive;
+        console.log(query);
+        let parallelObject = {
+          actions: (callback) => {
+            dbo.collection("pub_keys").find(query).limit(-1).toArray(callback);
+              }
+        };
+        
+        async.parallel(parallelObject, (err, result) => {
+          if (err){
+              console.error(err);
+              return res.status(500).end();
+          }
+
+          if(result.count > 0) {
+            auth.code = 401;
+            auth.message = 'Failed to create account.';
+            res.json(auth);
+          }
+        })
+
         try {
           const result = await api.transact({
             actions: [{
@@ -734,17 +764,17 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
     assetCategory.data = JSON.parse('[]');
     assetCategory.data.push({
       id:'1',
-      assetName: '万加链',
+      assetName: '最新热点',
       selected: true
     });
     assetCategory.data.push({
       id:'2',
-      assetName: '区块链新闻',
+      assetName: '行业资讯',
       selected: true
     });
     assetCategory.data.push({
       id:'3',
-      assetName: '币圈大佬',
+      assetName: '万加动态',
       selected: true
     });
     console.log(assetCategory);
@@ -1225,7 +1255,9 @@ function getActionsDistinct(req, res){
     let action = String(req.body.action);
     let counter = Number(req.body.counter);
     let actionsNamesArr = (typeof req.body.filter === "string") ? req.body.filter.split(","): null;
-    action = "transfer";
+    actionsNamesArr = "reward,transfer".split(",");
+    // action = "transfer";
+    action = "";
     if(Ut.isEmpty(String(req.body.from)) && !Ut.isEmpty(String(req.body.to))){
       filterClass = 1;
       accountName = String(req.body.to);
