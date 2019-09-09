@@ -21,6 +21,7 @@ const request = require('request');
 const Ut = require("./common");
 const util = require('util');
 const Hashids = require('hashids');
+const RateLimit = require('express-rate-limit');
 require('colors');
 const {
   Api,
@@ -117,13 +118,27 @@ httpsServer.listen(NODE_SSLPORT, function() {
   console.log('HTTPS Server is running on: https://localhost:%s', NODE_SSLPORT);
 });
 
+const createAccountLimiter = RateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour window
+  max: 20, // start blocking after 5 requests
+  message:
+    "Too many accounts created from this IP, please try again after an hour"
+});
+
+const defaultLimiter = RateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour window
+  max: 200, // start blocking after 5 requests
+  message:
+    "Too many accounts created from this IP, please try again after an hour"
+});
+
 
 // 路由android 用户信息
 app.use(bodyParser.urlencoded({
   extended: false
 }));
 app.use(bodyParser.json());
-app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
+app.post('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res) => {
 
   let path_param1 = req.params.path_param1;
   let auth = JSON.parse('{}');
@@ -332,12 +347,9 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
   
 });
 
+
 // 路由android 用户信息
-app.use(bodyParser.urlencoded({
-  extended: false
-}));
-app.use(bodyParser.json());
-app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) => {
+app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', createAccountLimiter, async (req, res) => {
 
   let path_param1 = req.params.path_param1;
   let path_param2 = req.params.path_param2;
@@ -397,7 +409,10 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
         
         // make client connect to mongo service
         MongoClient.connect(MONGO_URL, function(err, db) {
-          if (err) throw err;
+          if (err) {
+            console.error(err);
+            return res.status(500).end();
+          }
 
           const dbo = db.db("VKT");
           let parallelObject = {
@@ -603,7 +618,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
 
 // 路由scatter 多语言数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
-app.use('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
+app.use('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res) => {
 
   let path_param1 = req.params.path_param1;
 
@@ -812,11 +827,7 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', async (req, res) => {
 });
 
 // 路由android blockchain信息
-app.use(bodyParser.urlencoded({
-  extended: false
-}));
-app.use(bodyParser.json());
-app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
+app.post('/api_oc_blockchain-v1.0.0/:path_param1', defaultLimiter, async (req, res) => {
 
   let path_param1 = req.params.path_param1;
 
@@ -1004,7 +1015,7 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
 
 // 路由scatter 多语言数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
-app.use('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
+app.use('/api_oc_blockchain-v1.0.0/:path_param1', defaultLimiter, async (req, res) => {
 
   let path_param1 = req.params.path_param1;
 
@@ -1036,7 +1047,7 @@ app.use('/api_oc_blockchain-v1.0.0/:path_param1', async (req, res) => {
 
 // 路由scatter 多语言数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
-app.use('/oulianvktaccount/getAccountOrder/:path_param1/:path_param2', async (req, res) => {
+app.use('/oulianvktaccount/getAccountOrder/:path_param1/:path_param2', defaultLimiter, async (req, res) => {
 
   let path_param1 = req.params.path_param1;
   let path_param2 = req.params.path_param2;
@@ -1219,13 +1230,10 @@ app.use('/oulianvktaccount/:path_param1', async (req, res) => {
 
 // });
 
-app.use(bodyParser.urlencoded({
-  extended: false
-}));
-app.use(bodyParser.json());
-app.post('/VX/GetActions', getActionsDistinct);
-app.post('/VX/GetAssetsLockRecords', getAssetsLockRecords);
-app.post('/VX/GenInviteCode', genInviteCode);
+
+app.post('/VX/GetActions', defaultLimiter, getActionsDistinct);
+app.post('/VX/GetAssetsLockRecords', defaultLimiter, getAssetsLockRecords);
+app.post('/VX/GenInviteCode', defaultLimiter, genInviteCode);
 
 function getActionsDistinct(req, res){
   console.log('/VX/GetActions', req.body,req.query);
@@ -1513,7 +1521,7 @@ async function genInviteCode (req, res) {
 
 // 路由scatter 多语言数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
-app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', async (req, res) => {
+app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, async (req, res) => {
 
   let path_param1 = req.params.path_param1;
   let path_param2 = req.params.path_param2;
@@ -1650,7 +1658,7 @@ app.use('/upgrade', express.static(path.join(__dirname, './upgrade')));
 
 // 路由scatter prices数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
-app.use('/vktapi/v1/currencies', async (req, res) => {
+app.use('/vktapi/v1/currencies', defaultLimiter, async (req, res) => {
 
   console.log('/vktapi/v1/currencies', req);
   res.json(vktdatav_currencies);
@@ -1670,7 +1678,7 @@ app.use('/vktapi/v1/getcurrencies', async (req, res) => {
 
 // 路由scatter prices数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
-app.use('/vktapi/v1/prices', async (req, res) => {
+app.use('/vktapi/v1/prices', defaultLimiter, async (req, res) => {
 
   console.log('/vktapi/v1/prices', req.query.v2);
   if (req.query.v2 === "true") {
@@ -1688,11 +1696,7 @@ app.use('/vktapi/v1/prices', async (req, res) => {
 //      owner: 'VKT64Qv4GnUN4TU3fKqHvfhxGLpnjnMCujwAMNZHLuWn1mYbAbFjk' },
 //   account_name: 'tokyoliyi111' }
 
-app.use(bodyParser.urlencoded({
-  extended: false
-}));
-app.use(bodyParser.json());
-app.post('/vktapi/v1/create_vkt', async (req, res) => {
+app.post('/vktapi/v1/create_vkt', createAccountLimiter, async (req, res) => {
 
   console.log('/vktapi/v1/create_vkt', req.body);
   if (!Ut.isEmpty(String(req.body.signature)) && !Ut.isEmpty(String(req.body.keys.active)) &&
@@ -1802,7 +1806,7 @@ app.post('/vktapi/v1/create_vkt', async (req, res) => {
 
 // 路由scatter 多语言数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
-app.use('/vktapi/v1/languages', async (req, res) => {
+app.use('/vktapi/v1/languages', defaultLimiter, async (req, res) => {
 
   let file;
   let Isfound = false;
@@ -1840,7 +1844,7 @@ app.use('/vktapi/v1/languages', async (req, res) => {
 
 // 路由scatter 账户信息数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
-app.use('/vktapi/v1/account/vkt/:account_id', async (req, res) => {
+app.use('/vktapi/v1/account/vkt/:account_id', defaultLimiter, async (req, res) => {
 
   app.param('account_id', function (req, res, next, account_id) {
     accountid = account_id;
@@ -1923,7 +1927,7 @@ app.use('/vktapi/v1/account/vkt/:account_id', async (req, res) => {
 
 // 路由vkt all info 数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
-app.use('/vktapi', async (req, res) => {
+app.use('/vktapi', defaultLimiter, async (req, res) => {
 
   console.log('/vktapi', req.query);
   switch (req.query.showtype) {
