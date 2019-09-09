@@ -121,15 +121,35 @@ httpsServer.listen(NODE_SSLPORT, function() {
 const createAccountLimiter = RateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour window
   max: 20, // start blocking after 5 requests
-  message:
-    "Too many accounts created from this IP, please try again after an hour"
+  // message:
+    // "Too many accounts created from this IP, please try again after an hour"
+  handler: function (req, res) { // 响应格式
+    res.format({
+        json: function () {
+            res.status(429).json({code:429,message:'Too many accounts created from this IP, please try again after an hour.'});
+        },
+        html: function () {
+            res.status(429).end('Too many accounts created from this IP, please try again after an hour.');
+        }
+    });
+  }
 });
 
 const defaultLimiter = RateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour window
-  max: 200, // start blocking after 5 requests
-  message:
-    "Too many accounts created from this IP, please try again after an hour"
+  max: 300, // start blocking after 5 requests
+  // message:
+    // "Too many requests from this IP, please try again after an hour"
+  handler: function (req, res) { // 响应格式
+    res.format({
+        json: function () {
+            res.status(429).json({code:429,message:'Too many requests from this IP, please try again after an hour.'});
+        },
+        html: function () {
+            res.status(429).end('Too many requests from this IP, please try again after an hour.');
+        }
+    });
+  }
 });
 
 
