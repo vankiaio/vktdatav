@@ -1292,9 +1292,8 @@ function getActionsDistinct(req, res){
     let action = String(req.body.action);
     let counter = Number(req.body.counter);
     let actionsNamesArr = (typeof req.body.filter === "string") ? req.body.filter.split(","): null;
-    actionsNamesArr = "reward,transfer".split(",");
-    // action = "transfer";
-    action = "";
+    actionsNamesArr = "reward".split(",");
+    action = "transfer";
     if(Ut.isEmpty(String(req.body.from)) && !Ut.isEmpty(String(req.body.to))){
       filterClass = 1;
       accountName = String(req.body.to);
@@ -1327,17 +1326,20 @@ function getActionsDistinct(req, res){
       query = {
         $or: [
         {"action_traces.act.data.from": accountName}, 
-        {"action_traces.act.data.to": accountName}
+        {"action_traces.act.data.to": accountName},
+        {"action_traces.act.data.account": accountName}
       ]};
     }else if(filterClass === 1){
       query = {
         $or: [
-        {"action_traces.act.data.to": accountName}
+        {"action_traces.act.data.to": accountName},
+        {"action_traces.act.data.account": accountName}
       ]};
     }else if(filterClass === 2){
       query = {
         $or: [
-        {"action_traces.act.data.from": accountName}
+        {"action_traces.act.data.from": accountName},
+        {"action_traces.act.data.account": accountName}
       ]};
     }
 
@@ -1404,7 +1406,14 @@ function getActionsDistinct(req, res){
       accounts.data.actions[index].time = result.actions[i].block_time;
       accounts.data.actions[index].cpu_usage_us = result.actions[i].cpu_usage;
       accounts.data.actions[index].net_usage_words = "bytes";
-      quantity = result.actions[i].action_traces[0].act.data.quantity;
+      if(result.actions[i].action_traces[0].act.name == "transfer") {
+        quantity = result.actions[i].action_traces[0].act.data.quantity;
+      }else if(result.actions[i].action_traces[0].act.name == "reward" && 
+               result.actions[i].action_traces[0].inline_traces.length > 0) {
+        quantity = result.actions[i].action_traces[0].inline_traces[0].act.data.quantity;
+      }else{
+        quantity = "";
+      }
       if(!Ut.isEmpty(String(quantity))){
         quantityarr = quantity.split(" ");
       }else{
