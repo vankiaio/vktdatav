@@ -1396,10 +1396,10 @@ function getActionsDistinct(req, res){
       // JSON.parse(result).actions.length > 1) {
       //   continue;
       // }
-      if(result.actions[i].action_traces[0].act.name == "reward" && 
-      result.actions[i].action_traces[0].inline_traces.length == 0){
-        continue;
-      }
+      // if(result.actions[i].action_traces[0].act.name == "reward" && 
+      // result.actions[i].action_traces[0].inline_traces.length == 0){
+      //   continue;
+      // }
       accounts.data.actions.push({"doc": result.actions[i].action_traces[0].act});
       accounts.data.actions[index].doc.data.expiration = result.actions[i].block_time;
       if(accounts.data.actions[index].doc.data.from === "eosio"){
@@ -1412,14 +1412,19 @@ function getActionsDistinct(req, res){
       accounts.data.actions[index].net_usage_words = "bytes";
       if(result.actions[i].action_traces[0].act.name == "transfer") {
         quantity = result.actions[i].action_traces[0].act.data.quantity;
-      }else if(result.actions[i].action_traces[0].act.name == "reward" ) {
+      }else if(result.actions[i].action_traces[0].act.name == "reward" &&
+               result.actions[i].action_traces[0].inline_traces.length > 0) {
         quantity = result.actions[i].action_traces[0].inline_traces[0].act.data.quantity;
-        accounts.data.actions[index].doc.data.from = result.actions[i].action_traces[0].inline_traces[0].act.data.from;
+        accounts.data.actions[index].doc.data.from = "daily signed";
         accounts.data.actions[index].doc.data.to = result.actions[i].action_traces[0].inline_traces[0].act.data.to;
         accounts.data.actions[index].doc.data.quantity = result.actions[i].action_traces[0].inline_traces[0].act.data.quantity;
         accounts.data.actions[index].doc.data.memo = result.actions[i].action_traces[0].inline_traces[0].act.data.memo;
       }else{
         quantity = "";
+        accounts.data.actions[index].doc.data.from = "daily signed";
+        accounts.data.actions[index].doc.data.to = accountName;
+        accounts.data.actions[index].doc.data.quantity = "0.0 VKT";
+        accounts.data.actions[index].doc.data.memo = "daily signed";
       }
       if(!Ut.isEmpty(String(quantity))){
         quantityarr = quantity.split(" ");
