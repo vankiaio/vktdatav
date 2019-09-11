@@ -1338,8 +1338,7 @@ function getActionsDistinct(req, res){
     }else if(filterClass === 2){
       query = {
         $or: [
-        {"action_traces.act.data.from": accountName},
-        {"action_traces.act.data.account": accountName}
+        {"action_traces.act.data.from": accountName}
       ]};
     }
 
