@@ -1346,7 +1346,10 @@ function getActionsDistinct(req, res){
     if (!Ut.isEmpty(String(action)) && action !== "all"){
       query["action_traces.act.name"] = action;
     }
- 
+
+    //filter daily signed with 0 vkt case
+    query["action_traces.inline_traces"] = {"$exists":true, "$ne":[]};
+
     //filter duplicate data
     query["producer_block_id"] ={ $ne: null};
 
@@ -1382,9 +1385,9 @@ function getActionsDistinct(req, res){
     accounts.code = 0;
     accounts.message = "ok";
     accounts.data = JSON.parse('{}');
-    accounts.data.pageSize = 1;
-    accounts.data.page = 1;
-    accounts.data.hasMore = 0;
+    accounts.data.pageSize = pageSize;
+    accounts.data.page = curpage;
+    accounts.data.hasMore = 1;
     accounts.data.actions = JSON.parse('[]');
     let quantity ;
     let quantityarr;
@@ -1397,8 +1400,8 @@ function getActionsDistinct(req, res){
       //   continue;
       // }
       // if(result.actions[i].action_traces[0].act.name == "reward" && 
-      // result.actions[i].action_traces[0].inline_traces.length == 0){
-      //   continue;
+      //    result.actions[i].action_traces[0].inline_traces.length == 0){
+      //    continue;
       // }
       accounts.data.actions.push({"doc": result.actions[i].action_traces[0].act});
       accounts.data.actions[index].doc.data.expiration = result.actions[i].block_time;
