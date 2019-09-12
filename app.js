@@ -37,6 +37,7 @@ const {
 const MongoClient = require('mongodb').MongoClient;
 const MONGO_URL = config.MONGO_URL;
 const VKTAPI_URL = config.VKTAPI_URL;
+const BGAPI_URL = config.BGAPI_URL;
 const XE_URL = config.XE_URL;
 const SCATTER_API = config.SCATTER_API;
 const defaultPrivateKey = config.defaultPrivateKey;
@@ -396,18 +397,18 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', createAccountLimit
     if (path_param2 === "add_new_vkt") {
       console.log('/api_oc_personal/v1.0.0/user/add_new_vkt', req.body);
       let auth = JSON.parse('{}');
+      let pubkeyactive = req.body.activeKey;
+      let pubkeyowner = req.body.ownerKey;
+      let actname = req.body.vktAccountName;
+      let inviteCode = req.body.inviteCode;
       auth.code = 0;
       auth.message = 'ok';
-      if (!Ut.isEmpty(String(req.body.ownerKey)) && !Ut.isEmpty(String(req.body.activeKey)) &&
-        !Ut.isEmpty(String(req.body.uid)) && !Ut.isEmpty(String(req.body.vktAccountName)) &&
-        req.body.ownerKey.substring(0,3) === 'VKT' &&
-        req.body.activeKey.substring(0,3) === 'VKT' &&
-        req.body.ownerKey.length === 53 &&
-        req.body.activeKey.length === 53) {
-
-        let pubkeyactive = req.body.activeKey;
-        let pubkeyowner = req.body.ownerKey;
-        let actname = req.body.vktAccountName;
+      if (!Ut.isEmpty(String(pubkeyowner)) && !Ut.isEmpty(String(pubkeyactive)) &&
+        !Ut.isEmpty(String(req.body.uid)) && !Ut.isEmpty(String(actname)) &&
+        pubkeyowner.substring(0,3) === 'VKT' &&
+        pubkeyactive.substring(0,3) === 'VKT' &&
+        pubkeyowner.length === 53 &&
+        pubkeyactive.length === 53) {
     
         console.log('Public Key:\t', pubkeyactive) // VKTkey...
         let checkpubkeyactive = ecc.isValidPublic(pubkeyactive, 'VKT');
@@ -528,6 +529,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', createAccountLimit
           console.log(error);
         }
         res.json(auth);
+        addusertoMG(actname,req.ip.match(/\d+\.\d+\.\d+\.\d+/),inviteCode)
       } else {
         auth.code = 501;
         auth.message = 'Failed to create account.';
@@ -2866,6 +2868,32 @@ const runScatterPrices = async (prices) => {
   }
 
   // console.log(currencies)
+}
+
+function addusertoMG(accountName,registIp,inviteCode) {
+  try {
+    let geo = geoip.lookup(registIp);
+    let user_info = JSON.parse('{}');
+    user_info.accountName = accountName;
+    user_info.registIp = registIp;
+    user_info.inviteCode = inviteCode;
+    user_info.registPlace = geo.city;
+
+    request.post({
+      url: BGAPI_URL+'/walletUser/add',
+      form: JSON.stringify(user_info)
+    }, 
+    (error, res2, body) => {
+      if (error) {
+        console.error(error)
+        return true
+      }
+      console.log(body)
+    })
+    return true
+  } catch (k) {
+    return false
+  }
 }
 
 /* eslint-disable */
