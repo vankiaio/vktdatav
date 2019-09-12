@@ -2879,6 +2879,34 @@ function addusertoMG(accountName,registIp,inviteCode) {
     user_info.inviteCode = inviteCode;
     user_info.registPlace = geo.city;
 
+
+    // make client connect to mongo service
+    MongoClient.connect(MONGO_URL, function(err, db) {
+      if (err) throw err;
+
+      const dbo = db.db("VKT");
+
+      // db pointing to newdb
+      console.log("Switched to "+dbo.databaseName+" database");
+
+        dbo.collection("InviteCode").find({
+          "inviteCode": {
+            $regex:inviteCode,
+            $options:'i'
+          }
+        }).toArray(async function (err, result) {
+          if (err) throw err;
+          if (result.count >= 1) {
+            user_info.inviteAccountName = result[0].name;
+            console.log(result)
+            db.close();
+          }else{
+            console.log("InviteCode not exist!");
+            db.close();
+          }
+        });
+    });
+
     request.post({
       url: BGAPI_URL+'/walletUser/add',
       form: JSON.stringify(user_info)
