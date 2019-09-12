@@ -399,8 +399,8 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', createAccountLimit
       let auth = JSON.parse('{}');
       let pubkeyactive = req.body.activeKey;
       let pubkeyowner = req.body.ownerKey;
-      let actname = req.body.vktAccountName;
-      let inviteCode = req.body.invitationCode;
+      let actname = req.body.vktAccountName.trim();
+      let inviteCode = req.body.invitationCode.trim();
       auth.code = 0;
       auth.message = 'ok';
       if (!Ut.isEmpty(String(pubkeyowner)) && !Ut.isEmpty(String(pubkeyactive)) &&
@@ -2901,7 +2901,7 @@ function addusertoMG(accountName,registIp,inviteCode) {
             console.log(result)
             request.post({
               url: BGAPI_URL+'/walletUser/add',
-              form: JSON.stringify(user_info)
+              json: JSON.stringify(user_info)
             }, 
             (error, res2, body) => {
               if (error) {
