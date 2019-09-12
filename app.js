@@ -2873,8 +2873,7 @@ function addusertoMG(accountName,registIp,inviteCode) {
     user_info.accountName = accountName;
     user_info.registIp = registIp;
     user_info.inviteCode = inviteCode;
-    user_info.registPlace = ipres.province + " - " + city;
-
+    user_info.registPlace = ipres.province + " - " + ipres.city;
 
     // make client connect to mongo service
     MongoClient.connect(MONGO_URL, function(err, db) {
