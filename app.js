@@ -8,8 +8,8 @@ const utils = require('./utils');
 const r2 = require('r2');
 // import ccxt
 const ccxt = require('ccxt-vkt');
-// import GeoIP-lite
-const geoip = require('geoip-lite');
+// import IP2Region
+const IP2Region = require('ip2region');
 const superagent = require('superagent');
 const translate = require('translate-google-cn');
 // 载入配置文件
@@ -2422,11 +2422,6 @@ const runRpcGetProducers = async () => {
       });
     }
 
-    // var ip = "124.200.176.166";
-    // var geo = geoip.lookup(ip);
-
-    // console.log(geo);
-
   return (vktdatav);
 
 };
@@ -2872,12 +2867,13 @@ const runScatterPrices = async (prices) => {
 
 function addusertoMG(accountName,registIp,inviteCode) {
   try {
-    let geo = geoip.lookup(registIp);
+    const ipquery = new IP2Region();
+    let ipres = ipquery.search(registIp);
     let user_info = JSON.parse('{}');
     user_info.accountName = accountName;
     user_info.registIp = registIp;
     user_info.inviteCode = inviteCode;
-    user_info.registPlace = geo.city;
+    user_info.registPlace = ipres.province + " - " + city;
 
 
     // make client connect to mongo service
