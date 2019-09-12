@@ -400,7 +400,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', createAccountLimit
       let pubkeyactive = req.body.activeKey;
       let pubkeyowner = req.body.ownerKey;
       let actname = req.body.vktAccountName;
-      let inviteCode = req.body.inviteCode;
+      let inviteCode = req.body.invitationCode;
       auth.code = 0;
       auth.message = 'ok';
       if (!Ut.isEmpty(String(pubkeyowner)) && !Ut.isEmpty(String(pubkeyactive)) &&
@@ -528,8 +528,8 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', createAccountLimit
           auth.message = 'Failed to create account.';
           console.log(error);
         }
+        addusertoMG(actname,req.ip.match(/\d+\.\d+\.\d+\.\d+/)[0],inviteCode)
         res.json(auth);
-        addusertoMG(actname,req.ip.match(/\d+\.\d+\.\d+\.\d+/),inviteCode)
       } else {
         auth.code = 501;
         auth.message = 'Failed to create account.';
@@ -2896,9 +2896,20 @@ function addusertoMG(accountName,registIp,inviteCode) {
           }
         }).toArray(async function (err, result) {
           if (err) throw err;
-          if (result.count >= 1) {
+          if (result.length >= 1) {
             user_info.inviteAccountName = result[0].name;
             console.log(result)
+            request.post({
+              url: BGAPI_URL+'/walletUser/add',
+              form: JSON.stringify(user_info)
+            }, 
+            (error, res2, body) => {
+              if (error) {
+                console.error(error)
+                return true
+              }
+              console.log(body)
+            })
             db.close();
           }else{
             console.log("InviteCode not exist!");
@@ -2906,18 +2917,6 @@ function addusertoMG(accountName,registIp,inviteCode) {
           }
         });
     });
-
-    request.post({
-      url: BGAPI_URL+'/walletUser/add',
-      form: JSON.stringify(user_info)
-    }, 
-    (error, res2, body) => {
-      if (error) {
-        console.error(error)
-        return true
-      }
-      console.log(body)
-    })
     return true
   } catch (k) {
     return false
