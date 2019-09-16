@@ -370,7 +370,151 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res
 
 
 // 路由android 用户信息
-app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', createAccountLimiter, async (req, res) => {
+app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async (req, res) => {
+  console.log('/api_oc_personal/v1.0.0/user/add_new_vkt -- OK', req.body);
+  let auth = JSON.parse('{}');
+  let pubkeyactive = req.body.activeKey;
+  let pubkeyowner = req.body.ownerKey;
+  let actname = req.body.vktAccountName.trim();
+  let inviteCode = req.body.invitationCode.trim();
+  auth.code = 0;
+  auth.message = 'ok';
+  if (!Ut.isEmpty(String(pubkeyowner)) && !Ut.isEmpty(String(pubkeyactive)) &&
+    !Ut.isEmpty(String(req.body.uid)) && !Ut.isEmpty(String(actname)) &&
+    pubkeyowner.substring(0,3) === 'VKT' &&
+    pubkeyactive.substring(0,3) === 'VKT' &&
+    pubkeyowner.length === 53 &&
+    pubkeyactive.length === 53) {
+
+    console.log('Public Key:\t', pubkeyactive) // VKTkey...
+    let checkpubkeyactive = ecc.isValidPublic(pubkeyactive, 'VKT');
+    console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyactive=', checkpubkeyactive);
+    let checkpubkeyowner = ecc.isValidPublic(pubkeyowner, 'VKT');
+    console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyowner=', checkpubkeyowner);
+
+    if(!checkpubkeyactive || !checkpubkeyowner){
+      auth.code = 400;
+      auth.message = 'Failed to create account.';
+      res.json(auth);
+    }
+
+    // 检查重复公钥注册
+    let query = {
+      "public_key": { $eq: pubkeyactive }
+    }
+    console.log(query);
+    
+    // make client connect to mongo service
+    MongoClient.connect(MONGO_URL, function(err, db) {
+      if (err) {
+        console.error(err);
+        return res.status(500).end();
+      }
+
+      const dbo = db.db("VKT");
+      let parallelObject = {
+        actions: (callback) => {
+          dbo.collection("pub_keys").find(query).limit(-1).toArray(callback);
+            }
+      };
+    
+      async.parallel(parallelObject, (err, result) => {
+        if (err){
+            console.error(err);
+            return res.status(500).end();
+        }
+
+        if(result.count > 0) {
+          auth.code = 401;
+          auth.message = 'Failed to create account.';
+          res.json(auth);
+        }
+      })
+      db.close();
+    })
+
+    try {
+      const result = await api.transact({
+        actions: [{
+            account: 'eosio',
+            name: 'newaccount',
+            authorization: [{
+              actor: 'makeaccounts',
+              permission: 'active',
+            }],
+            data: {
+              creator: 'makeaccounts',
+              name: actname,
+              owner: {
+                threshold: 1,
+                keys: [{
+                  key: pubkeyowner,
+                  weight: 1
+                }],
+                accounts: [],
+                waits: []
+              },
+              active: {
+                threshold: 1,
+                keys: [{
+                  key: pubkeyactive,
+                  weight: 1
+                }],
+                accounts: [],
+                waits: []
+              },
+            },
+          },
+          {
+            account: 'eosio',
+            name: 'buyrambytes',
+            authorization: [{
+              actor: 'makeaccounts',
+              permission: 'active',
+            }],
+            data: {
+              payer: 'makeaccounts',
+              receiver: actname,
+              bytes: 8192,
+            },
+          },
+          {
+            account: 'eosio',
+            name: 'delegatebw',
+            authorization: [{
+              actor: 'makeaccounts',
+              permission: 'active',
+            }],
+            data: {
+              from: 'makeaccounts',
+              receiver: actname,
+              stake_net_quantity: '0.1500 VKT',
+              stake_cpu_quantity: '0.5000 VKT',
+              transfer: false,
+            }
+          }
+        ]
+      }, {
+        blocksBehind: 3,
+        expireSeconds: 30,
+      });
+      console.log("newaccount result = ", result);
+    } catch (error) {
+      auth.code = 500;
+      auth.message = 'Failed to create account.';
+      console.log(error);
+    }
+    addusertoMG(actname,req.ip.match(/\d+\.\d+\.\d+\.\d+/)[0],inviteCode)
+    res.json(auth);
+  } else {
+    auth.code = 501;
+    auth.message = 'Failed to create account.';
+    res.json(auth);
+  }
+});
+
+// 路由android 用户信息
+app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) => {
 
   let path_param1 = req.params.path_param1;
   let path_param2 = req.params.path_param2;
@@ -395,146 +539,40 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', createAccountLimit
     }
   }else if (path_param1 === "user") {
     if (path_param2 === "add_new_vkt") {
-      console.log('/api_oc_personal/v1.0.0/user/add_new_vkt', req.body);
-      let auth = JSON.parse('{}');
-      let pubkeyactive = req.body.activeKey;
-      let pubkeyowner = req.body.ownerKey;
-      let actname = req.body.vktAccountName.trim();
-      let inviteCode = req.body.invitationCode.trim();
-      auth.code = 0;
-      auth.message = 'ok';
-      if (!Ut.isEmpty(String(pubkeyowner)) && !Ut.isEmpty(String(pubkeyactive)) &&
-        !Ut.isEmpty(String(req.body.uid)) && !Ut.isEmpty(String(actname)) &&
-        pubkeyowner.substring(0,3) === 'VKT' &&
-        pubkeyactive.substring(0,3) === 'VKT' &&
-        pubkeyowner.length === 53 &&
-        pubkeyactive.length === 53) {
-    
-        console.log('Public Key:\t', pubkeyactive) // VKTkey...
-        let checkpubkeyactive = ecc.isValidPublic(pubkeyactive, 'VKT');
-        console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyactive=', checkpubkeyactive);
-        let checkpubkeyowner = ecc.isValidPublic(pubkeyowner, 'VKT');
-        console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyowner=', checkpubkeyowner);
+      console.log('/api_oc_personal/v1.0.0/user/add_new_vkt -- delete api !!!', req.body);
+      
+      return;
+    }
+    if (path_param2 === "upload_access_info") {
+      console.log('/api_oc_personal/v1.0.0/user/upload_access_info', req.body);
+      let upload_access_info = JSON.parse('{}');
+      upload_access_info.code = 0;
+      upload_access_info.message = 'ok';
+      upload_access_info.data = JSON.parse('{}');
+      upload_access_info.data.uid=req.body.uid;
 
-        if(!checkpubkeyactive || !checkpubkeyowner){
-          auth.code = 400;
-          auth.message = 'Failed to create account.';
-          res.json(auth);
+      const ipquery = new IP2Region();
+      let lastLoginIp = req.ip.match(/\d+\.\d+\.\d+\.\d+/)[0];
+      let ipres = ipquery.search(lastLoginIp);
+      let bm_upload_access_info = JSON.parse('{}');
+      bm_upload_access_info.accountName = req.body.uid;
+      bm_upload_access_info.lastLoginIp = lastLoginIp;
+      bm_upload_access_info.lastLoginPlace = ipres.country + " - " + ipres.province + " - " + ipres.city;
+
+      console.log(bm_upload_access_info)
+      request.post({
+        url: BGAPI_URL+'/walletUser/login',
+        json: bm_upload_access_info
+      }, 
+      (error, res2, body) => {
+        if (error) {
+          console.error(error)
+          return true
         }
+        console.log(body)
+      })
 
-        // 检查重复公钥注册
-        let query = {
-          "public_key": { $eq: pubkeyactive }
-        }
-        console.log(query);
-        
-        // make client connect to mongo service
-        MongoClient.connect(MONGO_URL, function(err, db) {
-          if (err) {
-            console.error(err);
-            return res.status(500).end();
-          }
-
-          const dbo = db.db("VKT");
-          let parallelObject = {
-            actions: (callback) => {
-              dbo.collection("pub_keys").find(query).limit(-1).toArray(callback);
-                }
-          };
-        
-          async.parallel(parallelObject, (err, result) => {
-            if (err){
-                console.error(err);
-                return res.status(500).end();
-            }
-
-            if(result.count > 0) {
-              auth.code = 401;
-              auth.message = 'Failed to create account.';
-              res.json(auth);
-            }
-          })
-          db.close();
-        })
-
-        try {
-          const result = await api.transact({
-            actions: [{
-                account: 'eosio',
-                name: 'newaccount',
-                authorization: [{
-                  actor: 'makeaccounts',
-                  permission: 'active',
-                }],
-                data: {
-                  creator: 'makeaccounts',
-                  name: actname,
-                  owner: {
-                    threshold: 1,
-                    keys: [{
-                      key: pubkeyowner,
-                      weight: 1
-                    }],
-                    accounts: [],
-                    waits: []
-                  },
-                  active: {
-                    threshold: 1,
-                    keys: [{
-                      key: pubkeyactive,
-                      weight: 1
-                    }],
-                    accounts: [],
-                    waits: []
-                  },
-                },
-              },
-              {
-                account: 'eosio',
-                name: 'buyrambytes',
-                authorization: [{
-                  actor: 'makeaccounts',
-                  permission: 'active',
-                }],
-                data: {
-                  payer: 'makeaccounts',
-                  receiver: actname,
-                  bytes: 8192,
-                },
-              },
-              {
-                account: 'eosio',
-                name: 'delegatebw',
-                authorization: [{
-                  actor: 'makeaccounts',
-                  permission: 'active',
-                }],
-                data: {
-                  from: 'makeaccounts',
-                  receiver: actname,
-                  stake_net_quantity: '0.1500 VKT',
-                  stake_cpu_quantity: '0.5000 VKT',
-                  transfer: false,
-                }
-              }
-            ]
-          }, {
-            blocksBehind: 3,
-            expireSeconds: 30,
-          });
-          console.log("newaccount result = ", result);
-        } catch (error) {
-          auth.code = 500;
-          auth.message = 'Failed to create account.';
-          console.log(error);
-        }
-        addusertoMG(actname,req.ip.match(/\d+\.\d+\.\d+\.\d+/)[0],inviteCode)
-        res.json(auth);
-      } else {
-        auth.code = 501;
-        auth.message = 'Failed to create account.';
-        res.json(auth);
-      }
+      res.json(upload_access_info);
       return;
     }
     //user info and icon
@@ -571,7 +609,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', createAccountLimit
       
       res.json(account);
       return;
-    } 
+    }
     if(path_param2 === "get_infoFeedback") {
       console.log('/api_oc_personal/v1.0.0/user/get_infoFeedback', req.body);
       let feedbackinfo = JSON.parse('{}');
@@ -1659,6 +1697,29 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
         }
       }
     }
+
+    let signedIp = req.ip.match(/\d+\.\d+\.\d+\.\d+/)[0];
+    let bm_signed_info = JSON.parse('{}');
+    bm_signed_info.accountName = actname;
+    bm_signed_info.ip = signedIp;
+    if(needtoRewardToday){
+      bm_signed_info.reward = parseFloat(reward_again_info[0].last_reward_amount.split(' ')[0]);
+    }else{
+      bm_signed_info.reward = parseFloat(reward_info[0].last_reward_amount.split(' ')[0]);
+    }
+
+    console.log(bm_signed_info)
+    request.post({
+      url: BGAPI_URL+'/walletUserSignTimes/add',
+      json: bm_signed_info
+    }, 
+    (error, res2, body) => {
+      if (error) {
+        console.error(error)
+        return true
+      }
+      console.log(body)
+    })
     
     // console.dir(result.processed.action_traces[0].inline_traces,{depth: null});
     // if(result && result.processed.action_traces.length > 0 && result.processed.action_traces[0].inline_traces.length > 0){
@@ -2766,9 +2827,10 @@ const runCcxt = async () => {
   }
   // console.log(ticker_ethusd);
 
-  console.log("get markets finish sleep start!!!", new Date());
-  await Ut.sleep(5000);
-  console.log("get markets finish sleep end!!!", new Date());
+  // console.log("get markets finish sleep start!!!", new Date());
+  // await Ut.sleep(5000);
+  // console.log("get markets finish sleep end!!!", new Date());
+
   // get vkteth 1hour price
   const ohlcvkteth = await bitforex.fetchOHLCV(symbol_vkteth, '1d', 8);
   if(ohlcvkteth.length < 7 ) {
@@ -2873,7 +2935,7 @@ function addusertoMG(accountName,registIp,inviteCode) {
     user_info.accountName = accountName;
     user_info.registIp = registIp;
     user_info.inviteCode = inviteCode;
-    user_info.registPlace = ipres.province + " - " + ipres.city;
+    user_info.registPlace = ipres.country + " - " + ipres.province + " - " + ipres.city;
 
     // make client connect to mongo service
     MongoClient.connect(MONGO_URL, function(err, db) {
@@ -2896,7 +2958,7 @@ function addusertoMG(accountName,registIp,inviteCode) {
             console.log(result)
             request.post({
               url: BGAPI_URL+'/walletUser/add',
-              json: JSON.stringify(user_info)
+              json: user_info
             }, 
             (error, res2, body) => {
               if (error) {
