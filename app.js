@@ -558,6 +558,8 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
       bm_upload_access_info.accountName = req.body.uid;
       bm_upload_access_info.lastLoginIp = lastLoginIp;
       bm_upload_access_info.lastLoginPlace = ipres.country + " - " + ipres.province + " - " + ipres.city;
+      bm_upload_access_info.os = req.body.os;
+      bm_upload_access_info.did = req.body.did;
 
       console.log(bm_upload_access_info)
       request.post({
