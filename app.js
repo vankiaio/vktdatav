@@ -22,6 +22,7 @@ const Ut = require("./common");
 const util = require('util');
 const Hashids = require('hashids');
 const RateLimit = require('express-rate-limit');
+const trim = require('string.prototype.trim');
 require('colors');
 const {
   Api,
@@ -375,8 +376,8 @@ app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async
   let auth = JSON.parse('{}');
   let pubkeyactive = req.body.activeKey;
   let pubkeyowner = req.body.ownerKey;
-  let actname = req.body.vktAccountName.trim();
-  let inviteCode = req.body.invitationCode.trim();
+  let actname = trim(req.body.vktAccountName);
+  let inviteCode = trim(req.body.invitationCode);
   auth.code = 0;
   auth.message = 'ok';
   if (!Ut.isEmpty(String(pubkeyowner)) && !Ut.isEmpty(String(pubkeyactive)) &&

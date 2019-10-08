@@ -36,6 +36,7 @@
     "opn": "^5.4.0",
     "r2": "^2.0.1",
     "request": "^2.88.0",
+    "string.prototype.trim": "^1.2.0",
     "superagent": "^4.0.0",
     "translate-google-cn": "^1.0.4",
     "vktjs": "^20.0.0-beta3"
