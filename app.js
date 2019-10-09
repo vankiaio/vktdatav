@@ -376,8 +376,10 @@ app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async
   let auth = JSON.parse('{}');
   let pubkeyactive = req.body.activeKey;
   let pubkeyowner = req.body.ownerKey;
-  let actname = trim(req.body.vktAccountName);
-  let inviteCode = trim(req.body.invitationCode);
+  let actname = req.body.vktAccountName;
+  let inviteCode = req.body.invitationCode;
+  actname = trim(actname);
+  inviteCode = trim(inviteCode);
   auth.code = 0;
   auth.message = 'ok';
   if (!Ut.isEmpty(String(pubkeyowner)) && !Ut.isEmpty(String(pubkeyactive)) &&
@@ -416,7 +418,7 @@ app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async
       let parallelObject = {
         actions: (callback) => {
           dbo.collection("pub_keys").find(query).limit(-1).toArray(callback);
-            }
+          }
       };
     
       async.parallel(parallelObject, (err, result) => {
@@ -2517,6 +2519,7 @@ const runMongodb = async () => {
           "value": result.length + 500
         }];
       }
+      db.close();
     });
     await dbo.collection("transaction_traces").find({
       "producer_block_id": {
@@ -2554,6 +2557,7 @@ const runMongodb = async () => {
       }
       vktdatav.contracks_num = result.count;
       //console.log(result);
+      db.close();
     });
     if (false) {
       //aggregate({$group : {_id : "$block_num", max_transactions : {$sum : 1}}},{$group:{_id:null,max:{$max:"$max_transactions"}}})
@@ -2655,6 +2659,7 @@ const runMongodb = async () => {
                 "url": ""
               }];
             }
+            db.close();
           });
         });
       //nowtps取得
@@ -2791,9 +2796,9 @@ const runMongodbTPSList = async () => {
               });
             }
           }
+          db.close();
         });
       });
-      db.close();
   });
   return vktdatav;
 }
