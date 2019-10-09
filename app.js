@@ -376,10 +376,8 @@ app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async
   let auth = JSON.parse('{}');
   let pubkeyactive = req.body.activeKey;
   let pubkeyowner = req.body.ownerKey;
-  let actname = req.body.vktAccountName;
-  let inviteCode = req.body.invitationCode;
-  actname = trim(actname);
-  inviteCode = trim(inviteCode);
+  let actname = trim(req.body.vktAccountName);
+  let inviteCode = trim(req.body.InvitationCode);
   auth.code = 0;
   auth.message = 'ok';
   if (!Ut.isEmpty(String(pubkeyowner)) && !Ut.isEmpty(String(pubkeyactive)) &&
@@ -1408,7 +1406,7 @@ function getActionsDistinct(req, res){
     let parallelObject = {
       actions: (callback) => {
         dbo.collection("transaction_traces").find(query).sort({ "block_time": sort }).skip(skip).limit(limit).toArray(callback);
-          }
+        }
     };
 
     if (counter === 1){
@@ -2519,7 +2517,9 @@ const runMongodb = async () => {
           "value": result.length + 500
         }];
       }
-      db.close();
+      setTimeout(function(){
+        db.close();
+      },50);
     });
     await dbo.collection("transaction_traces").find({
       "producer_block_id": {
@@ -2557,7 +2557,9 @@ const runMongodb = async () => {
       }
       vktdatav.contracks_num = result.count;
       //console.log(result);
-      db.close();
+      setTimeout(function(){
+        db.close();
+      },50);
     });
     if (false) {
       //aggregate({$group : {_id : "$block_num", max_transactions : {$sum : 1}}},{$group:{_id:null,max:{$max:"$max_transactions"}}})
@@ -2659,7 +2661,9 @@ const runMongodb = async () => {
                 "url": ""
               }];
             }
-            db.close();
+            setTimeout(function(){
+              db.close();
+            },50)
           });
         });
       //nowtps取得
@@ -2714,10 +2718,12 @@ const runMongodb = async () => {
                 "value": 0
               }];
             }
+            setTimeout(function(){
+              db.close();
+            },50)
           });
         });
     }
-    db.close();
   });
 
   return vktdatav;
@@ -2796,7 +2802,9 @@ const runMongodbTPSList = async () => {
               });
             }
           }
-          db.close();
+          setTimeout(function(){
+            db.close();
+          },50)
         });
       });
   });
@@ -2975,10 +2983,14 @@ function addusertoMG(accountName,registIp,inviteCode) {
               }
               console.log(body)
             })
-            db.close();
+            setTimeout(function(){
+              db.close();
+            },50)
           }else{
             console.log("InviteCode not exist!");
-            db.close();
+            setTimeout(function(){
+              db.close();
+            },50)
           }
         });
     });
