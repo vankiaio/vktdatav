@@ -18,12 +18,26 @@ const fs = require('fs');
 const moment = require('moment');
 const async	= require('async');
 const request = require('request');
-const Ut = require("./common");
+const { Ut,ClientWasm } = require("./common");
 const util = require('util');
 const Hashids = require('hashids');
 const RateLimit = require('express-rate-limit');
 const trim = require('string.prototype.trim');
 require('colors');
+const chainWasm = new ClientWasm('./data/chain-client.wasm');
+const tokenWasm = new ClientWasm('./data/token-client.wasm');
+
+(async () => {
+  try {
+      fs.writeFileSync('chain_request_schema.json', JSON.stringify(chainWasm.describe_query_request(), null, 4));
+      fs.writeFileSync('chain_response_schema.json', JSON.stringify(chainWasm.describe_query_response(), null, 4));
+      fs.writeFileSync('token_request_schema.json', JSON.stringify(tokenWasm.describe_query_request(), null, 4));
+      fs.writeFileSync('token_response_schema.json', JSON.stringify(tokenWasm.describe_query_response(), null, 4));
+    } catch (e) {
+      console.error(e);
+    }
+})();
+
 const {
   Api,
   JsonRpc,
@@ -154,7 +168,6 @@ const defaultLimiter = RateLimit({
   }
 });
 
-
 // 路由android 用户信息
 app.use(bodyParser.urlencoded({
   extended: false
@@ -280,6 +293,34 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res
     //   }
     // );
     //TODO
+  } else if (path_param1 === "get_all_accounts_token") {
+    console.log('/api_oc_personal/v1.0.0/get_all_accounts_token', req.body);
+    let snapshot_block = ["head", 0];
+    let first_account = "";
+    let last_account = "zzzzzzzzzzzzj";
+    let assets = JSON.parse('{}');
+    assets.code = 0;
+    assets.message = 'ok';
+    assets.data = JSON.parse('[]');
+    do {
+        const reply = await tokenWasm.round_trip(['bal.mult.acc', {
+            snapshot_block,
+            code: 'eosio.token',
+            sym: 'VKT',
+            first_account: first_account,
+            last_account: last_account,
+            max_results: 100,
+        }]);
+        for (let balance of reply[1].balances){
+          assets.data.push({
+            account: balance.account,
+            amount: format_extended_asset(balance.amount),
+          });
+          console.log(balance.account.padEnd(13, ' '), format_extended_asset(balance.amount));
+        }
+        first_account = reply[1].more;
+    } while (first_account);
+    res.json(assets);
   } else if (path_param1 === "import_accounts") {
     console.log('/api_oc_personal/v1.0.0/import_accounts', req.body);
     let import_accounts = JSON.parse('{}');
@@ -3062,6 +3103,19 @@ function decode64(g) {
   } catch (f) {
     return false
   }
+}
+
+function amount_to_decimal(amount) {
+  let s;
+  if (amount.amount[0] === '-')
+      s = '-' + amount.amount.substr(1).padStart(amount.precision + 1, '0');
+  else
+      s = amount.amount.padStart(amount.precision + 1, '0');
+  return s.substr(0, s.length - amount.precision) + '.' + s.substr(s.length - amount.precision);
+}
+
+function format_extended_asset(amount, number_size = 0) {
+  return amount_to_decimal(amount).padStart(number_size, ' ') + ' ' + amount.symbol;
 }
 
 // 监听端口、打开浏览器
