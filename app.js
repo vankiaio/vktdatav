@@ -1582,7 +1582,7 @@ async function getActionsFromHistoryTool (req, res) {
   accounts.data = JSON.parse('{}');
   accounts.data.pageSize = pageSize;
   accounts.data.page = curpage;
-  accounts.data.hasMore = 1;
+  accounts.data.hasMore = 0;
   accounts.data.actions = JSON.parse('[]');
   let quantity ;
   let quantityarr;
@@ -1634,6 +1634,20 @@ async function getActionsFromHistoryTool (req, res) {
   // console.log(transferIdArr)
 
   await async.eachSeries(transferIdArr,async(trx_id, cb) =>{
+
+    if (i < skip){
+      i++;
+      // console.log(i,skip)
+      return true;
+    }
+
+    if (i >= skip + limit){
+        console.log(i,skip + limit)
+        accounts.data.hasMore = 1;
+        return false;
+    }
+    i++;
+
     const trx_info = await rpc.history_get_transaction(trx_id);
     // console.log(util.inspect(trx_info, false, null, true));
 
@@ -1674,7 +1688,7 @@ async function getActionsFromHistoryTool (req, res) {
     // m_lasttrxid[req.body.from] = accounts.data.actions[index].trxid;
     index ++;
   });
-  
+
   res.json(accounts);
 }
 
