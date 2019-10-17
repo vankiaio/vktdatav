@@ -27,16 +27,16 @@ require('colors');
 const chainWasm = new ClientWasm('./data/chain-client.wasm');
 const tokenWasm = new ClientWasm('./data/token-client.wasm');
 
-(async () => {
-  try {
-      fs.writeFileSync('chain_request_schema.json', JSON.stringify(chainWasm.describe_query_request(), null, 4));
-      fs.writeFileSync('chain_response_schema.json', JSON.stringify(chainWasm.describe_query_response(), null, 4));
-      fs.writeFileSync('token_request_schema.json', JSON.stringify(tokenWasm.describe_query_request(), null, 4));
-      fs.writeFileSync('token_response_schema.json', JSON.stringify(tokenWasm.describe_query_response(), null, 4));
-    } catch (e) {
-      console.error(e);
-    }
-})();
+// (async () => {
+//   try {
+//       fs.writeFileSync('chain_request_schema.json', JSON.stringify(chainWasm.describe_query_request(), null, 4));
+//       fs.writeFileSync('chain_response_schema.json', JSON.stringify(chainWasm.describe_query_response(), null, 4));
+//       fs.writeFileSync('token_request_schema.json', JSON.stringify(tokenWasm.describe_query_request(), null, 4));
+//       fs.writeFileSync('token_response_schema.json', JSON.stringify(tokenWasm.describe_query_response(), null, 4));
+//     } catch (e) {
+//       console.error(e);
+//     }
+// })();
 
 const {
   Api,
@@ -1607,7 +1607,7 @@ async function getActionsFromHistoryTool (req, res) {
   let transferIdArr = [];
   while (first_key) {
       const reply = await tokenWasm.round_trip(['transfer', {
-          snapshot_block: ["irreversible", 0],
+          snapshot_block: ["head", 0],
           first_key,
           last_key,
           max_results: limit,
@@ -1616,10 +1616,10 @@ async function getActionsFromHistoryTool (req, res) {
       }]);
       // console.log(util.inspect(reply, false, null, true))
       first_key = reply[1].more;
-      i += reply[1].transfers.length;
-      console.log(i);
-      if (i <= skip)
-          continue;
+      // i += reply[1].transfers.length;
+      // console.log(i);
+      // if (i <= skip)
+      //     continue;
 
       for (let transfer of reply[1].transfers){
         transferIdArr.push(transfer.key.transaction_id);
@@ -1627,8 +1627,11 @@ async function getActionsFromHistoryTool (req, res) {
               transfer.from.padEnd(13, ' ') + ' -> ' + transfer.to.padEnd(13, ' '),
               format_extended_asset(transfer.quantity), '     ', transfer.memo);
       }
-      break;
+      // break;
   }
+  // console.log(transferIdArr)
+  transferIdArr.reverse();
+  // console.log(transferIdArr)
 
   await async.eachSeries(transferIdArr,async(trx_id, cb) =>{
     const trx_info = await rpc.history_get_transaction(trx_id);
@@ -1671,7 +1674,7 @@ async function getActionsFromHistoryTool (req, res) {
     // m_lasttrxid[req.body.from] = accounts.data.actions[index].trxid;
     index ++;
   });
-  console.log(transferIdArr)
+  
   res.json(accounts);
 }
 
