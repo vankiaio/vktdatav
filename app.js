@@ -27,16 +27,16 @@ require('colors');
 const chainWasm = new ClientWasm('./data/chain-client.wasm');
 const tokenWasm = new ClientWasm('./data/token-client.wasm');
 
-// (async () => {
-//   try {
-//       fs.writeFileSync('chain_request_schema.json', JSON.stringify(chainWasm.describe_query_request(), null, 4));
-//       fs.writeFileSync('chain_response_schema.json', JSON.stringify(chainWasm.describe_query_response(), null, 4));
-//       fs.writeFileSync('token_request_schema.json', JSON.stringify(tokenWasm.describe_query_request(), null, 4));
-//       fs.writeFileSync('token_response_schema.json', JSON.stringify(tokenWasm.describe_query_response(), null, 4));
-//     } catch (e) {
-//       console.error(e);
-//     }
-// })();
+(async () => {
+  try {
+      fs.writeFileSync('chain_request_schema.json', JSON.stringify(chainWasm.describe_query_request(), null, 4));
+      fs.writeFileSync('chain_response_schema.json', JSON.stringify(chainWasm.describe_query_response(), null, 4));
+      fs.writeFileSync('token_request_schema.json', JSON.stringify(tokenWasm.describe_query_request(), null, 4));
+      fs.writeFileSync('token_response_schema.json', JSON.stringify(tokenWasm.describe_query_response(), null, 4));
+    } catch (e) {
+      console.error(e);
+    }
+})();
 
 const {
   Api,
