@@ -1622,6 +1622,8 @@ async function getActionsFromHistoryTool (req, res) {
       //     continue;
 
       for (let transfer of reply[1].transfers){
+        if(filterClass === 1 && transfer.from === accountName){continue;}
+        if(filterClass === 2 && transfer.to === accountName){continue;}
         transferIdArr.push(transfer.key.transaction_id);
           console.log(
               transfer.from.padEnd(13, ' ') + ' -> ' + transfer.to.padEnd(13, ' '),
