@@ -421,28 +421,6 @@ app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async
   let inviteCode = "";
   if(req.body.InvitationCode != undefined){
     inviteCode = trim(req.body.InvitationCode);
-  }
-  auth.code = 0;
-  auth.message = 'ok';
-  if (!Ut.isEmpty(String(pubkeyowner)) && !Ut.isEmpty(String(pubkeyactive)) &&
-    !Ut.isEmpty(String(req.body.uid)) && !Ut.isEmpty(String(actname)) &&
-    pubkeyowner.substring(0,3) === 'VKT' &&
-    pubkeyactive.substring(0,3) === 'VKT' &&
-    pubkeyowner.length === 53 &&
-    pubkeyactive.length === 53) {
-
-    console.log('Public Key:\t', pubkeyactive) // VKTkey...
-    let checkpubkeyactive = ecc.isValidPublic(pubkeyactive, 'VKT');
-    console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyactive=', checkpubkeyactive);
-    let checkpubkeyowner = ecc.isValidPublic(pubkeyowner, 'VKT');
-    console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyowner=', checkpubkeyowner);
-
-    if(!checkpubkeyactive || !checkpubkeyowner){
-      auth.code = 400;
-      auth.message = 'Failed to create account.';
-      res.json(auth);
-    }
-
     // 检查重复公钥注册
     let query = {
       "public_key": { $eq: pubkeyactive }
@@ -477,6 +455,27 @@ app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async
       })
       db.close();
     })
+  }
+  auth.code = 0;
+  auth.message = 'ok';
+  if (!Ut.isEmpty(String(pubkeyowner)) && !Ut.isEmpty(String(pubkeyactive)) &&
+    !Ut.isEmpty(String(req.body.uid)) && !Ut.isEmpty(String(actname)) &&
+    pubkeyowner.substring(0,3) === 'VKT' &&
+    pubkeyactive.substring(0,3) === 'VKT' &&
+    pubkeyowner.length === 53 &&
+    pubkeyactive.length === 53) {
+
+    console.log('Public Key:\t', pubkeyactive) // VKTkey...
+    let checkpubkeyactive = ecc.isValidPublic(pubkeyactive, 'VKT');
+    console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyactive=', checkpubkeyactive);
+    let checkpubkeyowner = ecc.isValidPublic(pubkeyowner, 'VKT');
+    console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyowner=', checkpubkeyowner);
+
+    if(!checkpubkeyactive || !checkpubkeyowner){
+      auth.code = 400;
+      auth.message = 'Failed to create account.';
+      res.json(auth);
+    }
 
     try {
       const result = await api.transact({
@@ -549,8 +548,8 @@ app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async
       auth.message = 'Failed to create account.';
       console.log(error);
     }
-    addusertoMG(actname,req.ip.match(/\d+\.\d+\.\d+\.\d+/)[0],inviteCode)
     res.json(auth);
+    addusertoMG(actname,req.ip.match(/\d+\.\d+\.\d+\.\d+/)[0],inviteCode)
   } else {
     auth.code = 501;
     auth.message = 'Failed to create account.';
