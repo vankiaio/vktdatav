@@ -418,7 +418,10 @@ app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async
   let pubkeyactive = req.body.activeKey;
   let pubkeyowner = req.body.ownerKey;
   let actname = trim(req.body.vktAccountName);
-  let inviteCode = trim(req.body.InvitationCode);
+  let inviteCode = "";
+  if(req.body.InvitationCode != undefined){
+    inviteCode = trim(req.body.InvitationCode);
+  }
   auth.code = 0;
   auth.message = 'ok';
   if (!Ut.isEmpty(String(pubkeyowner)) && !Ut.isEmpty(String(pubkeyactive)) &&
