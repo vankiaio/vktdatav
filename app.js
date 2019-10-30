@@ -419,7 +419,7 @@ app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async
   let pubkeyowner = req.body.ownerKey;
   let actname = trim(req.body.vktAccountName);
   let inviteCode = "";
-  if(req.body.InvitationCode != undefined){
+  if(req.body.InvitationCode != undefined && req.body.InvitationCode != ""){
     inviteCode = trim(req.body.InvitationCode);
     // 检查重复公钥注册
     let query = {
