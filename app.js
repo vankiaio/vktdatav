@@ -448,7 +448,7 @@ app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async
             return res.status(500).end();
         }
 
-        if(result.count < 1) {
+        if(result.actions.length < 1) {
           auth.code = 403;
           auth.message = 'The invitation code is invalid. Please re-enter.';
           res.json(auth);
@@ -483,7 +483,7 @@ app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async
             return res.status(500).end();
         }
 
-        if(result.count > 0) {
+        if(result.actions.length > 0) {
           auth.code = 401;
           auth.message = 'Failed to create account.';
           res.json(auth);
