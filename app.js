@@ -421,6 +421,42 @@ app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async
   let inviteCode = "";
   if(req.body.InvitationCode != undefined && req.body.InvitationCode != ""){
     inviteCode = trim(req.body.InvitationCode);
+
+    // 检查邀请码是否存在
+    let query_invite_code = {
+      "inviteCode": { $eq: inviteCode }
+    }
+    console.log(query_invite_code);
+
+    // make client connect to mongo service
+    MongoClient.connect(MONGO_URL, function(err, db) {
+      if (err) {
+        console.error(err);
+        return res.status(500).end();
+      }
+
+      const dbo = db.db("VKT");
+      let parallelObject = {
+        actions: (callback) => {
+          dbo.collection("InviteCode").find(query_invite_code).limit(-1).toArray(callback);
+          }
+      };
+    
+      async.parallel(parallelObject, (err, result) => {
+        if (err){
+            console.error(err);
+            return res.status(500).end();
+        }
+
+        if(result.count < 1) {
+          auth.code = 403;
+          auth.message = 'The invitation code is invalid. Please re-enter.';
+          res.json(auth);
+        }
+      })
+      db.close();
+    })
+
     // 检查重复公钥注册
     let query = {
       "public_key": { $eq: pubkeyactive }
