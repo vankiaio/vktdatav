@@ -464,6 +464,8 @@ app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async
             }
           });
         });
+      }else{
+        await validatePublicKey();
       }
     }
     async function validatePublicKey(){
