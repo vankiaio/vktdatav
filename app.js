@@ -672,8 +672,8 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
       res.json(upload_access_info);
       return;
     }
-    if (path_param2 === "validate_invitecode") {
-      console.log('/api_oc_personal/v1.0.0/user/validate_invitecode', req.body);
+    if (path_param2 === "validata_invitecode") {
+      console.log('/api_oc_personal/v1.0.0/user/validata_invitecode', req.body);
       let inviteCode = "";
       let auth = JSON.parse('{}');
 
@@ -720,15 +720,10 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
                 setTimeout(function(){
                   db.close();
                 },50)
-                await validatePublicKey()
               }
             });
           });
-        }else{
-          await validatePublicKey();
-        }
       }
-
     }
     //user info and icon
     if (path_param2 === "get_user") {
