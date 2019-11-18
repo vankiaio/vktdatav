@@ -420,9 +420,9 @@ app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async
   let actname = trim(req.body.vktAccountName);
   let inviteCode = "";
 
-  await validateInviteCode()
+  await validataInviteCode()
 
-  async function validateInviteCode() {
+  async function validataInviteCode() {
       if(req.body.InvitationCode != undefined && req.body.InvitationCode != ""){
         inviteCode = trim(req.body.InvitationCode);
 
@@ -671,6 +671,64 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
 
       res.json(upload_access_info);
       return;
+    }
+    if (path_param2 === "validate_invitecode") {
+      console.log('/api_oc_personal/v1.0.0/user/validate_invitecode', req.body);
+      let inviteCode = "";
+      let auth = JSON.parse('{}');
+
+      await validataInviteCode();
+
+      async function validataInviteCode() {
+        if(req.body.InvitationCode != undefined && req.body.InvitationCode != ""){
+          inviteCode = trim(req.body.InvitationCode);
+  
+          // make client connect to mongo service
+          await MongoClient.connect(MONGO_URL,  { useNewUrlParser: true }, async function(err, db) {
+            if (err) {
+              console.error(err);
+              return res.status(500).end();
+            }
+  
+            const dbo = db.db("VKT");
+  
+            // db pointing to newdb
+            console.log("Switched to "+dbo.databaseName+" database");
+  
+            // 检查邀请码是否存在
+            let query_invite_code = {
+              "inviteCode": { $eq: inviteCode }
+            }
+            console.log(query_invite_code);
+  
+            await dbo.collection("InviteCode").find(query_invite_code).toArray(async function (err, result) {
+              if (err) throw err;
+              console.log(result)
+              if (result.length < 1) {
+                auth.code = 403;
+                auth.message = 'The invitation code is invalid. Please re-enter.';
+                res.json(auth);
+                console.log("InviteCode is invalid!!!")
+                setTimeout(function(){
+                  db.close();
+                },50)
+              }else{
+                console.log("InviteCode is valid!");
+                auth.code = 0;
+                auth.message = 'ok';
+                res.json(auth);
+                setTimeout(function(){
+                  db.close();
+                },50)
+                await validatePublicKey()
+              }
+            });
+          });
+        }else{
+          await validatePublicKey();
+        }
+      }
+
     }
     //user info and icon
     if (path_param2 === "get_user") {
