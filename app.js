@@ -419,178 +419,191 @@ app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async
   let pubkeyowner = req.body.ownerKey;
   let actname = trim(req.body.vktAccountName);
   let inviteCode = "";
-  if(req.body.InvitationCode != undefined && req.body.InvitationCode != ""){
-    inviteCode = trim(req.body.InvitationCode);
 
-    // 检查邀请码是否存在
-    let query_invite_code = {
-      "inviteCode": { $eq: inviteCode }
-    }
-    console.log(query_invite_code);
+  await validateInviteCode()
 
-    // make client connect to mongo service
-    MongoClient.connect(MONGO_URL, function(err, db) {
-      if (err) {
-        console.error(err);
-        return res.status(500).end();
-      }
+  async function validateInviteCode() {
+      if(req.body.InvitationCode != undefined && req.body.InvitationCode != ""){
+        inviteCode = trim(req.body.InvitationCode);
 
-      const dbo = db.db("VKT");
-      let parallelObject = {
-        actions: (callback) => {
-          dbo.collection("InviteCode").find(query_invite_code).limit(-1).toArray(callback);
-          }
-      };
-    
-      async.parallel(parallelObject, (err, result) => {
-        if (err){
+        // make client connect to mongo service
+        await MongoClient.connect(MONGO_URL,  { useNewUrlParser: true }, async function(err, db) {
+          if (err) {
             console.error(err);
             return res.status(500).end();
-        }
-
-        if(result.actions.length < 1) {
-          auth.code = 403;
-          auth.message = 'The invitation code is invalid. Please re-enter.';
-          res.json(auth);
-        }
-      })
-      db.close();
-    })
-
-    // 检查重复公钥注册
-    let query = {
-      "public_key": { $eq: pubkeyactive }
-    }
-    console.log(query);
-    
-    // make client connect to mongo service
-    MongoClient.connect(MONGO_URL, function(err, db) {
-      if (err) {
-        console.error(err);
-        return res.status(500).end();
-      }
-
-      const dbo = db.db("VKT");
-      let parallelObject = {
-        actions: (callback) => {
-          dbo.collection("pub_keys").find(query).limit(-1).toArray(callback);
           }
-      };
-    
-      async.parallel(parallelObject, (err, result) => {
-        if (err){
-            console.error(err);
-            return res.status(500).end();
-        }
 
-        if(result.actions.length > 0) {
-          auth.code = 401;
+          const dbo = db.db("VKT");
+
+          // db pointing to newdb
+          console.log("Switched to "+dbo.databaseName+" database");
+
+          // 检查邀请码是否存在
+          let query_invite_code = {
+            "inviteCode": { $eq: inviteCode }
+          }
+          console.log(query_invite_code);
+
+          await dbo.collection("InviteCode").find(query_invite_code).toArray(async function (err, result) {
+            if (err) throw err;
+            console.log(result)
+            if (result.length < 1) {
+              auth.code = 403;
+              auth.message = 'The invitation code is invalid. Please re-enter.';
+              res.json(auth);
+              console.log("InviteCode is invalid!!!")
+              setTimeout(function(){
+                db.close();
+              },50)
+            }else{
+              console.log("InviteCode is valid!");
+              setTimeout(function(){
+                db.close();
+              },50)
+              await validatePublicKey()
+            }
+          });
+        });
+      }
+    }
+    async function validatePublicKey(){
+      // make client connect to mongo service
+      await MongoClient.connect(MONGO_URL, { useNewUrlParser: true }, async function(err, db) {
+        if (err) {
+          console.error(err);
+          return res.status(500).end();
+        }
+        const dbo = db.db("VKT");
+
+        // db pointing to newdb
+        console.log("Switched to "+dbo.databaseName+" database");
+
+        // 检查重复公钥注册
+        let query = {
+          "public_key": { $eq: pubkeyactive }
+        }
+        console.log(query);
+
+        await dbo.collection("pub_keys").find(query).toArray(async function (err, result) {
+          if (err) throw err;
+          if (result.length > 0) {
+            console.log("pub_keys is exits!");
+            auth.code = 401;
+            auth.message = 'Failed to create account.';
+            res.json(auth);
+            setTimeout(function(){
+              db.close();
+            },50)
+          }else{
+            console.log("pub_keys is valid!");
+            setTimeout(function(){
+              db.close();
+            },50)
+            await createAccount();
+          }
+        });
+      });
+    }
+    async function createAccount() {
+      auth.code = 0;
+      auth.message = 'ok';
+      if (!Ut.isEmpty(String(pubkeyowner)) && !Ut.isEmpty(String(pubkeyactive)) &&
+        !Ut.isEmpty(String(req.body.uid)) && !Ut.isEmpty(String(actname)) &&
+        pubkeyowner.substring(0,3) === 'VKT' &&
+        pubkeyactive.substring(0,3) === 'VKT' &&
+        pubkeyowner.length === 53 &&
+        pubkeyactive.length === 53) {
+        console.log('Public Key:\t', pubkeyactive) // VKTkey...
+        let checkpubkeyactive = ecc.isValidPublic(pubkeyactive, 'VKT');
+        console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyactive=', checkpubkeyactive);
+        let checkpubkeyowner = ecc.isValidPublic(pubkeyowner, 'VKT');
+        console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyowner=', checkpubkeyowner);
+
+        if(!checkpubkeyactive || !checkpubkeyowner){
+          auth.code = 400;
           auth.message = 'Failed to create account.';
           res.json(auth);
         }
-      })
-      db.close();
-    })
-  }
-  auth.code = 0;
-  auth.message = 'ok';
-  if (!Ut.isEmpty(String(pubkeyowner)) && !Ut.isEmpty(String(pubkeyactive)) &&
-    !Ut.isEmpty(String(req.body.uid)) && !Ut.isEmpty(String(actname)) &&
-    pubkeyowner.substring(0,3) === 'VKT' &&
-    pubkeyactive.substring(0,3) === 'VKT' &&
-    pubkeyowner.length === 53 &&
-    pubkeyactive.length === 53) {
 
-    console.log('Public Key:\t', pubkeyactive) // VKTkey...
-    let checkpubkeyactive = ecc.isValidPublic(pubkeyactive, 'VKT');
-    console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyactive=', checkpubkeyactive);
-    let checkpubkeyowner = ecc.isValidPublic(pubkeyowner, 'VKT');
-    console.log('/api_oc_personal/v1.0.0/user/add_new_vkt - checkpubkeyowner=', checkpubkeyowner);
-
-    if(!checkpubkeyactive || !checkpubkeyowner){
-      auth.code = 400;
-      auth.message = 'Failed to create account.';
-      res.json(auth);
-    }
-
-    try {
-      const result = await api.transact({
-        actions: [{
-            account: 'eosio',
-            name: 'newaccount',
-            authorization: [{
-              actor: 'makeaccounts',
-              permission: 'active',
-            }],
-            data: {
-              creator: 'makeaccounts',
-              name: actname,
-              owner: {
-                threshold: 1,
-                keys: [{
-                  key: pubkeyowner,
-                  weight: 1
+        try {
+          const result = await api.transact({
+            actions: [{
+                account: 'eosio',
+                name: 'newaccount',
+                authorization: [{
+                  actor: 'makeaccounts',
+                  permission: 'active',
                 }],
-                accounts: [],
-                waits: []
+                data: {
+                  creator: 'makeaccounts',
+                  name: actname,
+                  owner: {
+                    threshold: 1,
+                    keys: [{
+                      key: pubkeyowner,
+                      weight: 1
+                    }],
+                    accounts: [],
+                    waits: []
+                  },
+                  active: {
+                    threshold: 1,
+                    keys: [{
+                      key: pubkeyactive,
+                      weight: 1
+                    }],
+                    accounts: [],
+                    waits: []
+                  },
+                },
               },
-              active: {
-                threshold: 1,
-                keys: [{
-                  key: pubkeyactive,
-                  weight: 1
+              {
+                account: 'eosio',
+                name: 'buyrambytes',
+                authorization: [{
+                  actor: 'makeaccounts',
+                  permission: 'active',
                 }],
-                accounts: [],
-                waits: []
+                data: {
+                  payer: 'makeaccounts',
+                  receiver: actname,
+                  bytes: 8192,
+                },
               },
-            },
-          },
-          {
-            account: 'eosio',
-            name: 'buyrambytes',
-            authorization: [{
-              actor: 'makeaccounts',
-              permission: 'active',
-            }],
-            data: {
-              payer: 'makeaccounts',
-              receiver: actname,
-              bytes: 8192,
-            },
-          },
-          {
-            account: 'eosio',
-            name: 'delegatebw',
-            authorization: [{
-              actor: 'makeaccounts',
-              permission: 'active',
-            }],
-            data: {
-              from: 'makeaccounts',
-              receiver: actname,
-              stake_net_quantity: '0.1500 VKT',
-              stake_cpu_quantity: '0.5000 VKT',
-              transfer: false,
-            }
-          }
-        ]
-      }, {
-        blocksBehind: 3,
-        expireSeconds: 30,
-      });
-      console.log("newaccount result = ", result);
-    } catch (error) {
-      auth.code = 500;
-      auth.message = 'Failed to create account.';
-      console.log(error);
+              {
+                account: 'eosio',
+                name: 'delegatebw',
+                authorization: [{
+                  actor: 'makeaccounts',
+                  permission: 'active',
+                }],
+                data: {
+                  from: 'makeaccounts',
+                  receiver: actname,
+                  stake_net_quantity: '0.1500 VKT',
+                  stake_cpu_quantity: '0.5000 VKT',
+                  transfer: false,
+                }
+              }
+            ]
+          }, {
+            blocksBehind: 3,
+            expireSeconds: 30,
+          });
+          console.log("newaccount result = ", result);
+        } catch (error) {
+          auth.code = 500;
+          auth.message = 'Failed to create account.';
+          console.log(error);
+        }
+        res.json(auth);
+        addusertoMG(actname,req.ip.match(/\d+\.\d+\.\d+\.\d+/)[0],inviteCode)
+      } else {
+        auth.code = 501;
+        auth.message = 'Failed to create account.';
+        res.json(auth);
+      }
     }
-    res.json(auth);
-    addusertoMG(actname,req.ip.match(/\d+\.\d+\.\d+\.\d+/)[0],inviteCode)
-  } else {
-    auth.code = 501;
-    auth.message = 'Failed to create account.';
-    res.json(auth);
-  }
 });
 
 // 路由android 用户信息
@@ -1380,7 +1393,7 @@ app.post('/VX/GenInviteCode', defaultLimiter, genInviteCode);
 
 function getActionsDistinct(req, res){
   console.log('/VX/GetActions', req.body,req.query);
-  MongoClient.connect(MONGO_URL, async function (err, db) {
+  MongoClient.connect(MONGO_URL, { useNewUrlParser: true }, async function (err, db) {
     if (err) {
       console.error(err);
       return res.status(500).end();
@@ -1805,7 +1818,7 @@ async function genInviteCode (req, res) {
   console.log(hashids.encode(1));
 
   // make client connect to mongo service
-  MongoClient.connect(MONGO_URL, function(err, db) {
+  MongoClient.connect(MONGO_URL, { useNewUrlParser: true }, function(err, db) {
     if (err) throw err;
 
     const dbo = db.db("VKT");
@@ -2737,7 +2750,7 @@ const runRpcGetProducers = async () => {
 const runMongodb = async () => {
 
 
-  MongoClient.connect(MONGO_URL, async function (err, db) {
+  MongoClient.connect(MONGO_URL, { useNewUrlParser: true }, async function (err, db) {
     if (err) {
       console.error(err);
       throw err;
@@ -2976,7 +2989,7 @@ const runMongodb = async () => {
 const runMongodbTPSList = async () => {
 
 
-  MongoClient.connect(MONGO_URL, async function (err, db) {
+  MongoClient.connect(MONGO_URL, { useNewUrlParser: true }, async function (err, db) {
     if (err) {
       console.error(err);
       throw err;
@@ -3197,7 +3210,7 @@ function addusertoMG(accountName,registIp,inviteCode) {
     user_info.registPlace = ipres.country + " - " + ipres.province + " - " + ipres.city;
 
     // make client connect to mongo service
-    MongoClient.connect(MONGO_URL, function(err, db) {
+    MongoClient.connect(MONGO_URL, { useNewUrlParser: true }, function(err, db) {
       if (err) throw err;
 
       const dbo = db.db("VKT");
