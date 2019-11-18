@@ -796,9 +796,9 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res)
     ios_version.message = 'ok';
     ios_version.data = JSON.parse('{}');
     ios_version.data.uploadUrl = 'http://wapi.devicexx.com:3030/upgrade/umeng/VKToken_umeng_release.apk';
-    ios_version.data.versionDetail = '0.9.0'
-    ios_version.data.versionCode = '090'
-    ios_version.data.versionName = '0.9.0'
+    ios_version.data.versionDetail = '1.0.1'
+    ios_version.data.versionCode = '101'
+    ios_version.data.versionName = '1.0.1'
     ios_version.data.versionDescription = ['1.新增xxx功能','2.修改了xxx，修复若干bug','3.修改了xxx，修复若干bug','4.新增xxx功能']
     console.log(ios_version);
     res.json(ios_version);
