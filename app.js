@@ -489,7 +489,7 @@ app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async
         await dbo.collection("pub_keys").find(query).toArray(async function (err, result) {
           if (err) throw err;
           if (result.length > 0) {
-            console.log("pub_keys is exits!");
+            console.log("pub_keys is exsit!");
             auth.code = 401;
             auth.message = 'Failed to create account.';
             res.json(auth);
@@ -599,12 +599,12 @@ app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async
           console.log(error);
         }
         res.json(auth);
-        addusertoMG(actname,req.ip.match(/\d+\.\d+\.\d+\.\d+/)[0],inviteCode)
       } else {
         auth.code = 501;
         auth.message = 'Failed to create account.';
         res.json(auth);
       }
+      addusertoMG(actname,req.ip.match(/\d+\.\d+\.\d+\.\d+/)[0],inviteCode)
     }
 });
 
