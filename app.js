@@ -55,6 +55,7 @@ const VKTAPI_URL = config.VKTAPI_URL;
 const BGAPI_URL = config.BGAPI_URL;
 const XE_URL = config.XE_URL;
 const SCATTER_API = config.SCATTER_API;
+const HOTBIT_API = config.HOTBIT_API;
 const defaultPrivateKey = config.defaultPrivateKey;
 const candyPrivateKey = config.candyPrivateKey;
 
@@ -3126,101 +3127,84 @@ const runMongodbTPSList = async () => {
 // rpc对象支持promise，所以使用 async/await 函数运行rpc命令
 const runCcxt = async () => {
 
-  let ticker_vkteth = [];
-  let ticker_ethusd = [];
-  let vktkline_date = "";
+  let vktkline_7day = [];
   let vktkline_YMD = "";
-
-  // get vkteth price and vol
-  let bitforex = new ccxt.bitforex();
-  //bitforex.proxy = 'https://cors-anywhere.herokuapp.com/';
-  // load all markets from the exchange
-  let markets = await bitforex.loadMarkets();
+  let vkteth24_info = {};
+  let ethusd24_info = {};
 
   const symbol_vkteth = 'VKT/ETH';
-  if (symbol_vkteth in bitforex.markets) {
-    ticker_vkteth = await bitforex.fetchTicker(symbol_vkteth);
-  }
-  // console.log(ticker_vkteth);
 
-  // get ethusd price
-  let bittrex = new ccxt.bittrex();
-  //bittrex.proxy = 'https://cors-anywhere.herokuapp.com/';
-  // load all markets from the exchange
-  markets = await bittrex.loadMarkets();
+  //获取VKT/ETH 24小时 交易量jsons数据
+  await superagent.get(HOTBIT_API + '/v1/market.status24h').end(async (err, sres) => {
+    if (err) {
+      console.log('err:', err);
+      return;
+    }
+    vkteth24_info = JSON.parse(sres.text).VKTETH;
+    ethusd24_info = JSON.parse(sres.text).ETHUSD;
+ 
+    console.log(vkteth24_info);
+    console.log(ethusd24_info);
 
-  const symbol_ethusd = 'ETH/USD';
-  if (symbol_ethusd in bittrex.markets) {
-    ticker_ethusd = await bittrex.fetchTicker(symbol_ethusd);
-  }
-  // console.log(ticker_ethusd);
+    let enddate = moment(moment().format("YYYY-MM-DD")).format('X');
+    console.log(enddate);
+    let startdate = moment(moment().format("YYYY-MM-DD")).format('X') - 3600 * 24 * 7;
+    console.log(startdate);
 
-  // console.log("get markets finish sleep start!!!", new Date());
-  // await Ut.sleep(5000);
-  // console.log("get markets finish sleep end!!!", new Date());
+    // console.log("get markets finish sleep start!!!", new Date());
+    // await Ut.sleep(5000);
+    // console.log("get markets finish sleep end!!!", new Date());
 
-  // get vkteth 1hour price
-  const ohlcvkteth = await bitforex.fetchOHLCV(symbol_vkteth, '1d', 8);
-  if(ohlcvkteth.length < 7 ) {
-    console.log("ohlcvkteth fetchOHLCV failed!!!");
-    return;
-  }
-  // console.log(ohlcvkteth);
-  const last7dTime = ohlcvkteth[0].time; // 1h ago closing time
-  const currentPrice = ohlcvkteth[ohlcvkteth.length - 1].close; // current closing price
-  const last1dPrice = ohlcvkteth[ohlcvkteth.length - 2].close; // 1d ago closing price
-  const last1wPrice = ohlcvkteth[1].close; // 1w ago closing price
-  // console.log(last7dTime);
-  // console.log(last1hPrice);
-  // console.log(last1dPrice);
-  // console.log(last1wPrice);
+    // get vkteth price from before 7day to now 
+    //https://api.hotbit.io/api/v1/market.kline?market=ETH/BTC&start_time=1521100000&end_time=1521101193&interval=60
+    await superagent.get(HOTBIT_API + '/v1/market.kline?market=VKT/ETH&start_time=' + startdate + '&end_time=' + enddate + '&interval=86400').end(async (err, sres) => {
+      if (err) {
+        console.log('err:', err);
+        return;
+      }
 
-  const ohlcethusd = await bittrex.fetchOHLCV(symbol_ethusd, '1d', last7dTime, 7);
-  if(ohlcethusd.length < 7 ) {
-    console.log("ohlcethusd fetchOHLCV failed!!!");
-    return;
-  }
-  // console.log(ohlcethusd);
-  // console.log(ohlcethusd[0][4]);
+      vktkline_7day = JSON.parse(sres.text).result;
+      console.log();
+      // console.log(ohlcvkteth);
+      const currentvktethPrice = vkteth24_info.last; // current closing price
+      const currentethusdPrice = ethusd24_info.last; // current closing price
+      const last1dPrice = vktkline_7day[1][3]; // 1d ago closing price
+      const last1wPrice = vktkline_7day[vktkline_7day.length - 1][3]; // 1w ago closing price
+      // console.log(last7dTime);
+      // console.log(last1hPrice);
+      // console.log(last1dPrice);
+      // console.log(last1wPrice);
 
-  vktdatav.vktusdlast7d = JSON.parse('[]');
-  vktdatav_vktprice_list = JSON.parse('[]');
-  // [
-  //   {
-  //     "x": "2010/01/01 00:00:00",
-  //     "y": 375
-  //   },
-  // ]
-  for (let i in ohlcethusd) {
-    vktkline_date = new Date(ohlcvkteth[i].time);
-    vktkline_YMD = vktkline_date.getFullYear() + '/' +
-      (vktkline_date.getMonth() + 1 < 10 ? '0' + (vktkline_date.getMonth() + 1) : vktkline_date.getMonth() + 1) + '/' +
-      (vktkline_date.getDate() < 10 ? '0' + (vktkline_date.getDate()) : vktkline_date.getDate())
-    // console.log(vktkline_date)
-    vktdatav.vktusdlast7d.push({
-      'price': (ohlcethusd[i][4] * ohlcvkteth[i].close).toFixed(8),
-      'date': vktkline_YMD
+      vktdatav.vktusdlast7d = JSON.parse('[]');
+      vktdatav_vktprice_list = JSON.parse('[]');
+
+
+      vktkline_YMD = moment().format("YYYY/MM/DD");
+      vktdatav.vktusdlast7d.push({
+        'price': (currentvktethPrice * currentethusdPrice).toFixed(8),
+        'date': vktkline_YMD
+      });
+      vktdatav_vktprice_list.push({
+        'x': vktkline_YMD,
+        'y': (currentvktethPrice * currentethusdPrice).toFixed(8)
+      });
+
+      vktdatav_cnyusd_price = [{
+        // "name": "",
+        "value": (vktdatav.usdcny * vktdatav_vktprice_list[0].y).toFixed(8)
+      }];
+
+      vktdatav_vkttracker_info = {
+        'price_vktcny': (vktdatav.usdcny * vktdatav_vktprice_list[0].y).toFixed(8),
+        'price_vkteth': (currentvktethPrice * 1.0).toFixed(8),
+        'volume_24h': vkteth24_info.volume,
+        'circulating_supply': 500000000,
+        'total_supply': 1000000000,
+        'percent_change_1d': ((currentvktethPrice - last1dPrice) / last1dPrice).toFixed(8),
+        'percent_change_7d': ((currentvktethPrice - last1wPrice) / last1wPrice).toFixed(8)
+      };
     });
-    vktdatav_vktprice_list.push({
-      'x': vktkline_YMD,
-      'y': (ohlcethusd[i][4] * ohlcvkteth[i].close).toFixed(8)
-    });
-  }
-
-  vktdatav_cnyusd_price = [{
-    // "name": "",
-    "value": (vktdatav.usdcny * vktdatav_vktprice_list[6].y).toFixed(8)
-  }];
-
-  vktdatav_vkttracker_info = {
-    'price_vktcny': (vktdatav.usdcny * vktdatav_vktprice_list[6].y).toFixed(8),
-    'price_vkteth': last1dPrice.toFixed(8),
-    'volume_24h': ticker_vkteth.baseVolume,
-    'circulating_supply': 500000000,
-    'total_supply': 1000000000,
-    'percent_change_1d': ((currentPrice - last1dPrice) / last1dPrice).toFixed(8),
-    'percent_change_7d': ((currentPrice - last1wPrice) / last1wPrice).toFixed(8)
-  };
+  });
   return vktdatav;
 }
 
@@ -3239,15 +3223,15 @@ const runScatterPrices = async (prices) => {
     console.log("runScatterPrices vktdatav.vktusdlast7d.length=" ,vktdatav.vktusdlast7d.length);
     vktdatav_allprices = prices;
     vktdatav_allprices["vkt:eosio.token:vkt"] = {
-      USD: (vktdatav.vktusdlast7d[6].price * 1.0).toFixed(8),
-      EUR: (vktdatav.vktusdlast7d[6].price * vktdatav.currencies.EUR).toFixed(8),
-      CNY: (vktdatav.vktusdlast7d[6].price * vktdatav.currencies.CNY).toFixed(8),
-      GBP: (vktdatav.vktusdlast7d[6].price * vktdatav.currencies.GBP).toFixed(8),
-      JPY: (vktdatav.vktusdlast7d[6].price * vktdatav.currencies.JPY).toFixed(8),
-      CAD: (vktdatav.vktusdlast7d[6].price * vktdatav.currencies.CAD).toFixed(8),
-      CHF: (vktdatav.vktusdlast7d[6].price * vktdatav.currencies.CHF).toFixed(8),
-      AUD: (vktdatav.vktusdlast7d[6].price * vktdatav.currencies.AUD).toFixed(8),
-      KRW: (vktdatav.vktusdlast7d[6].price * vktdatav.currencies.KRW).toFixed(8),
+      USD: (vktdatav.vktusdlast7d[0].price * 1.0).toFixed(8),
+      EUR: (vktdatav.vktusdlast7d[0].price * vktdatav.currencies.EUR).toFixed(8),
+      CNY: (vktdatav.vktusdlast7d[0].price * vktdatav.currencies.CNY).toFixed(8),
+      GBP: (vktdatav.vktusdlast7d[0].price * vktdatav.currencies.GBP).toFixed(8),
+      JPY: (vktdatav.vktusdlast7d[0].price * vktdatav.currencies.JPY).toFixed(8),
+      CAD: (vktdatav.vktusdlast7d[0].price * vktdatav.currencies.CAD).toFixed(8),
+      CHF: (vktdatav.vktusdlast7d[0].price * vktdatav.currencies.CHF).toFixed(8),
+      AUD: (vktdatav.vktusdlast7d[0].price * vktdatav.currencies.AUD).toFixed(8),
+      KRW: (vktdatav.vktusdlast7d[0].price * vktdatav.currencies.KRW).toFixed(8),
     };
     vktdatav.allprices = vktdatav_allprices;
   }
