@@ -93,7 +93,7 @@ let vktdatav_producer_now = {};
 let vktdatav_producer_location = {};
 let vktdatav_mproducer_location = {};
 let vktdatav_bproducer_location = {};
-let vktdatav_cnyusd_price = {};
+let vktdatav_cnyusd_price = [];
 let vktdatav_flyline = {};
 
 let IsLoadingRPCBASE = false;
@@ -3143,17 +3143,13 @@ const runCcxt = async () => {
     vkteth24_info = JSON.parse(sres.text).VKTETH;
     ethusd24_info = JSON.parse(sres.text).ETHUSD;
  
-    console.log(vkteth24_info);
-    console.log(ethusd24_info);
+    // console.log(vkteth24_info);
+    // console.log(ethusd24_info);
 
     let enddate = moment(moment().format("YYYY-MM-DD")).format('X');
-    console.log(enddate);
+    // console.log(enddate);
     let startdate = moment(moment().format("YYYY-MM-DD")).format('X') - 3600 * 24 * 7;
-    console.log(startdate);
-
-    // console.log("get markets finish sleep start!!!", new Date());
-    // await Ut.sleep(5000);
-    // console.log("get markets finish sleep end!!!", new Date());
+    // console.log(startdate);
 
     // get vkteth price from before 7day to now 
     //https://api.hotbit.io/api/v1/market.kline?market=ETH/BTC&start_time=1521100000&end_time=1521101193&interval=60
@@ -3203,6 +3199,7 @@ const runCcxt = async () => {
         'percent_change_1d': ((currentvktethPrice - last1dPrice) / last1dPrice).toFixed(8),
         'percent_change_7d': ((currentvktethPrice - last1wPrice) / last1wPrice).toFixed(8)
       };
+      // console.log(vktdatav_vkttracker_info);
     });
   });
   return vktdatav;
@@ -3219,7 +3216,7 @@ const runExchange = async (rates) => {
 // rpc对象支持promise，所以使用 async/await 函数运行rpc命令
 const runScatterPrices = async (prices) => {
   //console.log(prices)
-  if (vktdatav.vktusdlast7d && vktdatav.vktusdlast7d.length > 6) {
+  if (vktdatav.vktusdlast7d && vktdatav.vktusdlast7d.length > 0) {
     console.log("runScatterPrices vktdatav.vktusdlast7d.length=" ,vktdatav.vktusdlast7d.length);
     vktdatav_allprices = prices;
     vktdatav_allprices["vkt:eosio.token:vkt"] = {
