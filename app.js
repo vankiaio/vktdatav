@@ -534,11 +534,11 @@ app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async
                 account: 'eosio',
                 name: 'newaccount',
                 authorization: [{
-                  actor: 'makeaccounts',
+                  actor: 'createaccout',
                   permission: 'active',
                 }],
                 data: {
-                  creator: 'makeaccounts',
+                  creator: 'createaccout',
                   name: actname,
                   owner: {
                     threshold: 1,
@@ -564,11 +564,11 @@ app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async
                 account: 'eosio',
                 name: 'buyrambytes',
                 authorization: [{
-                  actor: 'makeaccounts',
+                  actor: 'createaccout',
                   permission: 'active',
                 }],
                 data: {
-                  payer: 'makeaccounts',
+                  payer: 'createaccout',
                   receiver: actname,
                   bytes: 8192,
                 },
@@ -577,11 +577,11 @@ app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async
                 account: 'eosio',
                 name: 'delegatebw',
                 authorization: [{
-                  actor: 'makeaccounts',
+                  actor: 'createaccout',
                   permission: 'active',
                 }],
                 data: {
-                  from: 'makeaccounts',
+                  from: 'createaccout',
                   receiver: actname,
                   stake_net_quantity: '0.1500 VKT',
                   stake_cpu_quantity: '0.5000 VKT',
@@ -853,9 +853,9 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res)
     ios_version.message = 'ok';
     ios_version.data = JSON.parse('{}');
     ios_version.data.uploadUrl = 'http://wapi.devicexx.com:3030/upgrade/umeng/VKToken_umeng_release.apk';
-    ios_version.data.versionDetail = '1.0.1'
-    ios_version.data.versionCode = '101'
-    ios_version.data.versionName = '1.0.1'
+    ios_version.data.versionDetail = '1.0.0'
+    ios_version.data.versionCode = '100'
+    ios_version.data.versionName = '1.0.0'
     ios_version.data.versionDescription = ['1.新增xxx功能','2.修改了xxx，修复若干bug','3.修改了xxx，修复若干bug','4.新增xxx功能']
     console.log(ios_version);
     res.json(ios_version);
@@ -1929,9 +1929,10 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
   if (path_param1 === "get_candy_score") {
     console.log('/api_oc_pe_candy_system/get_candy_score', req.body);
     let actname = path_param2;
-
+    let signedIp = req.ip.match(/\d+\.\d+\.\d+\.\d+/)[0];
+    let bm_signed_info = JSON.parse('{}');
     let candy_score = JSON.parse('{}');
-
+    var reward_again_info = JSON.parse('{}');
     candy_score.code = 0;
     candy_score.message = 'ok';
     
@@ -1983,67 +1984,91 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
         blocksBehind: 3,
         expireSeconds: 30,
       });
+      async.eachSeries([0,1,2,3,4,5,6,7,8,9], async(id, cb) => {
+        const reward_again_list = await rpc.get_table_rows({
+          json: true,              // Get the response as json
+          code: 'vktokendapps',     // Contract that we target
+          scope: 'vktokendapps',         // Account that owns the data
+          table: 'usertable',        // Table name
+          limit: -1,               // maximum number of rows that we want to get
+        });
 
-      const reward_again_list = await rpc.get_table_rows({
-        json: true,              // Get the response as json
-        code: 'vktokendapps',     // Contract that we target
-        scope: 'vktokendapps',         // Account that owns the data
-        table: 'usertable',        // Table name
-        limit: -1,               // maximum number of rows that we want to get
-      });
+        // console.log(reward_again_info)
+        // console.log("----------------------------------")
+        // console.dir(result,{depth: null});
 
-      // console.log(reward_again_info)
-      // console.log("----------------------------------")
-      // console.dir(result,{depth: null});
+        reward_again_info = reward_again_list.rows.filter(function(p){
+          return p.account === actname;
+        });
+        if(reward_again_info.length > 0){
+          let last_reward_time = moment.utc(reward_again_info[0].last_reward_time, moment.ISO_8601).local().format("YYYY-MM-DD");
+          let now_time = moment().format("YYYY-MM-DD");
+          console.log({"last_reward_time":last_reward_time,"now_time":now_time})
 
-      var reward_again_info = reward_again_list.rows.filter(function(p){
-        return p.account === actname;
-      });
-      if(reward_again_info.length > 0){
-        let last_reward_time = moment.utc(reward_again_info[0].last_reward_time, moment.ISO_8601).local().format("YYYY-MM-DD");
-        let now_time = moment().format("YYYY-MM-DD");
-        console.log({"last_reward_time":last_reward_time,"now_time":now_time})
-
-        if(moment(last_reward_time).isSame(now_time)){
-          console.log({"last_reward_time":last_reward_time,"now_time":now_time,"is":"same"})
-          candy_score.data.scoreNum = reward_again_info[0].last_reward_amount;
-          candy_score.data.totalscoreNum = reward_again_info[0].balance;
-          candy_score.data.totalscoreDays = reward_again_info[0].sign_in_accumulate_days;
-          candy_score.data.isRewardedToday = false;
+          if(moment(last_reward_time).isSame(now_time)){
+            console.log({"last_reward_time":last_reward_time,"now_time":now_time,"is":"same"})
+            candy_score.data.scoreNum = reward_again_info[0].last_reward_amount;
+            candy_score.data.totalscoreNum = reward_again_info[0].balance;
+            candy_score.data.totalscoreDays = reward_again_info[0].sign_in_accumulate_days;
+            candy_score.data.isRewardedToday = false;
+            // Break out of async
+            console.log("Broke out of async!!!")
+            var err = new Error('Broke out of async');
+            err.break = true;
+            return cb(err);
+          }
+        }else{
+          await(sleep(300));
+          console.log("can't get user:", actname, id)
         }
-      }
-    }
+      }, function(err) {
+        if (err) {
+          // Handle break out of async here
 
-    let signedIp = req.ip.match(/\d+\.\d+\.\d+\.\d+/)[0];
-    let bm_signed_info = JSON.parse('{}');
-    bm_signed_info.accountName = actname;
-    bm_signed_info.ip = signedIp;
-    if(needtoRewardToday){
-      bm_signed_info.reward = parseFloat(reward_again_info[0].last_reward_amount.split(' ')[0]);
+          bm_signed_info.accountName = actname;
+          bm_signed_info.ip = signedIp;
+          bm_signed_info.reward = parseFloat(reward_again_info[0].last_reward_amount.split(' ')[0]);
+
+          console.log(bm_signed_info)
+          request.post({
+            url: BGAPI_URL+'/walletUserSignTimes/add',
+            json: bm_signed_info
+          }, 
+          (error, _res2, body) => {
+            if (error) {
+              console.error(error)
+              return true
+            }
+            console.log(body)
+          })
+          
+          res.json(candy_score);
+        }else{
+          console.log("Failed Broke out of async!!!")
+        }
+     });
     }else{
+
+      bm_signed_info.accountName = actname;
+      bm_signed_info.ip = signedIp;
       bm_signed_info.reward = parseFloat(reward_info[0].last_reward_amount.split(' ')[0]);
+
+      console.log(bm_signed_info)
+      request.post({
+        url: BGAPI_URL+'/walletUserSignTimes/add',
+        json: bm_signed_info
+      }, 
+      (error, res2, body) => {
+        if (error) {
+          console.error(error)
+          return true
+        }
+        console.log(body)
+      })
+      
+      res.json(candy_score); 
     }
 
-    console.log(bm_signed_info)
-    request.post({
-      url: BGAPI_URL+'/walletUserSignTimes/add',
-      json: bm_signed_info
-    }, 
-    (error, res2, body) => {
-      if (error) {
-        console.error(error)
-        return true
-      }
-      console.log(body)
-    })
-    
-    // console.dir(result.processed.action_traces[0].inline_traces,{depth: null});
-    // if(result && result.processed.action_traces.length > 0 && result.processed.action_traces[0].inline_traces.length > 0){
-    //   candy_score.data.scoreNum = result.processed.action_traces[0].inline_traces[0].act.data.quantity;
-    // }else{
-    //   candy_score.data.scoreNum = "";
-    // }
-    res.json(candy_score);
   } else if (path_param1 === "get_user_task") {
     console.log('/api_oc_pe_candy_system/get_user_task', req.body);
     let candy_score = JSON.parse('{}');
@@ -2137,11 +2162,11 @@ app.post('/vktapi/v1/create_vkt', createAccountLimiter, async (req, res) => {
           account: 'eosio',
           name: 'newaccount',
           authorization: [{
-            actor: 'makeaccounts',
+            actor: 'createaccout',
             permission: 'active',
           }],
           data: {
-            creator: 'makeaccounts',
+            creator: 'createaccout',
             name: actname,
             owner: {
               threshold: 1,
@@ -2167,11 +2192,11 @@ app.post('/vktapi/v1/create_vkt', createAccountLimiter, async (req, res) => {
           account: 'eosio',
           name: 'buyrambytes',
           authorization: [{
-            actor: 'makeaccounts',
+            actor: 'createaccout',
             permission: 'active',
           }],
           data: {
-            payer: 'makeaccounts',
+            payer: 'createaccout',
             receiver: actname,
             bytes: 8192,
           },
@@ -2180,11 +2205,11 @@ app.post('/vktapi/v1/create_vkt', createAccountLimiter, async (req, res) => {
           account: 'eosio',
           name: 'delegatebw',
           authorization: [{
-            actor: 'makeaccounts',
+            actor: 'createaccout',
             permission: 'active',
           }],
           data: {
-            from: 'makeaccounts',
+            from: 'createaccout',
             receiver: actname,
             stake_net_quantity: '0.1500 VKT',
             stake_cpu_quantity: '0.5000 VKT',
@@ -3160,7 +3185,6 @@ const runCcxt = async () => {
       }
 
       vktkline_7day = JSON.parse(sres.text).result;
-      console.log();
       // console.log(ohlcvkteth);
       const currentvktethPrice = vkteth24_info.last; // current closing price
       const currentethusdPrice = ethusd24_info.last; // current closing price
@@ -3382,3 +3406,7 @@ function format_extended_asset(amount, number_size = 0) {
 //     console.log("mock server start success.".green);
 //   }
 // });
+
+function sleep(ms) {
+	return new Promise(resolve => setTimeout(resolve, ms))
+}
