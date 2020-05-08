@@ -26,6 +26,11 @@ const trim = require('string.prototype.trim');
 require('colors');
 const chainWasm = new ClientWasm('./data/chain-client.wasm');
 const tokenWasm = new ClientWasm('./data/token-client.wasm');
+const redis = require("redis");
+const redis_client = redis.createClient({ detect_buffers: true });
+const { promisify } = require("util");
+const getAsync = promisify(redis_client.get).bind(redis_client);
+const setAsync = promisify(redis_client.set).bind(redis_client);
 
 (async () => {
   try {
@@ -1447,6 +1452,7 @@ app.post('/VX/GetActions', defaultLimiter, getActionsDistinct);
 app.post('/VX/GetActions2', defaultLimiter, getActionsFromHistoryTool);
 app.post('/VX/GetAssetsLockRecords', defaultLimiter, getAssetsLockRecords);
 app.post('/VX/GenInviteCode', defaultLimiter, genInviteCode);
+app.post('/VX/GetNotifications', defaultLimiter, getNotifications);
 
 function getActionsDistinct(req, res){
   console.log('/VX/GetActions', req.body,req.query);
@@ -1802,6 +1808,183 @@ async function getActionsFromHistoryTool (req, res) {
   res.json(accounts);
 }
 
+async function getNotifications (req, res) {
+  console.log('/VX/GetNotifications', req.body,req.query);
+
+  // default values
+  let skip = (isNaN(Number(req.body.skip))) ? 0 : Number(req.body.skip);
+  let limit = (isNaN(Number(req.body.limit))) ? 10 : Number(req.body.limit);
+  let sort = (isNaN(Number(req.body.sort))) ? -1 : Number(req.body.sort);
+  
+  let pageSize = (isNaN(Number(req.body.pageSize))) ? 0 : Number(req.body.pageSize);
+  let curpage = (isNaN(Number(req.body.page))) ? 0 : Number(req.body.page);
+  skip = curpage * pageSize;
+  limit = pageSize;
+
+  if (limit > MAX_ELEMENTS){
+    return res.status(401).send(`Max elements ${MAX_ELEMENTS}!`);
+  }
+  if (skip < 0 || limit <= 0){
+    return res.status(401).send(`Skip (${skip}) || (${limit}) limit <= 0`);
+  }
+  if (sort !== -1 && sort !== 1){
+    return res.status(401).send(`Sort param must be 1 or -1`);
+  }
+  if (skip > MAX_SKIP){
+    return res.status(500).send("Large skip for account! Max skip per request " + MAX_SKIP);
+  }
+
+  let filterClass = 0;
+  let accountName = "";
+  let action = String(req.body.action);
+  let counter = Number(req.body.counter);
+  let actionsNamesArr = (typeof req.body.filter === "string") ? req.body.filter.split(","): null;
+  actionsNamesArr = "reward".split(",");
+  action = "transfer";
+  if(Ut.isEmpty(String(req.body.from)) && !Ut.isEmpty(String(req.body.to))){
+    filterClass = 1;
+    accountName = String(req.body.to);
+  }else if(!Ut.isEmpty(String(req.body.from)) && Ut.isEmpty(String(req.body.to))){
+    filterClass = 2;
+    accountName = String(req.body.from);
+  }else{
+    filterClass = 0;
+    accountName = String(req.body.from);
+  }
+
+  let accounts = JSON.parse('{}');
+  accounts.code = 0;
+  accounts.message = "ok";
+  accounts.data = JSON.parse('{}');
+  accounts.data.pageSize = pageSize;
+  accounts.data.page = curpage;
+  accounts.data.hasMore = 0;
+  accounts.data.actions = JSON.parse('[]');
+  let quantity ;
+  let quantityarr;
+  let index = 0;
+
+  let first_key = {
+    receiver: accountName,
+    account: 'eosio.token',
+    block: ['absolute', 0],
+    transaction_id: '0000000000000000000000000000000000000000000000000000000000000000',
+    action_ordinal: 0,
+  };
+  let last_key = {
+      receiver: accountName,
+      account: 'eosio.token',
+      block: ['irreversible', 0],
+      transaction_id: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+      action_ordinal: 0xffffffff,
+  };
+
+  let i = 0;
+  let transferIdArr = [];
+  while (first_key) {
+      const reply = await tokenWasm.round_trip(['transfer', {
+          snapshot_block: ["head", 0],
+          first_key,
+          last_key,
+          max_results: limit,
+          include_notify_incoming: true,
+          include_notify_outgoing: true,
+      }]);
+      // console.log(util.inspect(reply, false, null, true))
+      first_key = reply[1].more;
+      // i += reply[1].transfers.length;
+      // console.log(i);
+      // if (i <= skip)
+      //     continue;
+
+      for (let transfer of reply[1].transfers){
+        if(filterClass === 1 && transfer.from === accountName){continue;}
+        if(filterClass === 2 && transfer.to === accountName){continue;}
+        transferIdArr.push(transfer.key.transaction_id);
+          console.log(
+              transfer.from.padEnd(13, ' ') + ' -> ' + transfer.to.padEnd(13, ' '),
+              format_extended_asset(transfer.quantity), '     ', transfer.memo);
+      }
+      // break;
+  }
+  // console.log(transferIdArr)
+  transferIdArr.reverse();
+  // console.log(transferIdArr)
+
+  await async.eachSeries(transferIdArr,async(trx_id, cb) =>{
+
+    if (i < skip){
+      i++;
+      // console.log(i,skip)
+      return true;
+    }
+
+    if (i >= skip + limit){
+        console.log(i,skip + limit)
+        accounts.data.hasMore = 1;
+        return false;
+    }
+    i++;
+
+    await rpc.history_get_transaction(trx_id).then(async(trx_info) =>{
+      // console.log(util.inspect(trx_info, false, null, true));
+
+      let read_key = accountName + '_' + trx_id;
+
+      // This will return a read status
+      await getAsync(read_key).then(async(reply) => {
+          if(reply) {
+            console.log(reply)
+          }else{
+            // redis to be inserted
+            await setAsync(read_key, "NO");
+          }
+
+          accounts.data.actions.push({"doc": trx_info.traces[0].act});
+          accounts.data.actions[index].doc.data.expiration = trx_info.trx.trx.expiration;
+          if(accounts.data.actions[index].doc.data.from === "eosio"){
+            accounts.data.actions[index].doc.data.from = "vktio";
+          }
+          accounts.data.actions[index].trxid = trx_info.id;
+          accounts.data.actions[index].blockNum = trx_info.block_num;
+          accounts.data.actions[index].time = trx_info.block_time;
+          accounts.data.actions[index].cpu_usage_us = trx_info.trx.receipt.cpu_usage_us;
+          accounts.data.actions[index].net_usage_words = trx_info.trx.receipt.net_usage_words;
+          if(trx_info.traces[0].act.name == "transfer") {
+            quantity = trx_info.traces[0].act.data.quantity;
+          }else if(trx_info.traces[0].act.name  == "reward" &&
+          trx_info.traces.length > 1) {
+            quantity = trx_info.traces[1].act.data.quantity;
+            accounts.data.actions[index].doc.data.from = "daily signed";
+            accounts.data.actions[index].doc.data.to = trx_info.traces[1].act.data.to;
+            accounts.data.actions[index].doc.data.quantity = trx_info.traces[1].act.data.quantity;
+            accounts.data.actions[index].doc.data.memo = trx_info.traces[1].act.data.memo;
+          }else{
+            quantity = "";
+            accounts.data.actions[index].doc.data.from = "daily signed";
+            accounts.data.actions[index].doc.data.to = accountName;
+            accounts.data.actions[index].doc.data.quantity = "0.0 VKT";
+            accounts.data.actions[index].doc.data.memo = "daily signed";
+          }
+          if(!Ut.isEmpty(String(quantity))){
+            quantityarr = quantity.split(" ");
+          }else{
+            quantityarr = "0.0 VKT".split(" ");
+          }
+          accounts.data.actions[index].amount = quantityarr[0];
+          accounts.data.actions[index].assestsType = quantityarr[1];
+          //for netxt page Deduplication
+          // m_lasttrxid[req.body.from] = accounts.data.actions[index].trxid;
+          accounts.data.actions[index].had_read = reply ? (reply.toString() === "NO") ? false : true : false;
+
+          index ++;
+      });
+    });
+  });
+
+  res.json(accounts);
+}
+
 async function getAssetsLockRecords (req, res) {
     console.log('/VX/GetAssetsLockRecords', req.body);
     let accounts = JSON.parse('{}');
@@ -1911,7 +2094,7 @@ async function genInviteCode (req, res) {
   inviteCode.message = "ok";
   inviteCode.data = JSON.parse('{}');
   inviteCode.data.code = hashids.encode(1);
-  inviteCode.data.qrcodeurl = "https://vktokendev.github.io/download/vktoken/index.html";
+  inviteCode.data.qrcodeurl = "https://www.vankia.io/mobile/vktoken/index.html";
 
   res.json(inviteCode);
 
