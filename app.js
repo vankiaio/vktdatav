@@ -1453,6 +1453,7 @@ app.post('/VX/GetActions2', defaultLimiter, getActionsFromHistoryTool);
 app.post('/VX/GetAssetsLockRecords', defaultLimiter, getAssetsLockRecords);
 app.post('/VX/GenInviteCode', defaultLimiter, genInviteCode);
 app.post('/VX/GetNotifications', defaultLimiter, getNotifications);
+app.post('/VX/SetNotificationsRead', defaultLimiter, setNotificationsRead);
 
 function getActionsDistinct(req, res){
   console.log('/VX/GetActions', req.body,req.query);
@@ -1975,7 +1976,7 @@ async function getNotifications (req, res) {
           accounts.data.actions[index].assestsType = quantityarr[1];
           //for netxt page Deduplication
           // m_lasttrxid[req.body.from] = accounts.data.actions[index].trxid;
-          accounts.data.actions[index].had_read = reply ? (reply.toString() === "NO") ? false : true : false;
+          accounts.data.actions[index].had_read = reply ? (reply.toString() === "NO") ? 0 : 1 : 0;
 
           index ++;
       });
@@ -1983,6 +1984,34 @@ async function getNotifications (req, res) {
   });
 
   res.json(accounts);
+}
+
+async function setNotificationsRead (req, res) {
+  console.log('/VX/SetNotificationsRead', req.body);
+  let notificationsRead = JSON.parse('{}');
+  let accountid = req.body.account_id;
+  let transferIdArr = req.body.trx_ids;
+  let trx_key = "";
+  console.log(transferIdArr);
+
+  await async.eachSeries(transferIdArr,async(trx_id, cb) =>{
+
+    trx_key = accountid + '_' + trx_id.toUpperCase();
+
+    // This will return a read status
+    await setAsync(trx_key,'YES').then(async(reply) => {
+      if(reply) {
+        console.log(reply)
+      }
+    });
+  });
+
+  notificationsRead.code = 0;
+  notificationsRead.message = "ok";
+  notificationsRead.data = JSON.parse('{}');
+
+  res.json(notificationsRead);
+
 }
 
 async function getAssetsLockRecords (req, res) {
