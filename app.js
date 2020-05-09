@@ -268,8 +268,8 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res
           asset_price_cny: vktdatav_allprices["vkt:eosio.token:vkt"].CNY,
           asset_price_krw: vktdatav_allprices["vkt:eosio.token:vkt"].KRW,
           asset_price_change_in_24h: (vktdatav_vkttracker_info.percent_change_1d * 100.0).toFixed(2),
-          iconUrl: "http://wapi.devicexx.com:3030/images/logo_van_green.png",
-          iconUrlHd: "http://wapi.devicexx.com:3030/images/logo_van_green@3x.png",
+          iconUrl: "http://dapi.vankia.io/images/logo_van_green.png",
+          iconUrlHd: "http://dapi.vankia.io/images/logo_van_green@3x.png",
           asset_market_cap_cny: vkt_balance * vktdatav_allprices["vkt:eosio.token:vkt"].CNY * 500000000,
           isRedpacket: true
         }
@@ -356,8 +356,8 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res
           assetName: 'VKT',
           contractName: 'eosio.token',
           coinmarketId: 'bitforex',
-          iconUrl: 'http://tracker.devicexx.com/assets/logo.png',
-          iconUrlHd: 'http://tracker.devicexx.com/assets/logo.png',
+          iconUrl: 'http://explorer.vankia.io/assets/logo.png',
+          iconUrlHd: 'http://explorer.vankia.io/assets/logo.png',
         },
         isFollow:true
       }
