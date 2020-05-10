@@ -31,6 +31,7 @@ const redis_client = redis.createClient({ detect_buffers: true });
 const { promisify } = require("util");
 const getAsync = promisify(redis_client.get).bind(redis_client);
 const setAsync = promisify(redis_client.set).bind(redis_client);
+const keysAsync = promisify(redis_client.keys).bind(redis_client);
 
 (async () => {
   try {
@@ -1454,6 +1455,7 @@ app.post('/VX/GetAssetsLockRecords', defaultLimiter, getAssetsLockRecords);
 app.post('/VX/GenInviteCode', defaultLimiter, genInviteCode);
 app.post('/VX/GetNotifications', defaultLimiter, getNotifications);
 app.post('/VX/SetNotificationsRead', defaultLimiter, setNotificationsRead);
+app.post('/VX/GetUnreadNotificationsNum', defaultLimiter, getUnreadNotificationsNum);
 
 function getActionsDistinct(req, res){
   console.log('/VX/GetActions', req.body,req.query);
@@ -1994,21 +1996,64 @@ async function setNotificationsRead (req, res) {
   let trx_key = "";
   console.log(transferIdArr);
 
-  await async.eachSeries(transferIdArr,async(trx_id, cb) =>{
+  if(transferIdArr.length === 0){
+    await keysAsync( accountid + '*').then(async(accountTrxKeys) => {
 
-    trx_key = accountid + '_' + trx_id.toUpperCase();
+      await async.eachSeries(accountTrxKeys,async(accountTrx, cb) =>{
+        // await getAsync(accountTrx).then(async(value) => {
+        // });
+        await setAsync(accountTrx,'YES').then(async(reply) => {
+          if(reply) {
+            console.log(reply)
+          }
+        });
+      });
+    });    
+  }else{
+    await async.eachSeries(transferIdArr,async(trx_id, cb) =>{
 
-    // This will return a read status
-    await setAsync(trx_key,'YES').then(async(reply) => {
-      if(reply) {
-        console.log(reply)
-      }
+      trx_key = accountid + '_' + trx_id.toUpperCase();
+
+      // This will return a read status
+      await setAsync(trx_key,'YES').then(async(reply) => {
+        if(reply) {
+          console.log(reply)
+        }
+      });
+    });
+  }
+
+  notificationsRead.code = 0;
+  notificationsRead.message = "ok";
+  notificationsRead.data = JSON.parse('{}');
+
+  res.json(notificationsRead);
+
+}
+
+async function getUnreadNotificationsNum (req, res) {
+  console.log('/VX/GetUnreadNotificationsNum', req.body);
+  let notificationsRead = JSON.parse('{}');
+  let accountid = req.body.account_id;
+  let unreadNum = 0;
+  console.log(accountid);
+
+  await keysAsync( accountid + '*').then(async(accountTrxKeys) => {
+
+    await async.eachSeries(accountTrxKeys,async(accountTrx, cb) =>{
+      await getAsync(accountTrx).then(async(value) => {
+        if(value && value.toString() === 'NO') {
+          unreadNum++;
+          console.log(value)
+        }
+      });
     });
   });
 
   notificationsRead.code = 0;
   notificationsRead.message = "ok";
   notificationsRead.data = JSON.parse('{}');
+  notificationsRead.data.unreadNum = unreadNum;
 
   res.json(notificationsRead);
 
