@@ -2254,13 +2254,14 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
     candy_score.code = 0;
     candy_score.message = 'ok';
     
-    const reward_list = await rpc.get_table_rows({
+    // const reward_list = 
+    await rpc.get_table_rows({
       json: true,              // Get the response as json
       code: 'vktokendapps',     // Contract that we target
       scope: 'vktokendapps',         // Account that owns the data
       table: 'usertable',        // Table name
       limit: -1,               // maximum number of rows that we want to get
-    });
+    }).then(async (reward_list) => {
 
     var reward_info = reward_list.rows.filter(function(p){
       return p.account === actname;
@@ -2386,6 +2387,7 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
       
       res.json(candy_score); 
     }
+  });
 
   } else if (path_param1 === "get_user_task") {
     console.log('/api_oc_pe_candy_system/get_user_task', req.body);
