@@ -1255,7 +1255,7 @@ const scheduleCronSendMail = async ()=>{
               vkt_balance = balarr[0];
             }
           }
-          if(vkt_balance < 50000000){
+          if(vkt_balance < 500){
             let transporter = nodemailer.createTransport({
               // host: 'smtp.ethereal.email',
               service: 'qq', // 使用了内置传输发送邮件 查看支持列表：https://nodemailer.com/smtp/well-known/
@@ -1270,7 +1270,7 @@ const scheduleCronSendMail = async ()=>{
             
             let mailOptions = {
               from: '"李轶给馨月的提醒" <8760358@qq.com>', // sender address
-              to: 'liyi@vankia.cn', // list of receivers
+              to: 'xingxinyue@vankia.cn', // list of receivers
               subject: '账户余额不足提醒-账号：'+ accountName, // Subject line
               // 发送text或者html格式
               // text: 'Hello world?', // plain text body
