@@ -71,6 +71,10 @@ let privateKey  = fs.readFileSync('./data/server.key', 'utf8');
 let certificate = fs.readFileSync('./data/server.crt', 'utf8');
 let credentials = {key: privateKey, cert: certificate};
 
+// 定时触发
+const schedule = require('node-schedule');
+const nodemailer = require('nodemailer');
+
 // 服务器端口
 let NODE_PORT = 3030;
 var NODE_SSLPORT = 3033;
@@ -879,7 +883,7 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res)
       dappIntro:'数据确权，数据溯源',
       dappIcon:'https://www.gemalto.com/iot-site/PublishingImages/inspired-iot-modules-banner.jpg?RenditionID=1',
       dappPicture:'https://www.gemalto.com/iot-site/PublishingImages/inspired-iot-modules-banner.jpg?RenditionID=1',
-      dappUrl:'http://bc.qzbdata.com',
+      dappUrl:'http://182.92.72.34:8081',
       status:'released',
       introReason:'good',
       dappCategoryName:'1',
@@ -892,7 +896,7 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res)
       dappIntro:'数据确权，数据溯源',
       dappIcon:'https://www.simplilearn.com/ice9/free_resources_article_thumb/Data-Science-vs.-Big-Data-vs.jpg',
       dappPicture:'https://www.simplilearn.com/ice9/free_resources_article_thumb/Data-Science-vs.-Big-Data-vs.jpg',
-      dappUrl:'http://bc.qzbdata.com',
+      dappUrl:'http://182.92.72.34:8081',
       status:'released',
       introReason:'good',
       dappCategoryName:'1',
@@ -906,7 +910,7 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res)
       dappIntro:'数据确权，数据溯源',
       dappIcon:'https://5b0988e595225.cdn.sohucs.com/a_auto,c_cut,x_14,y_8,w_386,h_386/images/20180329/f3f82468cf734c0db09ea978801db4f2.jpeg',
       dappPicture:'https://5b0988e595225.cdn.sohucs.com/a_auto,c_cut,x_14,y_8,w_386,h_386/images/20180329/f3f82468cf734c0db09ea978801db4f2.jpeg',
-      dappUrl:'http://bc.qzbdata.com',
+      dappUrl:'http://182.92.72.34:8081',
       status:'released',
       introReason:'good',
       dappCategoryName:'2',
@@ -919,7 +923,7 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res)
       dappIntro:'预测大盘，谁是预言家',
       dappIcon:'http://icons.iconarchive.com/icons/hadezign/hobbies/128/Magic-icon.png',
       dappPicture:'http://icons.iconarchive.com/icons/hadezign/hobbies/128/Magic-icon.png',
-      dappUrl:'http://bc.qzbdata.com',
+      dappUrl:'http://182.92.72.34:8081',
       status:'released',
       introReason:'good',
       dappCategoryName:'3',
@@ -933,7 +937,7 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res)
       dappIntro:'数据确权，数据溯源',
       dappIcon:'https://precise.seas.upenn.edu/content/images/research/domain/banner/banner_iot_r3.png',
       dappPicture:'https://precise.seas.upenn.edu/content/images/research/domain/banner/banner_iot_r3.png',
-      dappUrl:'http://bc.qzbdata.com',
+      dappUrl:'http://182.92.72.34:8081',
       status:'released',
       introReason:'good',
       dappCategoryName:'3',
@@ -972,7 +976,7 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res)
         dappIntro:'数据确权，数据溯源',
         dappIcon:'https://5b0988e595225.cdn.sohucs.com/a_auto,c_cut,x_14,y_8,w_386,h_386/images/20180329/f3f82468cf734c0db09ea978801db4f2.jpeg',
         dappPicture:'https://5b0988e595225.cdn.sohucs.com/a_auto,c_cut,x_14,y_8,w_386,h_386/images/20180329/f3f82468cf734c0db09ea978801db4f2.jpeg',
-        dappUrl:'http://bc.qzbdata.com',
+        dappUrl:'http://182.92.72.34:8081',
         status:'released',
         introReason:'good',
         dappCategoryName:'3',
@@ -986,7 +990,7 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res)
         dappIntro:'预测大盘，谁是预言家',
         dappIcon:'http://icons.iconarchive.com/icons/hadezign/hobbies/128/Magic-icon.png',
         dappPicture:'http://icons.iconarchive.com/icons/hadezign/hobbies/128/Magic-icon.png',
-        dappUrl:'http://bc.qzbdata.com',
+        dappUrl:'http://182.92.72.34:8081',
         status:'released',
         introReason:'good',
         dappCategoryName:'3',
@@ -1230,6 +1234,63 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', defaultLimiter, async (req, r
   }
 
 });
+
+const scheduleCronSendMail = async ()=>{
+  //每分钟的第30秒定时执行一次:
+  schedule.scheduleJob('8 8 8 * * *', async()=>{
+        console.log('scheduleCronSendMail:' + new Date());
+        var checkAccounts = ['vktokendapps','createaccout'];
+        await async.eachSeries(checkAccounts,async(accountName, cb) =>{
+          //获取账号xxxx的资产,查询资产的时候要加上资产的合约名字eosio.token
+          const balances = await rpc.get_currency_balance('eosio.token', accountName);
+          console.log(balances);
+          if(balances.length === 0){
+            balances.push("0.0000 VKT");
+          }
+
+          let vkt_balance = 0;
+          for (let i in balances) {
+            let balarr = balances[i].split(" ");
+            if (balarr[1] === "VKT") {
+              vkt_balance = balarr[0];
+            }
+          }
+          if(vkt_balance < 50000000){
+            let transporter = nodemailer.createTransport({
+              // host: 'smtp.ethereal.email',
+              service: 'qq', // 使用了内置传输发送邮件 查看支持列表：https://nodemailer.com/smtp/well-known/
+              port: 465, // SMTP 端口
+              secureConnection: true, // 使用了 SSL
+              auth: {
+                user: '8760358@qq.com',
+                // 这里密码不是qq密码，是你设置的smtp授权码
+                pass: 'ilmbjmyljenmbghh',
+              }
+            });
+            
+            let mailOptions = {
+              from: '"李轶给馨月的提醒" <8760358@qq.com>', // sender address
+              to: 'liyi@vankia.cn', // list of receivers
+              subject: '账户余额不足提醒-账号：'+ accountName, // Subject line
+              // 发送text或者html格式
+              // text: 'Hello world?', // plain text body
+              html: '<b>请及时给该账户充币~！！！！！</b>' + '<p>账户：'+accountName +'</p>' + '<p>余额：'+vkt_balance +' VKT</p>' // html body
+            };
+
+            // send mail with defined transport object
+            transporter.sendMail(mailOptions, (error, info) => {
+              if (error) {
+                return console.log(error);
+              }
+              console.log('Message sent: %s', info.messageId);
+              // Message sent: <04ec7731-cc68-1ef6-303c-61b0f796b78f@qq.com>
+            });
+          }
+        }); 
+    });
+}
+
+scheduleCronSendMail();
 
 // 路由scatter 多语言数据
 //app.use('/vktapi', mockjs(path.join(__dirname, './data')));
