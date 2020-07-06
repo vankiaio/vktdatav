@@ -2247,7 +2247,8 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
   if (path_param1 === "get_candy_score") {
     console.log('/api_oc_pe_candy_system/get_candy_score', req.body);
     let actname = path_param2;
-    let signedIp = req.ip.match(/\d+\.\d+\.\d+\.\d+/)[0];
+    // let signedIp = req.ip.match(/\d+\.\d+\.\d+\.\d+/)[0];
+    let signedIp = getNetIp(req);
     let bm_signed_info = JSON.parse('{}');
     let candy_score = JSON.parse('{}');
     var reward_again_info = JSON.parse('{}');
@@ -3730,3 +3731,25 @@ function format_extended_asset(amount, number_size = 0) {
 function sleep(ms) {
 	return new Promise(resolve => setTimeout(resolve, ms))
 }
+
+//获取外网ip
+var getNetIp = function(_http) {
+  var ipStr = _http.headers['X-Real-IP'] || _http.headers['x-forwarded-for'];
+  console.log(ipStr)
+  if (ipStr) {
+    var ipArray = ipStr.split(",");
+    if (ipArray.length > 1) { //如果获取到的为ip数组
+      for (var i = 0; i < ipArray.length; i++) {
+        var ipNumArray = ipArray[i].split(".");
+        var tmp = ipNumArray[0] + "." + ipNumArray[1];
+        if (tmp == "192.168" || (ipNumArray[0] == "172" && ipNumArray[1] >= 16 && ipNumArray[1] <= 32) || tmp == "10.7") {
+          continue;
+        }
+        return ipArray[i];
+      }
+    }
+    return ipArray[0];
+  } else { //获取不到时
+    return _http.ip.substring(_http.ip.lastIndexOf(":") + 1);
+  }
+};
