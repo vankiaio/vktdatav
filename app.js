@@ -675,6 +675,9 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
       (error, res2, body) => {
         if (error) {
           console.error(error)
+          if(error.code == -1){
+            addusertoMG(req.body.uid,getNetIp(req),'');
+          }
           return true
         }
         console.log(body)
