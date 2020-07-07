@@ -615,7 +615,7 @@ app.post('/api_oc_personal/v1.0.0/user/add_new_vkt', createAccountLimiter, async
         auth.message = 'Failed to create account.';
         res.json(auth);
       }
-      addusertoMG(actname,req.ip.match(/\d+\.\d+\.\d+\.\d+/)[0],inviteCode)
+      addusertoMG(actname,getNetIp(req),inviteCode)
     }
 });
 
@@ -658,7 +658,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
       upload_access_info.data.uid=req.body.uid;
 
       const ipquery = new IP2Region();
-      let lastLoginIp = req.ip.match(/\d+\.\d+\.\d+\.\d+/)[0];
+      let lastLoginIp = getNetIp(req);
       let ipres = ipquery.search(lastLoginIp);
       let bm_upload_access_info = JSON.parse('{}');
       bm_upload_access_info.accountName = req.body.uid;
