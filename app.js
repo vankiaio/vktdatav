@@ -122,7 +122,8 @@ const MAX_SKIP 		= config.maxSkip;
 // 创建express
 const app = express();
 
-const JsSignatureProvider = require('vktjs/dist/eosjs-jssig').default;
+// const JsSignatureProvider = require('vktjs/dist/eosjs-jssig').default;
+const { JsSignatureProvider } = require('vktjs/dist/eosjs-jssig'); // development only
 const signatureProvider = new JsSignatureProvider([defaultPrivateKey,candyPrivateKey]);
 
 const rpc = new JsonRpc(VKTAPI_URL, {
