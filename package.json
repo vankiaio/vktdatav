@@ -42,6 +42,7 @@
     "string.prototype.trim": "^1.2.0",
     "superagent": "^4.0.0",
     "translate-google-cn": "^1.0.4",
-    "vktjs": "^20.0.0-beta3"
+    "vktjs": "^20.0.2",
+    "vktjs-ecc": "^4.0.7"
   }
 }
