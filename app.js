@@ -263,7 +263,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res
         {
           contract_name: "eosio.token",
           token_symbol: "VKT",
-          coinmarket_id: "bitforex",
+          coinmarket_id: "hotbit",
           account_name: accountName,
           balance: vkt_balance,
           locked_amount: amountlocked,
@@ -1746,7 +1746,7 @@ async function getActionsFromHistoryTool (req, res) {
   let counter = Number(req.body.counter);
   let actionsNamesArr = (typeof req.body.filter === "string") ? req.body.filter.split(","): null;
   actionsNamesArr = "reward".split(",");
-  action = "transfer";
+  // action = "transfer";
   if(Ut.isEmpty(String(req.body.from)) && !Ut.isEmpty(String(req.body.to))){
     filterClass = 1;
     accountName = String(req.body.to);
@@ -1834,6 +1834,10 @@ async function getActionsFromHistoryTool (req, res) {
 
     const trx_info = await rpc.history_get_transaction(trx_id);
     // console.log(util.inspect(trx_info, false, null, true));
+
+    if (!Ut.isEmpty(String(action)) && action !== "undefined" && trx_info.traces[0].act.name != "reward"){
+      return true;
+    }
 
     accounts.data.actions.push({"doc": trx_info.traces[0].act});
     accounts.data.actions[index].doc.data.expiration = trx_info.trx.trx.expiration;
