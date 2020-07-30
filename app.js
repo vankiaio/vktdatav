@@ -149,6 +149,14 @@ httpsServer.listen(NODE_SSLPORT, function() {
 const createAccountLimiter = RateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour window
   max: 20, // start blocking after 5 requests
+  skip: async(req, res) => {
+    let signedIp = getNetIp(req);
+    let skipFlag = false;
+    await async.eachSeries(config.SKIP_IP_ARR,async(skip_ip, cb) =>{
+      if(signedIp.includes(skip_ip)){skipFlag = true;}
+    });
+    return skipFlag;
+  },
   // message:
     // "Too many accounts created from this IP, please try again after an hour"
   handler: function (req, res) { // 响应格式
@@ -166,6 +174,14 @@ const createAccountLimiter = RateLimit({
 const defaultLimiter = RateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour window
   max: 300, // start blocking after 5 requests
+  skip: async(req, res) => {
+    let signedIp = getNetIp(req);
+    let skipFlag = false;
+    await async.eachSeries(config.SKIP_IP_ARR,async(skip_ip, cb) =>{
+      if(signedIp.includes(skip_ip)){skipFlag = true;}
+    });
+    return skipFlag;
+  },
   // message:
     // "Too many requests from this IP, please try again after an hour"
   handler: function (req, res) { // 响应格式
