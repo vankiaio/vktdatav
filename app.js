@@ -152,7 +152,7 @@ const createAccountLimiter = RateLimit({
   skip: async(req, res) => {
     let signedIp = getNetIp(req);
     let skipFlag = false;
-    await async.eachSeries(config.SKIP_IP_ARR,async(skip_ip, cb) =>{
+    await async.eachSeries(config.WHITELIST_IP_ARR,async(skip_ip, cb) =>{
       if(signedIp.includes(skip_ip)){skipFlag = true;}
     });
     return skipFlag;
@@ -177,7 +177,7 @@ const defaultLimiter = RateLimit({
   skip: async(req, res) => {
     let signedIp = getNetIp(req);
     let skipFlag = false;
-    await async.eachSeries(config.SKIP_IP_ARR,async(skip_ip, cb) =>{
+    await async.eachSeries(config.WHITELIST_IP_ARR,async(skip_ip, cb) =>{
       if(signedIp.includes(skip_ip)){skipFlag = true;}
     });
     return skipFlag;
