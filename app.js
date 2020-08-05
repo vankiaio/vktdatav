@@ -681,7 +681,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
       let bm_upload_access_info = JSON.parse('{}');
       bm_upload_access_info.accountName = req.body.uid;
       bm_upload_access_info.lastLoginIp = lastLoginIp;
-      bm_upload_access_info.lastLoginPlace = ipres.country + " - " + ipres.province + " - " + ipres.city;
+      bm_upload_access_info.lastLoginPlace = ipres.country + " - " + ipres.province + " - " + ipres.city + " - " + ipres.isp;
       bm_upload_access_info.os = req.body.os;
       bm_upload_access_info.did = req.body.did;
 
@@ -700,6 +700,8 @@ app.post('/api_oc_personal/v1.0.0/:path_param1/:path_param2', async (req, res) =
           addusertoMG(req.body.uid,getNetIp(req),'');
         }
       })
+
+      await saveLoginLogs(req.body.uid, lastLoginIp, ipres.country + " - " + ipres.province + " - " + ipres.city);
 
       res.json(upload_access_info);
       return;
@@ -1538,6 +1540,7 @@ app.post('/VX/GenInviteCode', defaultLimiter, genInviteCode);
 app.post('/VX/GetNotifications', defaultLimiter, getNotifications);
 app.post('/VX/SetNotificationsRead', defaultLimiter, setNotificationsRead);
 app.post('/VX/GetUnreadNotificationsNum', defaultLimiter, getUnreadNotificationsNum);
+app.post('/VX/SetBlackListUsers', defaultLimiter, setBlackListUsers);
 
 function getActionsDistinct(req, res){
   console.log('/VX/GetActions', req.body,req.query);
@@ -2209,6 +2212,85 @@ async function getAssetsLockRecords (req, res) {
 }
 
 
+async function setBlackListUsers (req, res) {
+  console.log('/VX/SetBlackListUsers', req.body);
+  let blackListUsers = JSON.parse('{}');
+  let blacklist_users = req.body.blacklist_users;
+  let unblacklist_users = req.body.unblacklist_users;
+  let head_key = "BLACKLIST_USERS_";
+  let blacklist_key = "";
+  console.log(blacklist_users);
+
+  await async.eachSeries(blacklist_users,async(bl_user, cb) =>{
+ 
+    blacklist_key = head_key + bl_user;
+
+    // This will return a read status
+    await getAsync(blacklist_key).then(async(reply) => {
+      if(reply) {
+        console.log(reply)
+
+        // This will return a read status
+        await setAsync(blacklist_key, "YES");
+      }else{
+        // redis to be inserted
+        await setAsync(blacklist_key, "YES");
+      }
+    });
+
+  });
+
+  await async.eachSeries(unblacklist_users,async(unbl_user, cb) =>{
+ 
+    blacklist_key = head_key + unbl_user;
+
+    // This will return a read status
+    await getAsync(blacklist_key).then(async(reply) => {
+      if(reply) {
+        console.log(reply)
+
+        // This will return a read status
+        await delAsync(blacklist_key, "YES");
+      }
+    });
+
+  });
+
+  blackListUsers.code = 0;
+  blackListUsers.message = "ok";
+  blackListUsers.data = JSON.parse('{}');
+
+  res.json(blackListUsers);
+
+}
+
+async function saveLoginLogs (accountid, ip, location) {
+  console.log('saveLoginLogs', accountid, ip , location);
+
+  // make client connect to mongo service
+  MongoClient.connect(MONGO_URL, { useNewUrlParser: true }, function(err, db) {
+    if (err) throw err;
+
+    const dbo = db.db("VKT");
+
+    // db pointing to newdb
+    console.log("Switched to "+dbo.databaseName+" database");
+
+    // document to be inserted
+    var doc = { name: accountid, ipaddr: ip, location: location, datetime: moment().toISOString()};
+
+    // insert document to 'users' collection using insertOne
+    dbo.collection("LoginLogs").insertOne(doc, function(err, res) {
+        if (err) throw err;
+        console.log("LoginLogs inserted");
+        // close the connection to db when you are done with it
+        db.close();
+    });
+    
+  });
+
+}
+
 async function genInviteCode (req, res) {
   console.log('/VX/GenInviteCode', req.body);
   let inviteCode = JSON.parse('{}');
@@ -2330,84 +2412,138 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
           res.json(candy_score);
           return true;
         }else{
-          // 签到
-          const result = await api.transact({
-            actions: [{
-              account: 'vktokendapps',
-              name: 'reward',
-              authorization: [{
-                actor: 'vktokendapps',
-                permission: 'active',
-              }],
-              data: {"account":actname},
-            }]
-          }, {
-            blocksBehind: 3,
-            expireSeconds: 30,
-          });
-          async.eachSeries([0,1,2,3,4,5,6,7,8,9], async(id, cb) => {
-            const reward_again_list = await rpc.get_table_rows({
-              json: true,              // Get the response as json
-              code: 'vktokendapps',     // Contract that we target
-              scope: 'vktokendapps',         // Account that owns the data
-              table: 'usertable',        // Table name
-              limit: -1,               // maximum number of rows that we want to get
-            });
 
-            // console.log(reward_again_info)
-            // console.log("----------------------------------")
-            // console.dir(result,{depth: null});
-
-            reward_again_info = reward_again_list.rows.filter(function(p){
-              return p.account === actname;
-            });
-            if(reward_again_info.length > 0){
-              let last_reward_time = moment.utc(reward_again_info[0].last_reward_time, moment.ISO_8601).local().format("YYYY-MM-DD");
-              let now_time = moment().format("YYYY-MM-DD");
-              console.log({"last_reward_time":last_reward_time,"now_time":now_time})
-
-              if(moment(last_reward_time).isSame(now_time)){
-                console.log({"last_reward_time":last_reward_time,"now_time":now_time,"is":"same"})
-                candy_score.data.scoreNum = reward_again_info[0].last_reward_amount;
-                candy_score.data.totalscoreNum = reward_again_info[0].balance;
-                candy_score.data.totalscoreDays = reward_again_info[0].sign_in_accumulate_days;
-                candy_score.data.isRewardedToday = false;
-                // Break out of async
-                console.log("Broke out of async!!!")
-                var err = new Error('Broke out of async');
-                err.break = true;
-                return cb(err);
-              }
-            }else{
-              await(sleep(300));
-              console.log("can't get user:", actname, id)
-            }
-          }, function(err) {
-            if (err) {
-              // Handle break out of async here
-
-              bm_signed_info.accountName = actname;
-              bm_signed_info.ip = signedIp;
-              bm_signed_info.reward = parseFloat(reward_again_info[0].last_reward_amount.split(' ')[0]);
-
-              console.log(bm_signed_info)
-              request.post({
-                url: BGAPI_URL+'/walletUserSignTimes/add',
-                json: bm_signed_info
-              }, 
-              (error, _res2, body) => {
-                if (error) {
-                  console.error(error)
-                  return true
-                }
-                console.log(body)
-              })
-              
+          let read_key = 'BLACKLIST_USERS_' + actname;
+          // This will return a read status
+          await getAsync(read_key).then(async(reply) => {
+            if(reply) {
+              console.log(reply)
+              candy_score.code = 200;
+              candy_score.message = 'Too many requests from this User, please try again after an hour.';
               res.json(candy_score);
+              return true;
             }else{
-              console.log("Failed Broke out of async!!!")
+            // make client connect to mongo service
+            MongoClient.connect(MONGO_URL, { useNewUrlParser: true }, async function(err, db) {
+              if (err) throw err;
+
+              const dbo = db.db("VKT");
+              await dbo.collection("LoginLogs").aggregate({
+                $match: {
+                  "datetime": {
+                    $gt: (new Date(new Date().getTime() - (7 * 24 * 60 * 60 * 1000))).toISOString()
+                  },
+                  "location": {
+                    $ne: null
+                  }
+                }
+              }, {
+                $group: {
+                  _id: "$location",
+                  totallogin: {
+                    $sum: 1
+                  }
+                }
+              },
+              async function (err, result) {
+                if (err) throw err;
+                result.toArray(async function (err, result) {
+                  if (err) throw err;
+                  // console.log(result);
+                  if (result.length >= 3) {
+                    console.log(reply)
+                    candy_score.code = 200;
+                    candy_score.message = 'Too many requests from this User, please try again after an hour.';
+                    res.json(candy_score);
+                    return true;
+                  }else{
+                    // 签到
+                    const result = await api.transact({
+                      actions: [{
+                        account: 'vktokendapps',
+                        name: 'reward',
+                        authorization: [{
+                          actor: 'vktokendapps',
+                          permission: 'active',
+                        }],
+                        data: {"account":actname},
+                      }]
+                    }, {
+                      blocksBehind: 3,
+                      expireSeconds: 30,
+                    });
+                    async.eachSeries([0,1,2,3,4,5,6,7,8,9], async(id, cb) => {
+                      const reward_again_list = await rpc.get_table_rows({
+                        json: true,              // Get the response as json
+                        code: 'vktokendapps',     // Contract that we target
+                        scope: 'vktokendapps',         // Account that owns the data
+                        table: 'usertable',        // Table name
+                        limit: -1,               // maximum number of rows that we want to get
+                      });
+
+                      // console.log(reward_again_info)
+                      // console.log("----------------------------------")
+                      // console.dir(result,{depth: null});
+
+                      reward_again_info = reward_again_list.rows.filter(function(p){
+                        return p.account === actname;
+                      });
+                      if(reward_again_info.length > 0){
+                        let last_reward_time = moment.utc(reward_again_info[0].last_reward_time, moment.ISO_8601).local().format("YYYY-MM-DD");
+                        let now_time = moment().format("YYYY-MM-DD");
+                        console.log({"last_reward_time":last_reward_time,"now_time":now_time})
+
+                        if(moment(last_reward_time).isSame(now_time)){
+                          console.log({"last_reward_time":last_reward_time,"now_time":now_time,"is":"same"})
+                          candy_score.data.scoreNum = reward_again_info[0].last_reward_amount;
+                          candy_score.data.totalscoreNum = reward_again_info[0].balance;
+                          candy_score.data.totalscoreDays = reward_again_info[0].sign_in_accumulate_days;
+                          candy_score.data.isRewardedToday = false;
+                          // Break out of async
+                          console.log("Broke out of async!!!")
+                          var err = new Error('Broke out of async');
+                          err.break = true;
+                          return cb(err);
+                        }
+                      }else{
+                        await(sleep(300));
+                        console.log("can't get user:", actname, id)
+                      }
+                    }, function(err) {
+                      if (err) {
+                        // Handle break out of async here
+
+                        bm_signed_info.accountName = actname;
+                        bm_signed_info.ip = signedIp;
+                        bm_signed_info.reward = parseFloat(reward_again_info[0].last_reward_amount.split(' ')[0]);
+
+                        console.log(bm_signed_info)
+                        request.post({
+                          url: BGAPI_URL+'/walletUserSignTimes/add',
+                          json: bm_signed_info
+                        }, 
+                        (error, _res2, body) => {
+                          if (error) {
+                            console.error(error)
+                            return true
+                          }
+                          console.log(body)
+                        })
+                        
+                        res.json(candy_score);
+                      }else{
+                        console.log("Failed Broke out of async!!!")
+                      }
+                    });
+                  }
+                  setTimeout(function(){
+                    db.close();
+                  },50)
+                });
+              });
+            });
             }
-        });
+          });
         }
       });
     }else{
@@ -2912,15 +3048,21 @@ const intervalObj5 = setInterval(async () => {
 
 }, 10000);
 
-const intervalObj6 = setInterval(async () => {
+const scheduleCronCleanIPBlackList = async ()=>{
+  //每分钟的第30秒定时执行一次:
+  schedule.scheduleJob('0 0 1 * * *', async()=>{
+    console.log('runCleanIPBlackList:' + new Date());
 
-  //获取jsons数据
-  const datadb = await runCleanIPBlackList().catch(err => {
-    console.log("mongodb error: ", err)
+    //获取jsons数据
+    const datadb = await runCleanIPBlackList().catch(err => {
+      console.log("runCleanIPBlackList error: ", err)
+    });
+    console.log("nodejs app passed runCleanIPBlackList!!!");
+
   });
-  console.log("nodejs app passed runCleanIPBlackList!!!");
+}
 
-}, 1000 * 3600 * 24);
+scheduleCronCleanIPBlackList();
 
 // rpc对象支持promise，所以使用 async/await 函数运行rpc命令
 const runCleanIPBlackList = async () => {
@@ -3662,7 +3804,7 @@ function addusertoMG(accountName,registIp,inviteCode) {
     user_info.accountName = accountName;
     user_info.registIp = registIp;
     user_info.inviteCode = inviteCode;
-    user_info.registPlace = ipres.country + " - " + ipres.province + " - " + ipres.city;
+    user_info.registPlace = ipres.country + " - " + ipres.province + " - " + ipres.city + " - " + ipres.isp;
 
     // make client connect to mongo service
     MongoClient.connect(MONGO_URL, { useNewUrlParser: true }, function(err, db) {
