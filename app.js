@@ -148,8 +148,8 @@ httpsServer.listen(NODE_SSLPORT, function() {
 });
 
 const createAccountLimiter = RateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour window
-  max: 20, // start blocking after 5 requests
+  windowMs: 24 * 60 * 60 * 1000, // 1 hour window
+  max: 2, // start blocking after 5 requests
   skip: async(req, res) => {
     let signedIp = getNetIp(req);
     let skipFlag = false;
@@ -2406,7 +2406,7 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
           // redis to be inserted
           await setAsync(read_key, 1);
         }
-        if(Number(reply) > 10){
+        if(Number(reply) > 2){
           candy_score.code = 200;
           candy_score.message = 'Too many requests from this IP, please try again after an hour.';
           res.json(candy_score);
