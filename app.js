@@ -2430,6 +2430,9 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
               const dbo = db.db("VKT");
               await dbo.collection("LoginLogs").aggregate({
                 $match: {
+                  "name":{
+										$eq: actname
+									},
                   "datetime": {
                     $gt: (new Date(new Date().getTime() - (7 * 24 * 60 * 60 * 1000))).toISOString()
                   },
