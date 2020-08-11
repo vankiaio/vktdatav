@@ -1860,15 +1860,21 @@ async function getActionsFromHistoryTool (req, res) {
     }
 
     accounts.data.actions.push({"doc": trx_info.traces[0].act});
-    accounts.data.actions[index].doc.data.expiration = trx_info.trx.trx.expiration;
+    if(trx_info.trx !== null && trx_info.trx !== "undefined"){
+      accounts.data.actions[index].doc.data.expiration = trx_info.trx.trx.expiration;
+      accounts.data.actions[index].cpu_usage_us = trx_info.trx.receipt.cpu_usage_us;
+      accounts.data.actions[index].net_usage_words = trx_info.trx.receipt.net_usage_words;
+    }else{
+      accounts.data.actions[index].doc.data.expiration = trx_info.block_time;
+      accounts.data.actions[index].cpu_usage_us = "";
+      accounts.data.actions[index].net_usage_words = "";
+    }
     if(accounts.data.actions[index].doc.data.from === "eosio"){
       accounts.data.actions[index].doc.data.from = "vktio";
     }
     accounts.data.actions[index].trxid = trx_info.id;
     accounts.data.actions[index].blockNum = trx_info.block_num;
     accounts.data.actions[index].time = trx_info.block_time;
-    accounts.data.actions[index].cpu_usage_us = trx_info.trx.receipt.cpu_usage_us;
-    accounts.data.actions[index].net_usage_words = trx_info.trx.receipt.net_usage_words;
     if(trx_info.traces[0].act.name == "transfer") {
       quantity = trx_info.traces[0].act.data.quantity;
     }else if(trx_info.traces[0].act.name  == "reward" &&
@@ -2396,15 +2402,15 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
     }
 
     if(needtoRewardToday){
-      let read_key = 'IP_ADDRESS_' + signedIp;
+      let ip_read_key = 'IP_ADDRESS_' + signedIp;
       // This will return a read status
-      await getAsync(read_key).then(async(reply) => {
+      await getAsync(ip_read_key).then(async(reply) => {
         if(reply) {
-          await setAsync(read_key, Number(reply) + 1);
+          await setAsync(ip_read_key, Number(reply) + 1);
           console.log(reply)
         }else{
           // redis to be inserted
-          await setAsync(read_key, 1);
+          await setAsync(ip_read_key, 1);
         }
         if(Number(reply) > 2){
           candy_score.code = 200;
