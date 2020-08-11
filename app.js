@@ -2039,15 +2039,21 @@ async function getNotifications (req, res) {
           }
 
           accounts.data.actions.push({"doc": trx_info.traces[0].act});
-          accounts.data.actions[index].doc.data.expiration = trx_info.trx.trx.expiration;
+          if(trx_info.trx !== null && trx_info.trx !== "undefined"){
+            accounts.data.actions[index].doc.data.expiration = trx_info.trx.trx.expiration;
+            accounts.data.actions[index].cpu_usage_us = trx_info.trx.receipt.cpu_usage_us;
+            accounts.data.actions[index].net_usage_words = trx_info.trx.receipt.net_usage_words;
+          }else{
+            accounts.data.actions[index].doc.data.expiration = trx_info.block_time;
+            accounts.data.actions[index].cpu_usage_us = "";
+            accounts.data.actions[index].net_usage_words = "";
+          }
           if(accounts.data.actions[index].doc.data.from === "eosio"){
             accounts.data.actions[index].doc.data.from = "vktio";
           }
           accounts.data.actions[index].trxid = trx_info.id;
           accounts.data.actions[index].blockNum = trx_info.block_num;
           accounts.data.actions[index].time = trx_info.block_time;
-          accounts.data.actions[index].cpu_usage_us = trx_info.trx.receipt.cpu_usage_us;
-          accounts.data.actions[index].net_usage_words = trx_info.trx.receipt.net_usage_words;
           if(trx_info.traces[0].act.name == "transfer") {
             quantity = trx_info.traces[0].act.data.quantity;
           }else if(trx_info.traces[0].act.name  == "reward" &&
@@ -2403,6 +2409,8 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
 
     if(needtoRewardToday){
       let ip_read_key = 'IP_ADDRESS_' + signedIp;
+      let ip_white_list = ["124.206.0.227","127.0.0.1"];
+      console.log(ip_read_key)
       // This will return a read status
       await getAsync(ip_read_key).then(async(reply) => {
         if(reply) {
@@ -2412,7 +2420,7 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
           // redis to be inserted
           await setAsync(ip_read_key, 1);
         }
-        if(Number(reply) > 2){
+        if(Number(reply) > 2 && !ip_white_list.includes(signedIp)){
           candy_score.code = 200;
           candy_score.message = 'Too many requests from this IP, please try again after an hour.';
           res.json(candy_score);
