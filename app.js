@@ -1541,6 +1541,7 @@ app.post('/VX/GetNotifications', defaultLimiter, getNotifications);
 app.post('/VX/SetNotificationsRead', defaultLimiter, setNotificationsRead);
 app.post('/VX/GetUnreadNotificationsNum', defaultLimiter, getUnreadNotificationsNum);
 app.post('/VX/SetBlackListUsers', defaultLimiter, setBlackListUsers);
+app.use('/VX/GetUserLoginArea/:path_param1', defaultLimiter, getUserLoginArea);
 
 function getActionsDistinct(req, res){
   console.log('/VX/GetActions', req.body,req.query);
@@ -2158,6 +2159,51 @@ async function getUnreadNotificationsNum (req, res) {
 
   res.json(notificationsRead);
 
+}
+
+
+async function getUserLoginArea (req, res) {
+  console.log('/VX/GetUserLoginArea', req.body);
+  let path_param1 = req.params.path_param1;
+  let getUserLoginArea = JSON.parse('{}');
+
+  // make client connect to mongo service
+  MongoClient.connect(MONGO_URL, { useNewUrlParser: true }, async function(err, db) {
+    if (err) throw err;
+
+    const dbo = db.db("VKT");
+    await dbo.collection("LoginLogs").aggregate({
+      $match: {
+        "name":{
+          $eq: path_param1
+        },
+        "datetime": {
+          $gt: (new Date(new Date().getTime() - (7 * 24 * 60 * 60 * 1000))).toISOString()
+        },
+        "location": {
+          $ne: null
+        }
+      }
+    }, {
+      $group: {
+        _id: "$location",
+        totallogin: {
+          $sum: 1
+        }
+      }
+    },
+    async function (err, result) {
+      if (err) throw err;
+      result.toArray(async function (err, result) {
+        getUserLoginArea.code = 0;
+        getUserLoginArea.message = "ok";
+        getUserLoginArea.data = JSON.parse('{}');
+        getUserLoginArea.data.lastWeekLoginPlaceNum = result.length;
+        getUserLoginArea.data.lastWeekLoginPlace = result;
+        res.json(getUserLoginArea);
+      });
+    });
+  });
 }
 
 async function getAssetsLockRecords (req, res) {
