@@ -2459,7 +2459,7 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
 
     if(needtoRewardToday){
       let ip_read_key = 'IP_ADDRESS_' + signedIp;
-      let ip_white_list = ["124.206.0.227","127.0.0.1"];
+      let ip_white_list = ["124.206.0.227","127.0.0.1","124.200.176.166"];
       console.log(ip_read_key)
       // This will return a read status
       await getAsync(ip_read_key).then(async(reply) => {
