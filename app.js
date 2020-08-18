@@ -262,6 +262,7 @@ app.post('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res
         scope: accountName,         // Account that owns the data
         table: 'locked',        // Table name
         limit: 10,               // maximum number of rows that we want to get
+        reverse: true,
       });
     
       console.log(lockedbalance)
@@ -1123,6 +1124,7 @@ app.post('/api_oc_blockchain-v1.0.0/:path_param1', defaultLimiter, async (req, r
       scope: accountName,         // Account that owns the data
       table: 'locked',        // Table name
       limit: 10,               // maximum number of rows that we want to get
+      reverse: true,
     });
   
     console.log(lockedbalance)
@@ -2228,6 +2230,7 @@ async function getAssetsLockRecords (req, res) {
       scope: accountid,         // Account that owns the data
       table: 'locked',        // Table name
       limit: 10,               // maximum number of rows that we want to get
+      reverse: true,
     });
   
     console.log(lockedbalance)
@@ -2427,6 +2430,7 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
       scope: 'vktokendapps',         // Account that owns the data
       table: 'usertable',        // Table name
       limit: -1,               // maximum number of rows that we want to get
+      reverse: true,
     }).then(async (reward_list) => {
 
     var reward_info = reward_list.rows.filter(function(p){
@@ -2542,6 +2546,7 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
                         scope: 'vktokendapps',         // Account that owns the data
                         table: 'usertable',        // Table name
                         limit: -1,               // maximum number of rows that we want to get
+                        reverse: true,
                       });
 
                       // console.log(reward_again_info)
@@ -2884,6 +2889,7 @@ app.use('/vktapi/v1/account/vkt/:account_id', defaultLimiter, async (req, res) =
     scope: accountid,         // Account that owns the data
     table: 'locked',        // Table name
     limit: 10,               // maximum number of rows that we want to get
+    reverse: true,
   });
 
   console.log(lockedbalance)
