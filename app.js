@@ -2539,14 +2539,20 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
                       blocksBehind: 3,
                       expireSeconds: 30,
                     });
+                    let b_reverse = true;
                     async.eachSeries([0,1,2,3,4,5,6,7,8,9], async(id, cb) => {
+                      if(id%2 == 0) {
+                        b_reverse = true;
+                      }else{
+                        b_reverse = false;
+                      }
                       const reward_again_list = await rpc.get_table_rows({
                         json: true,              // Get the response as json
                         code: 'vktokendapps',     // Contract that we target
                         scope: 'vktokendapps',         // Account that owns the data
                         table: 'usertable',        // Table name
                         limit: -1,               // maximum number of rows that we want to get
-                        reverse: true,
+                        reverse: b_reverse,
                       });
 
                       // console.log(reward_again_info)
