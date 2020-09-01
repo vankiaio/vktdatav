@@ -2420,40 +2420,39 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
     let bm_signed_info = JSON.parse('{}');
     let candy_score = JSON.parse('{}');
     var reward_again_info = JSON.parse('{}');
+    var reward_info = JSON.parse('{}');
     candy_score.code = 0;
     candy_score.message = 'ok';
     
     // const reward_list = 
-    await rpc.get_table_rows({
-      json: true,              // Get the response as json
-      code: 'vktokendapps',     // Contract that we target
-      scope: 'vktokendapps',         // Account that owns the data
-      table: 'usertable',        // Table name
-      limit: -1,               // maximum number of rows that we want to get
-      reverse: true,
-    }).then(async (reward_list) => {
-
-    var reward_info = reward_list.rows.filter(function(p){
-      return p.account === actname;
-    });
-    
-    if(reward_info.length === 0){
-      // const reward_list = 
-      await rpc.get_table_rows({
+    let b_reverse = true;
+    async.eachSeries([0,1,2,3,4,5,6,7,8,9], async(id, cb) => {
+      if(id%2 == 0) {
+        b_reverse = true;
+      }else{
+        b_reverse = false;
+      }
+      const reward_list = await rpc.get_table_rows({
         json: true,              // Get the response as json
         code: 'vktokendapps',     // Contract that we target
         scope: 'vktokendapps',         // Account that owns the data
         table: 'usertable',        // Table name
         limit: -1,               // maximum number of rows that we want to get
-        reverse: false,
-      }).then(async (reward_list) => {
-
-        reward_info = reward_list.rows.filter(function(p){
-          return p.account === actname;
-        });
+        reverse: b_reverse,
       });
-    }
 
+      // console.log(reward_again_info)
+      // console.log("----------------------------------")
+      // console.dir(result,{depth: null});
+
+      reward_info = reward_list.rows.filter(function(p){
+        return p.account === actname;
+      });
+      if(reward_info.length > 0){
+        return cb('ok');
+      }
+    });
+    
     candy_score.data = JSON.parse('{}');
    
     if(reward_info.length > 0){
