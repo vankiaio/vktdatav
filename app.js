@@ -2442,17 +2442,20 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
         reverse: b_reverse,
       }).then(async (reward_list) => {
 
-      // console.log(reward_again_info)
-      // console.log("----------------------------------")
-      // console.dir(result,{depth: null});
+        // console.log(reward_again_info)
+        // console.log("----------------------------------")
+        // console.dir(result,{depth: null});
 
-      reward_info = reward_list.rows.filter(function(p){
-        return p.account === actname;
+        reward_info = reward_list.rows.filter(function(p){
+          return p.account === actname;
+        });
       });
       if(reward_info.length > 0){
-        return true;
+        return reward_info;
       }
     
+      }).then(async (reward_info) => {
+
       candy_score.data = JSON.parse('{}');
     
       if(reward_info.length > 0){
@@ -2656,7 +2659,6 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
         
         res.json(candy_score); 
       }
-    });
   });
 
   } else if (path_param1 === "get_user_task") {
