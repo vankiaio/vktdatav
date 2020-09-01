@@ -2451,7 +2451,6 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
       if(reward_info.length > 0){
         return cb('ok');
       }
-    });
     
     candy_score.data = JSON.parse('{}');
    
