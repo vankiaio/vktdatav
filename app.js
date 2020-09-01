@@ -2420,249 +2420,229 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
     let bm_signed_info = JSON.parse('{}');
     let candy_score = JSON.parse('{}');
     var reward_again_info = JSON.parse('{}');
-    var reward_info = JSON.parse('{}');
     candy_score.code = 0;
     candy_score.message = 'ok';
     
     // const reward_list = 
-    let b_reverse = true;
-    async.eachSeries([0,1,2,3,4,5,6,7,8,9], async(id, cb) => {
-      if(id%2 == 0) {
-        b_reverse = true;
-      }else{
-        b_reverse = false;
-      }
+    await rpc.get_table_rows({
+      json: true,              // Get the response as json
+      code: 'vktokendapps',     // Contract that we target
+      scope: 'vktokendapps',         // Account that owns the data
+      table: 'usertable',        // Table name
+      limit: -1,               // maximum number of rows that we want to get
+      reverse: true,
+    }).then(async (reward_list) => {
 
-      await rpc.get_table_rows({
-        json: true,              // Get the response as json
-        code: 'vktokendapps',     // Contract that we target
-        scope: 'vktokendapps',         // Account that owns the data
-        table: 'usertable',        // Table name
-        limit: -1,               // maximum number of rows that we want to get
-        reverse: b_reverse,
-      }).then(async (reward_list) => {
-
-        // console.log(reward_again_info)
-        // console.log("----------------------------------")
-        // console.dir(result,{depth: null});
-
-        reward_info = reward_list.rows.filter(function(p){
-          return p.account === actname;
-        });
-      });
-      if(reward_info.length > 0){
-        // Break out of async
-        console.log("Broke out of async!!!")
-        var err = new Error('Broke out of async');
-        err.break = true;
-        return true;
-      }
+    var reward_info = reward_list.rows.filter(function(p){
+      return p.account === actname;
+    });
     
-      }).then(async (reward_info) => {
+    candy_score.data = JSON.parse('{}');
+   
+    if(reward_info.length > 0){
+      let last_reward_time = moment.utc(reward_info[0].last_reward_time, moment.ISO_8601).local().format("YYYY-MM-DD");
+      let now_time = moment().format("YYYY-MM-DD");
+      console.log({"last_reward_time":last_reward_time,"now_time":now_time})
 
-      candy_score.data = JSON.parse('{}');
-    
-      if(reward_info.length > 0){
-        let last_reward_time = moment.utc(reward_info[0].last_reward_time, moment.ISO_8601).local().format("YYYY-MM-DD");
-        let now_time = moment().format("YYYY-MM-DD");
-        console.log({"last_reward_time":last_reward_time,"now_time":now_time})
-
-        if(moment(last_reward_time).isSame(now_time)){
-          console.log({"last_reward_time":last_reward_time,"now_time":now_time,"is":"same"})
-          candy_score.data.scoreNum = reward_info[0].last_reward_amount;
-          candy_score.data.totalscoreNum = reward_info[0].balance;
-          candy_score.data.totalscoreDays = reward_info[0].sign_in_accumulate_days;
-          candy_score.data.isRewardedToday = true;
-        }else{
-          needtoRewardToday = true;
-        }
+      if(moment(last_reward_time).isSame(now_time)){
+        console.log({"last_reward_time":last_reward_time,"now_time":now_time,"is":"same"})
+        candy_score.data.scoreNum = reward_info[0].last_reward_amount;
+        candy_score.data.totalscoreNum = reward_info[0].balance;
+        candy_score.data.totalscoreDays = reward_info[0].sign_in_accumulate_days;
+        candy_score.data.isRewardedToday = true;
       }else{
         needtoRewardToday = true;
       }
+    }else{
+      needtoRewardToday = true;
+    }
 
-      if(needtoRewardToday){
-        let ip_read_key = 'IP_ADDRESS_' + signedIp;
-        console.log(ip_read_key)
-        // This will return a read status
-        await getAsync(ip_read_key).then(async(reply) => {
-          if(reply) {
-            await setAsync(ip_read_key, Number(reply) + 1);
-            console.log(reply)
-          }else{
-            // redis to be inserted
-            await setAsync(ip_read_key, 1);
-          }
-          if(Number(reply) > 2 && !config.WHITELIST_IP_ARR.includes(signedIp.slice(signedIp.length-3))){
-            candy_score.code = 200;
-            candy_score.message = 'Too many requests from this IP, please try again after an hour.';
-            res.json(candy_score);
-            return true;
-          }else{
+    if(needtoRewardToday){
+      let ip_read_key = 'IP_ADDRESS_' + signedIp;
+      console.log(ip_read_key)
+      // This will return a read status
+      await getAsync(ip_read_key).then(async(reply) => {
+        if(reply) {
+          await setAsync(ip_read_key, Number(reply) + 1);
+          console.log(reply)
+        }else{
+          // redis to be inserted
+          await setAsync(ip_read_key, 1);
+        }
+        if(Number(reply) > 2 && !config.WHITELIST_IP_ARR.includes(signedIp.slice(signedIp.length-3))){
+          candy_score.code = 200;
+          candy_score.message = 'Too many requests from this IP, please try again after an hour.';
+          res.json(candy_score);
+          return true;
+        }else{
 
-            let read_key = 'BLACKLIST_USERS_' + actname;
-            // This will return a read status
-            await getAsync(read_key).then(async(reply) => {
-              if(reply) {
-                console.log(reply)
-                candy_score.code = 200;
-                candy_score.message = 'Too many requests from this User, please try again after an hour.';
-                res.json(candy_score);
-                return true;
-              }else{
-              // make client connect to mongo service
-              MongoClient.connect(MONGO_URL, { useNewUrlParser: true }, async function(err, db) {
+          let read_key = 'BLACKLIST_USERS_' + actname;
+          // This will return a read status
+          await getAsync(read_key).then(async(reply) => {
+            if(reply) {
+              console.log(reply)
+              candy_score.code = 200;
+              candy_score.message = 'Too many requests from this User, please try again after an hour.';
+              res.json(candy_score);
+              return true;
+            }else{
+            // make client connect to mongo service
+            MongoClient.connect(MONGO_URL, { useNewUrlParser: true }, async function(err, db) {
+              if (err) throw err;
+
+              const dbo = db.db("VKT");
+              await dbo.collection("LoginLogs").aggregate({
+                $match: {
+                  "name":{
+										$eq: actname
+									},
+                  "datetime": {
+                    $gt: (new Date(new Date().getTime() - (7 * 24 * 60 * 60 * 1000))).toISOString()
+                  },
+                  "location": {
+                    $ne: null
+                  }
+                }
+              }, {
+                $group: {
+                  _id: "$location",
+                  totallogin: {
+                    $sum: 1
+                  }
+                }
+              },
+              async function (err, result) {
                 if (err) throw err;
-
-                const dbo = db.db("VKT");
-                await dbo.collection("LoginLogs").aggregate({
-                  $match: {
-                    "name":{
-                      $eq: actname
-                    },
-                    "datetime": {
-                      $gt: (new Date(new Date().getTime() - (7 * 24 * 60 * 60 * 1000))).toISOString()
-                    },
-                    "location": {
-                      $ne: null
-                    }
-                  }
-                }, {
-                  $group: {
-                    _id: "$location",
-                    totallogin: {
-                      $sum: 1
-                    }
-                  }
-                },
-                async function (err, result) {
+                result.toArray(async function (err, result) {
                   if (err) throw err;
-                  result.toArray(async function (err, result) {
-                    if (err) throw err;
-                    // console.log(result);
-                    if (result.length >= 3) {
-                      console.log(reply)
-                      candy_score.code = 200;
-                      candy_score.message = 'Too many requests from this User, please try again after an hour.';
-                      res.json(candy_score);
-                      return true;
-                    }else{
-                      // 签到
-                      const result = await api.transact({
-                        actions: [{
-                          account: 'vktokendapps',
-                          name: 'reward',
-                          authorization: [{
-                            actor: 'vktokendapps',
-                            permission: 'active',
-                          }],
-                          data: {"account":actname},
-                        }]
-                      }, {
-                        blocksBehind: 3,
-                        expireSeconds: 30,
+                  // console.log(result);
+                  if (result.length >= 3) {
+                    console.log(reply)
+                    candy_score.code = 200;
+                    candy_score.message = 'Too many requests from this User, please try again after an hour.';
+                    res.json(candy_score);
+                    return true;
+                  }else{
+                    // 签到
+                    const result = await api.transact({
+                      actions: [{
+                        account: 'vktokendapps',
+                        name: 'reward',
+                        authorization: [{
+                          actor: 'vktokendapps',
+                          permission: 'active',
+                        }],
+                        data: {"account":actname},
+                      }]
+                    }, {
+                      blocksBehind: 3,
+                      expireSeconds: 30,
+                    });
+                    let b_reverse = true;
+                    async.eachSeries([0,1,2,3,4,5,6,7,8,9], async(id, cb) => {
+                      if(id%2 == 0) {
+                        b_reverse = true;
+                      }else{
+                        b_reverse = false;
+                      }
+                      const reward_again_list = await rpc.get_table_rows({
+                        json: true,              // Get the response as json
+                        code: 'vktokendapps',     // Contract that we target
+                        scope: 'vktokendapps',         // Account that owns the data
+                        table: 'usertable',        // Table name
+                        limit: -1,               // maximum number of rows that we want to get
+                        reverse: b_reverse,
                       });
-                      let b_reverse = true;
-                      async.eachSeries([0,1,2,3,4,5,6,7,8,9], async(id, cb) => {
-                        if(id%2 == 0) {
-                          b_reverse = true;
-                        }else{
-                          b_reverse = false;
+
+                      // console.log(reward_again_info)
+                      // console.log("----------------------------------")
+                      // console.dir(result,{depth: null});
+
+                      reward_again_info = reward_again_list.rows.filter(function(p){
+                        return p.account === actname;
+                      });
+                      if(reward_again_info.length > 0){
+                        let last_reward_time = moment.utc(reward_again_info[0].last_reward_time, moment.ISO_8601).local().format("YYYY-MM-DD");
+                        let now_time = moment().format("YYYY-MM-DD");
+                        console.log({"last_reward_time":last_reward_time,"now_time":now_time})
+
+                        if(moment(last_reward_time).isSame(now_time)){
+                          console.log({"last_reward_time":last_reward_time,"now_time":now_time,"is":"same"})
+                          candy_score.data.scoreNum = reward_again_info[0].last_reward_amount;
+                          candy_score.data.totalscoreNum = reward_again_info[0].balance;
+                          candy_score.data.totalscoreDays = reward_again_info[0].sign_in_accumulate_days;
+                          candy_score.data.isRewardedToday = false;
+                          // sign in successd then didn't count plus one
+                          await setAsync(ip_read_key, Number(reply) - 1);
+                          console.log(reply)
+                          // Break out of async
+                          console.log("Broke out of async!!!")
+                          var err = new Error('Broke out of async');
+                          err.break = true;
+                          return cb(err);
                         }
-                        const reward_again_list = await rpc.get_table_rows({
-                          json: true,              // Get the response as json
-                          code: 'vktokendapps',     // Contract that we target
-                          scope: 'vktokendapps',         // Account that owns the data
-                          table: 'usertable',        // Table name
-                          limit: -1,               // maximum number of rows that we want to get
-                          reverse: b_reverse,
-                        });
+                      }else{
+                        await(sleep(300));
+                        console.log("can't get user:", actname, id)
+                      }
+                    }, function(err) {
+                      if (err) {
+                        // Handle break out of async here
 
-                        // console.log(reward_again_info)
-                        // console.log("----------------------------------")
-                        // console.dir(result,{depth: null});
+                        bm_signed_info.accountName = actname;
+                        bm_signed_info.ip = signedIp;
+                        bm_signed_info.reward = parseFloat(reward_again_info[0].last_reward_amount.split(' ')[0]);
 
-                        reward_again_info = reward_again_list.rows.filter(function(p){
-                          return p.account === actname;
-                        });
-                        if(reward_again_info.length > 0){
-                          let last_reward_time = moment.utc(reward_again_info[0].last_reward_time, moment.ISO_8601).local().format("YYYY-MM-DD");
-                          let now_time = moment().format("YYYY-MM-DD");
-                          console.log({"last_reward_time":last_reward_time,"now_time":now_time})
-
-                          if(moment(last_reward_time).isSame(now_time)){
-                            console.log({"last_reward_time":last_reward_time,"now_time":now_time,"is":"same"})
-                            candy_score.data.scoreNum = reward_again_info[0].last_reward_amount;
-                            candy_score.data.totalscoreNum = reward_again_info[0].balance;
-                            candy_score.data.totalscoreDays = reward_again_info[0].sign_in_accumulate_days;
-                            candy_score.data.isRewardedToday = false;
-                            // Break out of async
-                            console.log("Broke out of async!!!")
-                            var err = new Error('Broke out of async');
-                            err.break = true;
-                            return cb(err);
+                        console.log(bm_signed_info)
+                        request.post({
+                          url: BGAPI_URL+'/walletUserSignTimes/add',
+                          json: bm_signed_info
+                        }, 
+                        (error, _res2, body) => {
+                          if (error) {
+                            console.error(error)
+                            return true
                           }
-                        }else{
-                          await(sleep(300));
-                          console.log("can't get user:", actname, id)
-                        }
-                      }, function(err) {
-                        if (err) {
-                          // Handle break out of async here
-
-                          bm_signed_info.accountName = actname;
-                          bm_signed_info.ip = signedIp;
-                          bm_signed_info.reward = parseFloat(reward_again_info[0].last_reward_amount.split(' ')[0]);
-
-                          console.log(bm_signed_info)
-                          request.post({
-                            url: BGAPI_URL+'/walletUserSignTimes/add',
-                            json: bm_signed_info
-                          }, 
-                          (error, _res2, body) => {
-                            if (error) {
-                              console.error(error)
-                              return true
-                            }
-                            console.log(body)
-                          })
-                          
-                          res.json(candy_score);
-                        }else{
-                          console.log("Failed Broke out of async!!!")
-                        }
-                      });
-                    }
-                    setTimeout(function(){
-                      db.close();
-                    },50)
-                  });
+                          console.log(body)
+                        })
+                        
+                        res.json(candy_score);
+                      }else{
+                        console.log("Failed Broke out of async!!!")
+                      }
+                    });
+                  }
+                  setTimeout(function(){
+                    db.close();
+                  },50)
                 });
               });
-              }
             });
-          }
-        });
-      }else{
+            }
+          });
+        }
+      });
+    }else{
 
-        bm_signed_info.accountName = actname;
-        bm_signed_info.ip = signedIp;
-        bm_signed_info.reward = parseFloat(reward_info[0].last_reward_amount.split(' ')[0]);
+      bm_signed_info.accountName = actname;
+      bm_signed_info.ip = signedIp;
+      bm_signed_info.reward = parseFloat(reward_info[0].last_reward_amount.split(' ')[0]);
 
-        console.log(bm_signed_info)
-        request.post({
-          url: BGAPI_URL+'/walletUserSignTimes/add',
-          json: bm_signed_info
-        }, 
-        (error, res2, body) => {
-          if (error) {
-            console.error(error)
-            return true
-          }
-          console.log(body)
-        })
-        
-        res.json(candy_score); 
-      }
+      console.log(bm_signed_info)
+      request.post({
+        url: BGAPI_URL+'/walletUserSignTimes/add',
+        json: bm_signed_info
+      }, 
+      (error, res2, body) => {
+        if (error) {
+          console.error(error)
+          return true
+        }
+        console.log(body)
+      })
+      
+      res.json(candy_score); 
+    }
   });
 
   } else if (path_param1 === "get_user_task") {
