@@ -2539,7 +2539,7 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
                       expireSeconds: 30,
                     });
                     let b_reverse = true;
-                    async.eachSeries([0,1,2,3,4,5,6,7,8,9], async(id, cb) => {
+                    async.eachSeries([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20], async(id, cb) => {
                       if(id%2 == 0) {
                         b_reverse = true;
                       }else{
