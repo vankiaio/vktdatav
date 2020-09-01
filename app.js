@@ -2451,7 +2451,7 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
         });
       });
       if(reward_info.length > 0){
-        return reward_info;
+        return cb(reward_info);
       }
     
       }).then(async (reward_info) => {
