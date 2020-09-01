@@ -2437,6 +2437,23 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
       return p.account === actname;
     });
     
+    if(reward_info.length === 0){
+      // const reward_list = 
+      await rpc.get_table_rows({
+        json: true,              // Get the response as json
+        code: 'vktokendapps',     // Contract that we target
+        scope: 'vktokendapps',         // Account that owns the data
+        table: 'usertable',        // Table name
+        limit: -1,               // maximum number of rows that we want to get
+        reverse: false,
+      }).then(async (reward_list) => {
+
+        reward_info = reward_list.rows.filter(function(p){
+          return p.account === actname;
+        });
+      });
+    }
+
     candy_score.data = JSON.parse('{}');
    
     if(reward_info.length > 0){
@@ -2469,7 +2486,7 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
           // redis to be inserted
           await setAsync(ip_read_key, 1);
         }
-        if(Number(reply) > 2 && !config.WHITELIST_IP_ARR.includes(signedIp)){
+        if(Number(reply) > 2 && !config.WHITELIST_IP_ARR.includes(signedIp.slice(signedIp.length-3))){
           candy_score.code = 200;
           candy_score.message = 'Too many requests from this IP, please try again after an hour.';
           res.json(candy_score);
