@@ -2459,7 +2459,6 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
 
     if(needtoRewardToday){
       let ip_read_key = 'IP_ADDRESS_' + signedIp;
-      let ip_white_list = ["124.206.0.227","127.0.0.1","124.200.176.166"];
       console.log(ip_read_key)
       // This will return a read status
       await getAsync(ip_read_key).then(async(reply) => {
@@ -2470,7 +2469,7 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
           // redis to be inserted
           await setAsync(ip_read_key, 1);
         }
-        if(Number(reply) > 2 && !ip_white_list.includes(signedIp)){
+        if(Number(reply) > 2 && !config.WHITELIST_IP_ARR.includes(signedIp)){
           candy_score.code = 200;
           candy_score.message = 'Too many requests from this IP, please try again after an hour.';
           res.json(candy_score);
