@@ -2432,7 +2432,7 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
       }else{
         b_reverse = false;
       }
-      
+
       await rpc.get_table_rows({
         json: true,              // Get the response as json
         code: 'vktokendapps',     // Contract that we target
@@ -2450,7 +2450,7 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
         return p.account === actname;
       });
       if(reward_info.length > 0){
-        return cb('ok');
+        return true;
       }
     
       candy_score.data = JSON.parse('{}');
