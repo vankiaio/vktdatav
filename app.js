@@ -2455,7 +2455,7 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
         console.log("Broke out of async!!!")
         var err = new Error('Broke out of async');
         err.break = true;
-        return cb(err);
+        return true;
       }
     
       }).then(async (reward_info) => {
