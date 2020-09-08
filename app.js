@@ -893,7 +893,21 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res)
     ios_version.data.versionDescription = ['1.新增xxx功能','2.修改了xxx，修复若干bug','3.修改了xxx，修复若干bug','4.新增xxx功能']
     console.log(ios_version);
     res.json(ios_version);
-  }else   if (path_param1 === "recommend_dapp") {
+  } else if (path_param1 === "get_last_info_ios") {
+    console.log('/api_oc_personal/v1.0.0/get_last_info_ios', req.body);
+    let ios_version = JSON.parse('{}');
+    
+    ios_version.code = 0;
+    ios_version.message = 'ok';
+    ios_version.data = JSON.parse('{}');
+    ios_version.data.uploadUrl = 'https://testflight.apple.com/join/g01bXkTX';
+    ios_version.data.versionDetail = '1.0.1'
+    ios_version.data.versionCode = '101'
+    ios_version.data.versionName = '1.0.1'
+    ios_version.data.versionDescription = ['1.新增xxx功能','2.修改了xxx，修复若干bug','3.修改了xxx，修复若干bug','4.新增xxx功能']
+    console.log(ios_version);
+    res.json(ios_version);
+  } else if (path_param1 === "recommend_dapp") {
     console.log('/api_oc_personal/v1.0.0/recommend_dapp', req.body);
     let recommend_dapp = JSON.parse('{}');
 
