@@ -901,9 +901,10 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res)
     ios_version.message = 'ok';
     ios_version.data = JSON.parse('{}');
     ios_version.data.uploadUrl = 'https://testflight.apple.com/join/g01bXkTX';
-    ios_version.data.versionDetail = '1.0.1'
-    ios_version.data.versionCode = '101'
-    ios_version.data.versionName = '1.0.1'
+    ios_version.data.versionDetail = '2.0.1'
+    ios_version.data.versionCode = '201'
+    ios_version.data.versionName = '2.0.1'
+    ios_version.data.forceFlg = '0'
     ios_version.data.versionDescription = ['1.新增xxx功能','2.修改了xxx，修复若干bug','3.修改了xxx，修复若干bug','4.新增xxx功能']
     console.log(ios_version);
     res.json(ios_version);
@@ -2530,7 +2531,7 @@ app.use('/api_oc_pe_candy_system/:path_param1/:path_param2', defaultLimiter, asy
                 result.toArray(async function (err, result) {
                   if (err) throw err;
                   // console.log(result);
-                  if (result.length >= 3) {
+                  if (result.length >= 5) {
                     console.log(reply)
                     candy_score.code = 200;
                     candy_score.message = 'Too many requests from this User, please try again after an hour.';
