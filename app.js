@@ -886,7 +886,7 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res)
     ios_version.code = 0;
     ios_version.message = 'ok';
     ios_version.data = JSON.parse('{}');
-    ios_version.data.uploadUrl = 'http://wapi.devicexx.com:3030/upgrade/umeng/VKToken_umeng_release.apk';
+    ios_version.data.uploadUrl = 'http://download.vankia.io/download/packages/VKToken_umeng_release.apk';
     ios_version.data.versionDetail = '1.0.0'
     ios_version.data.versionCode = '100'
     ios_version.data.versionName = '1.0.0'
