@@ -887,11 +887,11 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res)
     ios_version.message = 'ok';
     ios_version.data = JSON.parse('{}');
     ios_version.data.uploadUrl = 'http://download.vankia.io/download/packages/VKToken_umeng_release.apk';
-    ios_version.data.versionDetail = '1.0.0'
-    ios_version.data.versionCode = '100'
-    ios_version.data.versionName = '1.0.0'
+    ios_version.data.versionDetail = '1.0.1'
+    ios_version.data.versionCode = '101'
+    ios_version.data.versionName = '1.0.1'
     ios_version.data.forceFlg = '0'
-    ios_version.data.versionDescription = ['1.新增xxx功能','2.修改了xxx，修复若干bug','3.修改了xxx，修复若干bug','4.新增xxx功能']
+    ios_version.data.versionDescription = ['1.修复已知问题','2.优化页面显示','3.支持安卓9以上设备','4.优化升级功能']
     console.log(ios_version);
     res.json(ios_version);
   } else if (path_param1 === "get_last_info_ios") {
@@ -906,7 +906,7 @@ app.use('/api_oc_personal/v1.0.0/:path_param1', defaultLimiter, async (req, res)
     ios_version.data.versionCode = '200'
     ios_version.data.versionName = '2.0.0'
     ios_version.data.forceFlg = '0'
-    ios_version.data.versionDescription = ['1.新增xxx功能','2.修改了xxx，修复若干bug','3.修改了xxx，修复若干bug','4.新增xxx功能']
+    ios_version.data.versionDescription = ['1.修复已知问题','2.优化页面显示','3.支持IOS 13以上设备','4.优化升级功能']
     console.log(ios_version);
     res.json(ios_version);
   } else if (path_param1 === "recommend_dapp") {
