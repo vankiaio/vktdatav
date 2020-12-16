@@ -1763,6 +1763,7 @@ async function getActionsFromHistoryTool (req, res) {
   
   let pageSize = (isNaN(Number(req.body.pageSize))) ? 0 : Number(req.body.pageSize);
   let curpage = (isNaN(Number(req.body.page))) ? 0 : Number(req.body.page);
+  let startBlockNum = (isNaN(Number(req.body.startBlockNum))) ? 0 : Number(req.body.startBlockNum);
   skip = curpage * pageSize;
   limit = pageSize;
 
@@ -1812,7 +1813,7 @@ async function getActionsFromHistoryTool (req, res) {
   let first_key = {
     receiver: accountName,
     account: 'eosio.token',
-    block: ['absolute', 0],
+    block: ['absolute', startBlockNum],
     transaction_id: '0000000000000000000000000000000000000000000000000000000000000000',
     action_ordinal: 0,
   };
