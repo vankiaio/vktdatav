@@ -3329,14 +3329,14 @@ const runRpcGetProducers = async () => {
             dumapLocal_en += "shi"
           }
           console.log(dumapLocal_en)
-          await translate(dumapLocal_en, {
-            to: 'zh-CN'
-          }).then(async (res) => {
-            dumapLocal_cn = res.text;
+          //await translate(dumapLocal_en, {
+          //  to: 'zh-CN'
+         // }).then(async (res) => {
+            dumapLocal_cn = "北京市";
             console.log("start ---- 3", dumapLocal_cn)
-            console.log(res.text);
+            //console.log(res.text);
             //=> 北京市
-            console.log(res.from.language.iso);
+            //console.log(res.from.language.iso);
             //=> zh-CN
             dumapLocal_en = "";
 
@@ -3445,9 +3445,9 @@ const runRpcGetProducers = async () => {
                   }
                 })
             }
-          }).catch(err => {
-            console.error(err);
-          });
+         // }).catch(err => {
+         //   console.error(err);
+        //  });
         }
         i++;
       });
