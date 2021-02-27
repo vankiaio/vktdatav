@@ -3818,6 +3818,20 @@ const runCcxt = async () => {
       // console.log(ohlcvkteth);
       const currentvktethPrice = vkteth24_info.last; // current closing price
       const currentethusdPrice = ethusd24_info.last; // current closing price
+      if(vktkline_7day.length<1) {
+        vktkline_7day =  new Array();
+
+        for(var k=0;k<8;k++){
+
+            vktkline_7day[k]=new Array();
+
+            for(var j=0;j<3;j++){
+
+               vktkline_7day[k][j]="0.05";
+            }
+       }
+
+      }
       const last1dPrice = vktkline_7day[1][3]; // 1d ago closing price
       const last1wPrice = vktkline_7day[vktkline_7day.length - 1][3]; // 1w ago closing price
       // console.log(last7dTime);
